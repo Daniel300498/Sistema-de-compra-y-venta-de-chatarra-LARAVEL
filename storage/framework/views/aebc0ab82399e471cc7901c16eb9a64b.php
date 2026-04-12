@@ -1,0 +1,57 @@
+
+<div id="formacionTable" style="display: none;"> 
+    <div class="container mt-3">
+    <form action="<?php echo e(route('academico.store')); ?>" method="POST">
+        <?php echo csrf_field(); ?>
+        <input type="hidden" name="tipo" value="formacion">
+        <div class="form-group">
+            <label for="descripcion">Nombre:<span class="text-danger">*</span></label>
+            <input required id="descripcion"  type="text" class="form-control <?php echo e($errors->has('descripcion') ? ' error' : ''); ?>" name= "descripcion" value="<?php echo e(old('descripcion', isset($parametros) ? $parametros->descripcion : '')); ?>"   onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);">
+            <?php $__errorArgs = ['descripcion'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+            <span class="text-danger"><?php echo e($message); ?></span>
+            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+        </div>
+    </br>
+        <button type="submit" class="btn btn-primary">Agregar Formación</button> 
+    </form>
+    <hr> 
+<div class="table-responsive">
+    <table cellspacing="0" width="100%" id="datos" class="table table-hover table-bordered table-sm">
+        <thead>
+            <tr>
+                <th class="text-center">Formaciones</th>
+                <th class="text-center">Opciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php $__currentLoopData = $formacion; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $f): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+                <td class="text-center">
+                    <small><?php echo e($f->descripcion); ?></small>
+                </td>
+                    <td class="d-flex justify-content-center">
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('academico.edit')): ?>
+                        <a href="<?php echo e(route('academico.edit',$f->id)); ?>" class="btn btn-warning" title="Modificar datos"><i class="bi bi-pencil-square"></i></a>
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('academico.destroy')): ?>
+                        <?php echo Form::open(['route'=>['academico.destroy',$f->id],'method'=>'DELETE']); ?>
+
+                        <button class="btn btn-danger" onclick="return confirm('¿Está seguro que desea eliminar la formacion?');"><i class="bi bi-trash"></i></button>
+                        <?php echo Form::close(); ?>
+
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </tbody>
+        </table>
+    </div>
+    </div>
+</div><?php /**PATH /home4/gadlprrhh/public_html/sistema_rrhh/resources/views/academico/secciones/formacion_table.blade.php ENDPATH**/ ?>
