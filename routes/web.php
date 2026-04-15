@@ -43,15 +43,15 @@ use Illuminate\Support\Facades\Route;
     Route::get('permisos/{permiso}/eliminar',[App\Http\Controllers\PermissionController::class,'destroy'])->name('permisos.destroy')->middleware('permission:permisos.destroy');
     Route::get('permisos/{permiso}/edit',[App\Http\Controllers\PermissionController::class,'edit'])->name('permisos.edit')->middleware('permission:permisos.edit');
 
-    //Pacientes
-    Route::post('paciente/store',[App\Http\Controllers\PacienteController::class,'store'])->name('pacientes.store')->middleware('permission:pacientes.create');
-    Route::get('pacientes',[App\Http\Controllers\PacienteController::class,'index'])->name('pacientes.index')->middleware('permission:pacientes.index');
-    Route::post('pacientes/consulta', [App\Http\Controllers\PacienteController::class, 'consulta'])->name('pacientes.consulta')->middleware('permission:pacientes.index');
-    Route::get('paciente/create',[App\Http\Controllers\PacienteController::class,'create'])->name('pacientes.create')->middleware('permission:pacientes.create');
-    Route::put('paciente/{paciente}',[App\Http\Controllers\PacienteController::class,'update'])->name('pacientes.update')->middleware('permission:pacientes.edit');
-    Route::get('paciente/{uuid}',[App\Http\Controllers\PacienteController::class,'show'])->name('pacientes.show')->middleware('permission:pacientes.show');
-    Route::get('paciente/{uuid}/destroy',[App\Http\Controllers\PacienteController::class,'destroy'])->name('pacientes.destroy')->middleware('permission:pacientes.destroy');
-    Route::get('paciente/{uuid}/edit',[App\Http\Controllers\PacienteController::class,'edit'])->name('pacientes.edit')->middleware('permission:pacientes.edit');
+    //Proveedores
+    Route::post('proveedor/store',[App\Http\Controllers\ProveedorController::class,'store'])->name('proveedores.store')->middleware('permission:proveedores.create');
+    Route::get('proveedores',[App\Http\Controllers\ProveedorController::class,'index'])->name('proveedores.index')->middleware('permission:proveedores.index');
+    Route::post('proveedores/consulta', [App\Http\Controllers\ProveedorController::class, 'consulta'])->name('proveedores.consulta')->middleware('permission:proveedores.index');
+    Route::get('proveedor/create',[App\Http\Controllers\ProveedorController::class,'create'])->name('proveedores.create')->middleware('permission:proveedores.create');
+    Route::put('proveedor/{proveedor}',[App\Http\Controllers\ProveedorController::class,'update'])->name('proveedores.update')->middleware('permission:proveedores.edit');
+    Route::get('proveedor/{uuid}',[App\Http\Controllers\ProveedorController::class,'show'])->name('proveedores.show')->middleware('permission:proveedores.show');
+    Route::get('proveedor/{uuid}/destroy',[App\Http\Controllers\ProveedorController::class,'destroy'])->name('proveedores.destroy')->middleware('permission:proveedores.destroy');
+    Route::get('proveedor/{uuid}/edit',[App\Http\Controllers\ProveedorController::class,'edit'])->name('proveedores.edit')->middleware('permission:proveedores.edit');
     
     //consultas
     Route::post('consultas/store', [App\Http\Controllers\ConsultaController::class, 'store'])->name('consultas.store')->middleware('permission:consultas.create');
@@ -61,7 +61,7 @@ use Illuminate\Support\Facades\Route;
     Route::get('consultas/edit/{uuid}', [App\Http\Controllers\ConsultaController::class, 'edit'])->name('consultas.edit')->middleware('permission:consultas.edit');
     Route::put('consultas/updated/{consulta}', [App\Http\Controllers\ConsultaController::class, 'updated'])->name('consultas.update')->middleware('permission:consultas.edit');
     Route::get('consultas', [App\Http\Controllers\ConsultaController::class, 'index'])->name('consultas.index')->middleware('permission:consultas.index');
-    Route::post('buscar_pacientes', [App\Http\Controllers\ConsultaController::class, 'buscar_paciente'])->name('buscar_pacientes')->middleware('permission:consultas.index');   
+    Route::post('buscar_proveedores', [App\Http\Controllers\ConsultaController::class, 'buscar_paciente'])->name('buscar_proveedores')->middleware('permission:consultas.index');   
 
      //internaciones
     Route::post('internaciones/store', [App\Http\Controllers\InternacionController::class, 'store'])->name('internaciones.store')->middleware('permission:internaciones.create');
@@ -71,7 +71,7 @@ use Illuminate\Support\Facades\Route;
     Route::get('internaciones/edit/{uuid}', [App\Http\Controllers\InternacionController::class, 'edit'])->name('internaciones.edit')->middleware('permission:internaciones.edit');
     Route::put('internaciones/updated/{internacion}', [App\Http\Controllers\InternacionController::class, 'updated'])->name('internaciones.update')->middleware('permission:internaciones.edit');
     Route::get('internaciones', [App\Http\Controllers\InternacionController::class, 'index'])->name('internaciones.index')->middleware('permission:internaciones.index');
-    Route::post('buscar_pacientes_internacion', [App\Http\Controllers\InternacionController::class, 'buscar_paciente_internacion'])->name('buscar_pacientes_internacion')->middleware('permission:internaciones.index');
+    Route::post('buscar_proveedores_internacion', [App\Http\Controllers\InternacionController::class, 'buscar_paciente_internacion'])->name('buscar_proveedores_internacion')->middleware('permission:internaciones.index');
  
     //Medicos
     Route::post('medico/store',[App\Http\Controllers\MedicoController::class,'store'])->name('medicos.store')->middleware('permission:medicos.create');

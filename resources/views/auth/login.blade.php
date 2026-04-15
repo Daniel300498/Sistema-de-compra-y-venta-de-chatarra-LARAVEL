@@ -21,8 +21,7 @@
             <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
 
               <div class="d-flex justify-content-center py-1">
-                <a href="#" class="">
-                                  
+                <a href="#" class="">                     
               
               </a>
               </div><!-- End Logo -->

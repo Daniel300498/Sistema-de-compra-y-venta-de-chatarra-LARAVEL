@@ -10,19 +10,19 @@
         </a>
       </li> 
         <li class="nav-item">
-          <a class="nav-link {{ isActiveRoute(['pacientes.index','pacientes.create','pacientes.edit','pacientes.ficha','pacientes.consulta']) }}" href="{{ route('pacientes.index') }}">
-            <i class="bi bi-person-plus"></i><span>Registro de Pacientes</span>
+          <a class="nav-link {{ isActiveRoute(['proveedores.index','proveedores.create','proveedores.edit','proveedores.ficha','proveedores.consulta']) }}" href="{{ route('proveedores.index') }}">
+            <i class="bi bi-person-plus"></i><span>Proveedores</span>
           </a>
         </li>      
         <li class="nav-item">
-          <a class="nav-link {{ isActiveRoute(['consultas*.*','buscar_pacientes'])  }}"href="{{ route('consultas.index') }}">
+          <a class="nav-link {{ isActiveRoute(['consultas*.*','buscar_proveedores'])  }}"href="{{ route('consultas.index') }}">
             <i class="bi bi-file-earmark-text"></i>
             <span>Consultas</span>
           </a>
         </li>
 
          <li class="nav-item">
-          <a class="nav-link {{ isActiveRoute(['internaciones*.*','buscar_pacientes_internacion'])  }}" href="{{ route('internaciones.index') }}">
+          <a class="nav-link {{ isActiveRoute(['internaciones*.*','buscar_proveedores_internacion'])  }}" href="{{ route('internaciones.index') }}">
             <i class="bi bi-file-earmark-text"></i>
             <span>Internaciones</span>
           </a>

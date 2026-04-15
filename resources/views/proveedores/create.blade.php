@@ -4,13 +4,13 @@
 @section('content')
 
 <div class="pagetitle">
-    <h1>REGISTRO PACIENTES
+    <h1>REGISTRO PROVEEDORES
     </h1>
     <nav>
       <ol class="breadcrumb"> 
         <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('pacientes.create') }}">Registro Pacientes</a></li>
-        <li class="breadcrumb-item active">Nuevo Paciente</li>
+        <li class="breadcrumb-item"><a href="{{ route('proveedores.create') }}">Registro Proveedores</a></li>
+        <li class="breadcrumb-item active">Nuevo Proveedor</li>
       </ol>
     </nav>
  </div><!-- End Page Title -->
@@ -19,10 +19,10 @@
       <div class="col-lg-12">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Nuevo Paciente</h5>
+            <h5 class="card-title">Nuevo Proveedor</h5>
            <!--CONTENIDO -->
-           {!! Form::open(['route'=>'pacientes.store','class'=>'row g-3','enctype'=>"multipart/form-data"]) !!}
-                @include('pacientes._form',['texto' => 'Registrar','color'=>'primary'])
+           {!! Form::open(['route'=>'proveedores.store','class'=>'row g-3','enctype'=>"multipart/form-data"]) !!}
+                @include('proveedores._form',['texto' => 'Registrar','color'=>'primary'])
             {!! Form::close() !!}
             <!-- EndCONTENIDO Example -->
           </div>
@@ -30,13 +30,13 @@
       </div>
     </div>
 </section>
-@include('pacientes.modals._modal_instituto')
-@include('pacientes.modals._modal_profesion')
-@include('pacientes.modals._modal_formacion')
-@include('pacientes.modals._modal_ciudad')
+@include('proveedores.modals._modal_instituto')
+@include('proveedores.modals._modal_profesion')
+@include('proveedores.modals._modal_formacion')
+@include('proveedores.modals._modal_ciudad')
 @endsection
 @section('scripts')
-<script src="{{ asset('assets/js/forms/pacientesControlCampos.js') }}" type="text/javascript"></script>
+<script src="{{ asset('assets/js/forms/proveedoresControlCampos.js') }}" type="text/javascript"></script>
 <script src="{{ asset('assets/js/jquery-ui.js') }}" type="text/javascript"></script>
 <script src="{{ asset('assets/js/forms/agregarCargo.js') }}" type="text/javascript"></script>
 <script src="{{ asset('assets/js/forms/agregaInstitucionFormacion.js') }}" type="text/javascript"></script>

@@ -10,19 +10,19 @@
         </a>
       </li> 
         <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['pacientes.index','pacientes.create','pacientes.edit','pacientes.ficha','pacientes.consulta'])); ?>" href="<?php echo e(route('pacientes.index')); ?>">
-            <i class="bi bi-person-plus"></i><span>Registro de Pacientes</span>
+          <a class="nav-link <?php echo e(isActiveRoute(['proveedores.index','proveedores.create','proveedores.edit','proveedores.ficha','proveedores.consulta'])); ?>" href="<?php echo e(route('proveedores.index')); ?>">
+            <i class="bi bi-person-plus"></i><span>Proveedores</span>
           </a>
         </li>      
         <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['consultas*.*','buscar_pacientes'])); ?>"href="<?php echo e(route('consultas.index')); ?>">
+          <a class="nav-link <?php echo e(isActiveRoute(['consultas*.*','buscar_proveedores'])); ?>"href="<?php echo e(route('consultas.index')); ?>">
             <i class="bi bi-file-earmark-text"></i>
             <span>Consultas</span>
           </a>
         </li>
 
          <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['internaciones*.*','buscar_pacientes_internacion'])); ?>" href="<?php echo e(route('internaciones.index')); ?>">
+          <a class="nav-link <?php echo e(isActiveRoute(['internaciones*.*','buscar_proveedores_internacion'])); ?>" href="<?php echo e(route('internaciones.index')); ?>">
             <i class="bi bi-file-earmark-text"></i>
             <span>Internaciones</span>
           </a>
