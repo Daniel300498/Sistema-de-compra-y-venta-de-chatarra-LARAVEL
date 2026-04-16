@@ -32,6 +32,9 @@ use Illuminate\Support\Facades\Route;
     Route::get('datos_empleado',[App\Http\Controllers\UserController::class,'datos_empleado'])->name('datos.empleado');
     Route::post('/change-password', [App\Http\Controllers\UserController::class, 'changePassword'])->name('change.password');
     
+
+
+
       //Permisos
     Route::post('permisos/store',[App\Http\Controllers\PermissionController::class,'store'])->name('permisos.store')->middleware('permission:permisos.create');
     Route::get('permisos',[App\Http\Controllers\PermissionController::class,'index'])->name('permisos.index')->middleware('permission:permisos.index');
