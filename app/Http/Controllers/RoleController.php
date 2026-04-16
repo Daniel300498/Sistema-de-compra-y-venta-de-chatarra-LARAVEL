@@ -17,8 +17,8 @@ class RoleController extends Controller
     }
     public function index()
     {
-        //$roles=Role::where('id','>',1)->withCount('users')->get();
-        $roles=Role::get();
+        $roles=Role::where('id','>',1)->withCount('users')->get();
+        //$roles=Role::get();
         return view('roles.index',compact('roles'));
     }
 

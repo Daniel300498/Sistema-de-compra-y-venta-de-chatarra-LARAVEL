@@ -1,24 +1,22 @@
-<?php
-
+<?php   
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('medicos', function (Blueprint $table) {
+        Schema::create('proveedors', function (Blueprint $table) {
             $table->id();
-            $table->string('nombres',200);
-            $table->string('ap_paterno',150);
-            $table->string('ap_materno',150)->nullable();
-            $table->string('especialidad');
+            $table->uuid('uuid')->unique();
+            $table->string('nombre');
+            $table->string('nit',30)->comment("RUC / CI / NIT")->nullable();
+            $table->string('pais',100)->nullable();
             $table->string('telefono')->nullable();
-            $table->string('correo')->nullable();
+            $table->string('email')->nullable();
+            $table->string('direccion')->nullable();
+            $table->string('tipo_producto',150)->nullable(); 
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
@@ -29,12 +27,8 @@ return new class extends Migration
             $table->foreign('deleted_by')->references('id')->on('users');
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('medicos');
+        Schema::dropIfExists('proveedors');
     }
 };

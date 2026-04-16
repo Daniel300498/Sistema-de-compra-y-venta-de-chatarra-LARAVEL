@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class MedicoRequest extends FormRequest
+class ClienteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,13 +23,12 @@ class MedicoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ap_paterno'=>'required',
-            'nombres'=>'required',
-            'especialidad'=>'required',
-            'correo' => [
+            'nombre'=>'required',
+            
+            'email' => [
                     'required',
                     'email',
-                    Rule::unique('medicos')->ignore( $this->route('medico') )->where('deleted_at',null)
+                    Rule::unique('clientes')->ignore( $this->route('cliente') )->where('deleted_at',null)
                 ],
             'telefono'=>'required|numeric',     
         ];

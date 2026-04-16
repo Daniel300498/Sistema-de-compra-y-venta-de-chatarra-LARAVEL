@@ -9,27 +9,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
-class Medico extends Model implements Auditable
+class Cliente extends Model implements Auditable
 {
     use HasFactory, Userstamps, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
-        'nombres',
-        'ap_paterno',
-        'ap_materno',
-        'especialidad',
+        'nombre',
         'telefono',
-        'correo',
+        'email',
+        'pais',
+        'nit',
+        'direccion',
         'created_by',
         'updated_by',
         'deleted_by',
         
     ];
-   public function internaciones()
-    {      
-        return $this->hasMany(Internacion::class); 
-    }
     protected static function boot()
     {
         parent::boot();

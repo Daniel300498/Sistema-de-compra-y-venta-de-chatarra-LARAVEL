@@ -6,7 +6,7 @@
       <li class="nav-item">
         <a class="nav-link <?php echo e(isActiveRoute('home')); ?>" href="<?php echo e(route('home')); ?>">
           <i class="bi bi-grid"></i>
-          <span>Inicio</span>
+          <span>Dashboard</span>
         </a>
       </li> 
         <li class="nav-item">
@@ -14,32 +14,13 @@
             <i class="bi bi-person-plus"></i><span>Proveedores</span>
           </a>
         </li>      
-        <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['consultas*.*','buscar_proveedores'])); ?>"href="<?php echo e(route('consultas.index')); ?>">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Consultas</span>
-          </a>
-        </li>
-
-         <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['internaciones*.*','buscar_proveedores_internacion'])); ?>" href="<?php echo e(route('internaciones.index')); ?>">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Internaciones</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['medicos.index','medicos.create','medicos.edit','medicos.ficha','medicos.consulta'])); ?>" href="<?php echo e(route('medicos.index')); ?>">
+        
+        <li class="nav-item"> 
+          <a class="nav-link <?php echo e(isActiveRoute(['clientes.index','clientes.create','clientes.edit','clientes.ficha','clientes.consulta'])); ?>" href="<?php echo e(route('clientes.index')); ?>">
             <i class="bi bi-person-plus"></i>
-            <span>Registro de M&eacute;dicos</span>
+            <span>Clientes</span>
           </a>
         </li>
-         <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['salas.index','salas.create','salas.edit','salas.ficha','salas.consulta'])); ?>" href="<?php echo e(route('salas.index')); ?>">
-            <i class="bi bi-person-plus"></i>
-         <span>Registro de Salas</span>
-          </a>
-        </li>  
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('permisos.index')): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo e(isActiveRoute('permisos.*')); ?>" href="<?php echo e(route('permisos.index')); ?>">
