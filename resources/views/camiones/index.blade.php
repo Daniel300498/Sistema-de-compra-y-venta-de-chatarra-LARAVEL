@@ -284,46 +284,33 @@
                 <div class="modal-body">
                     <p>Los campos con <strong class="text-danger">(*)</strong> son obligatorios.</p>
                     <div class="row g-3">
-                        <div class="col-md-3">
+
+                        {{-- Fila 1: Placa / Tipo / Estado --}}
+                        <div class="col-md-4">
                             <label class="form-label">Placa <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('placa') is-invalid @enderror" name="placa" id="cam_placa" onkeyup="this.value=this.value.toUpperCase()" maxlength="20" required>
+                            <input type="text"
+                                class="form-control @error('placa') is-invalid @enderror"
+                                name="placa" id="cam_placa"
+                                placeholder="Ej: 2345-ABC"
+                                onkeyup="this.value=this.value.toUpperCase()"
+                                maxlength="10"
+                                pattern="[0-9]{4}-[A-Z]{3}"
+                                title="Formato: 4 dígitos, guion y 3 letras (ej: 2345-ABC)"
+                                required>
+                            <small class="text-muted">Formato Bolivia: 2345-ABC</small>
                             @error('placa')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label">Tipo Vehículo <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('tipo_vehiculo') is-invalid @enderror" name="tipo_vehiculo" id="cam_tipo" required>
                                 <option value="">-- Seleccione --</option>
-                                @foreach(['Camión','Camioneta','Volqueta','Trailer','Furgón','Otro'] as $tipo)
+                                @foreach(['Camión','Volqueta','Trailer','Furgón'] as $tipo)
                                     <option value="{{ $tipo }}">{{ $tipo }}</option>
                                 @endforeach
                             </select>
                             @error('tipo_vehiculo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Marca <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('marca') is-invalid @enderror" name="marca" id="cam_marca" onkeyup="this.value=this.value.toUpperCase()" required>
-                            @error('marca')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Modelo <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('modelo') is-invalid @enderror" name="modelo" id="cam_modelo" onkeyup="this.value=this.value.toUpperCase()" required>
-                            @error('modelo')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Año <span class="text-danger">(*)</span></label>
-                            <input type="number" class="form-control @error('anio') is-invalid @enderror" name="anio" id="cam_anio" min="1900" max="{{ date('Y') + 1 }}" required>
-                            @error('anio')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Capacidad (kg) <span class="text-danger">(*)</span></label>
-                            <input type="number" step="0.01" class="form-control @error('capacidad_kg') is-invalid @enderror" name="capacidad_kg" id="cam_capacidad" min="0" required>
-                            @error('capacidad_kg')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Color</label>
-                            <input type="text" class="form-control" name="color" id="cam_color" onkeyup="this.value=this.value.toUpperCase()" maxlength="50">
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <label class="form-label">Estado <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('estado') is-invalid @enderror" name="estado" id="cam_estado" required>
                                 @foreach(['Activo','Inactivo','En mantenimiento'] as $est)
@@ -331,6 +318,65 @@
                                 @endforeach
                             </select>
                             @error('estado')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Fila 2: Marca / Modelo / Año --}}
+                        <div class="col-md-4">
+                            <label class="form-label">Marca <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('marca') is-invalid @enderror" name="marca" id="cam_marca" required>
+                                <option value="">-- Seleccione --</option>
+                                @foreach(['Volvo','Scania','Mercedes-Benz','Man','DAF','Iveco','Freightliner','Kenworth','Peterbilt','International','Ford','Chevrolet','Toyota','Hino','Isuzu','Faw','Sinotruk','Foton','Shacman','Dongfeng'] as $marca)
+                                    <option value="{{ $marca }}">{{ $marca }}</option>
+                                @endforeach
+                            </select>
+                            @error('marca')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Modelo <span class="text-danger">(*)</span></label>
+                            <input type="text"
+                                class="form-control @error('modelo') is-invalid @enderror"
+                                name="modelo" id="cam_modelo"
+                                onkeyup="this.value=this.value.toUpperCase()"
+                                maxlength="50"
+                                placeholder="Ej: FH 460"
+                                required>
+                            @error('modelo')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Año <span class="text-danger">(*)</span></label>
+                            <input type="text"
+                                class="form-control @error('anio') is-invalid @enderror"
+                                name="anio" id="cam_anio"
+                                maxlength="4"
+                                placeholder="{{ date('Y') }}"
+                                inputmode="numeric"
+                                autocomplete="off"
+                                required>
+                            <small id="anio_hint" class="text-muted">Entre 1970 y {{ date('Y') }}</small>
+                            @error('anio')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Fila 3: Capacidad / Color / Propietario --}}
+                        <div class="col-md-4">
+                            <label class="form-label">Capacidad (kg) <span class="text-danger">(*)</span></label>
+                            <input type="text"
+                                class="form-control @error('capacidad_kg') is-invalid @enderror"
+                                name="capacidad_kg" id="cam_capacidad"
+                                inputmode="decimal"
+                                placeholder="Ej: 25.500"
+                                autocomplete="off"
+                                required>
+                            <small id="capacidad_hint" class="text-muted">Entre 10.000 kg y 50.000 kg — 3 decimales con punto.</small>
+                            @error('capacidad_kg')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Color</label>
+                            <input type="text"
+                                class="form-control"
+                                name="color" id="cam_color"
+                                onkeyup="this.value=this.value.toUpperCase()"
+                                maxlength="30"
+                                placeholder="Ej: BLANCO">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Propietario</label>
@@ -341,6 +387,7 @@
                                 @endforeach
                             </select>
                         </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -548,6 +595,120 @@
             seccion.style.display = 'none';
         }
     }
+
+    // Validación en tiempo real del año
+    document.addEventListener('DOMContentLoaded', function () {
+        const anioInput = document.getElementById('cam_anio');
+        const anioHint  = document.getElementById('anio_hint');
+        const anioMin   = 1970;
+        const anioMax   = {{ date('Y') }};
+
+        anioInput.addEventListener('input', function () {
+            // Solo permitir dígitos
+            this.value = this.value.replace(/[^0-9]/g, '');
+
+            const val = parseInt(this.value);
+
+            if (this.value.length < 4) {
+                anioHint.className = 'text-muted';
+                anioHint.textContent = 'Entre ' + anioMin + ' y ' + anioMax;
+                this.classList.remove('is-invalid', 'is-valid');
+                return;
+            }
+
+            if (val < anioMin) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                anioHint.className = 'text-danger';
+                anioHint.textContent = '⚠ El año mínimo es ' + anioMin;
+            } else if (val > anioMax) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                anioHint.className = 'text-danger';
+                anioHint.textContent = '⚠ El año máximo es ' + anioMax;
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                anioHint.className = 'text-success';
+                anioHint.textContent = '✓ Año válido';
+            }
+        });
+
+        // Impedir tipear más de 4 caracteres
+        anioInput.addEventListener('keypress', function (e) {
+            if (this.value.length >= 4 || !/[0-9]/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        // Validación en tiempo real de capacidad
+        const capInput = document.getElementById('cam_capacidad');
+        const capHint  = document.getElementById('capacidad_hint');
+        const capMin   = 10;
+        const capMax   = 50000;
+
+        capInput.addEventListener('keydown', function (e) {
+            // Permitir teclas de control (backspace, delete, flechas, tab)
+            const teclaControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key);
+            if (teclaControl) return;
+
+            // Solo dígitos y punto
+            if (!/[0-9.]/.test(e.key)) { e.preventDefault(); return; }
+
+            // Solo un punto
+            if (e.key === '.' && this.value.includes('.')) { e.preventDefault(); return; }
+
+            const valorFuturo = this.value + e.key;
+            const partes = valorFuturo.split('.');
+
+            // Bloquear si la parte entera supera 50000
+            const parteEntera = parseInt(partes[0] || '0');
+            if (!this.value.includes('.') && parteEntera > capMax) {
+                e.preventDefault();
+                return;
+            }
+
+            // Bloquear si los decimales ya tienen 3 dígitos
+            if (partes[1] !== undefined && partes[1].length >= 3 && e.key !== '.') {
+                e.preventDefault();
+                return;
+            }
+        });
+
+        capInput.addEventListener('input', function () {
+            // Limpiar caracteres no válidos (por si pegan texto)
+            let val = this.value.replace(/[^0-9.]/g, '');
+            const partes = val.split('.');
+            if (partes.length > 2) val = partes[0] + '.' + partes.slice(1).join('');
+            if (partes[1] !== undefined && partes[1].length > 3) {
+                val = partes[0] + '.' + partes[1].substring(0, 3);
+            }
+            // Truncar parte entera si supera el máximo
+            if (parseInt(partes[0] || '0') > capMax) {
+                val = String(capMax) + (partes[1] !== undefined ? '.' + partes[1] : '');
+            }
+            this.value = val;
+
+            const num = parseFloat(val);
+            if (val === '' || isNaN(num)) {
+                this.classList.remove('is-invalid', 'is-valid');
+                capHint.className = 'text-muted';
+                capHint.textContent = 'Entre 10.000 kg y 50,000 kg — máximo 3 decimales con punto.';
+                return;
+            }
+            if (num < capMin) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                capHint.className = 'text-danger';
+                capHint.textContent = '⚠ La capacidad mínima es 10 kg.';
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                capHint.className = 'text-success';
+                capHint.textContent = '✓ Capacidad válida';
+            }
+        });
+    });
 
     // Reset y abrir modal camión en modo Nuevo
     function resetModalCamion() {
