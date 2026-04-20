@@ -6,13 +6,6 @@
     <div class="d-flex flex-row align-items-center justify-content-between">
         <div>     
             <h1>REGISTRO DE CLIENTES</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="">Registro Clientes</a></li>
-                    <li class="breadcrumb-item active">Ver Todos</li>
-                </ol>
-            </nav>
         </div>
         @can('clientes.create')
             <a href="{{route('clientes.create')}}" class="btn btn-primary MB-3">+ Nuevo Cliente</a>
@@ -41,31 +34,46 @@
                                     </thead>
                                     <tbody>
                                         @foreach($clientes as $c)
-                                                <tr>
-                                                    <td>{{$c->nombre}}</td>
-                                                    <td>{{$c->nit}}</td>
-                                                    <td>{{$c->pais}}</td>
-                                                    <td>{{$c->telefono}}</td>
-                                                    <td>{{$c->direccion}}</td>
-                                                    <td>{{$c->email}}</td>  
-                                                        <td class="text-center">
-                                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                                            <div class="btn-group" role="group">
-                                                                <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    Opciones
-                                                                </button>
-                                                                <ul class="dropdown-menu">
-                                                                    @can('clientes.edit')
-                                                                        <li><a class="dropdown-item" href="{{route('clientes.edit',$c->uuid)}}">Modificar Datos</a></li>
-                                                                    @endcan
-                                                                    @can('clientes.destroy')
-                                                                        <li><a class="dropdown-item" href="{{ route('clientes.destroy',$c->uuid) }}" onclick="return confirm('¿Está seguro que desea eliminar al cliente?');">Eliminar Cliente</a></li>
-                                                                    @endcan
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                        <tr>
+                                            <td>{{ $c->nombre }}</td>
+                                            <td>{{ $c->nit }}</td>
+                                            <td>{{ $c->pais }}</td>  
+                                            <td>
+                                                @foreach($c->contacts->where('tipo','telefono') as  $index => $contacto)
+                                                  Telefono {{$index+1}} :{{ $contacto->valor }}<br>
+                                                @endforeach
+                                            </td>
+                                            <td>
+                                                @foreach($c->contacts->where('tipo','direccion') as  $index => $contacto)
+                                                  Direccion {{$index+1}} :{{ $contacto->valor }}<br>
+                                                @endforeach
+                                            </td>
+                                            <td>{{ $c->email }}</td>
+                                        
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                                            Opciones
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            @can('clientes.edit')
+                                                                <li><a class="dropdown-item" href="{{route('clientes.edit',$c->uuid)}}">Modificar Datos</a></li>
+                                                            @endcan
+                                                            @can('clientes.destroy')
+                                                                <li>
+                                                                    <a class="dropdown-item" 
+                                                                    href="{{ route('clientes.destroy',$c->uuid) }}"
+                                                                    onclick="return confirm('¿Está seguro que desea eliminar al cliente?');">
+                                                                    Eliminar Cliente
+                                                                    </a>
+                                                                </li>
+                                                            @endcan
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

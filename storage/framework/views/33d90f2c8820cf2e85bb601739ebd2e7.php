@@ -6,13 +6,6 @@
     <div class="d-flex flex-row align-items-center justify-content-between">
         <div>     
             <h1>REGISTRO DE CLIENTES</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?php echo e(route('home')); ?>">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="">Registro Clientes</a></li>
-                    <li class="breadcrumb-item active">Ver Todos</li>
-                </ol>
-            </nav>
         </div>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('clientes.create')): ?>
             <a href="<?php echo e(route('clientes.create')); ?>" class="btn btn-primary MB-3">+ Nuevo Cliente</a>
@@ -41,31 +34,46 @@
                                     </thead>
                                     <tbody>
                                         <?php $__currentLoopData = $clientes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                <tr>
-                                                    <td><?php echo e($c->nombre); ?></td>
-                                                    <td><?php echo e($c->nit); ?></td>
-                                                    <td><?php echo e($c->pais); ?></td>
-                                                    <td><?php echo e($c->telefono); ?></td>
-                                                    <td><?php echo e($c->direccion); ?></td>
-                                                    <td><?php echo e($c->email); ?></td>  
-                                                        <td class="text-center">
-                                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                                            <div class="btn-group" role="group">
-                                                                <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    Opciones
-                                                                </button>
-                                                                <ul class="dropdown-menu">
-                                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('clientes.edit')): ?>
-                                                                        <li><a class="dropdown-item" href="<?php echo e(route('clientes.edit',$c->uuid)); ?>">Modificar Datos</a></li>
-                                                                    <?php endif; ?>
-                                                                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('clientes.destroy')): ?>
-                                                                        <li><a class="dropdown-item" href="<?php echo e(route('clientes.destroy',$c->uuid)); ?>" onclick="return confirm('¿Está seguro que desea eliminar al cliente?');">Eliminar Cliente</a></li>
-                                                                    <?php endif; ?>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
+                                        <tr>
+                                            <td><?php echo e($c->nombre); ?></td>
+                                            <td><?php echo e($c->nit); ?></td>
+                                            <td><?php echo e($c->pais); ?></td>  
+                                            <td>
+                                                <?php $__currentLoopData = $c->contacts->where('tipo','telefono'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                  Telefono <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </td>
+                                            <td>
+                                                <?php $__currentLoopData = $c->contacts->where('tipo','direccion'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                  Direccion <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </td>
+                                            <td><?php echo e($c->email); ?></td>
+                                        
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                                            Opciones
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('clientes.edit')): ?>
+                                                                <li><a class="dropdown-item" href="<?php echo e(route('clientes.edit',$c->uuid)); ?>">Modificar Datos</a></li>
+                                                            <?php endif; ?>
+                                                            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('clientes.destroy')): ?>
+                                                                <li>
+                                                                    <a class="dropdown-item" 
+                                                                    href="<?php echo e(route('clientes.destroy',$c->uuid)); ?>"
+                                                                    onclick="return confirm('¿Está seguro que desea eliminar al cliente?');">
+                                                                    Eliminar Cliente
+                                                                    </a>
+                                                                </li>
+                                                            <?php endif; ?>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </tbody>
                                 </table>

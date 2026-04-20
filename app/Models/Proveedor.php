@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use Wildside\Userstamps\Userstamps;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -13,24 +11,23 @@ class Proveedor extends Model implements Auditable
 {
     use HasFactory, Userstamps, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+    protected $table = 'proveedors';
     protected $fillable = [
         'nombre',
         'nit',
         'pais',
-        'telefono',
         'email',
-        'direccion',
         'tipo_producto',
         'created_by',
         'updated_by',
         'deleted_by',
         
     ];
-   /* public function internaciones()
-    {      
-        return $this->hasMany(Internacion::class); 
-    }*/
-        protected static function boot()
+    public function contacts()
+    {
+        return $this->morphMany(\App\Models\Contacto::class, 'contactable');
+    }
+    protected static function boot()
     {
         parent::boot();
         static::creating(function ($model) {

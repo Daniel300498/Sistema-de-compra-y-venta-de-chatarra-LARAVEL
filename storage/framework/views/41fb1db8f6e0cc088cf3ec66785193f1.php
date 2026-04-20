@@ -6,20 +6,12 @@
     <div class="d-flex flex-row align-items-center justify-content-between">
         <div>     
             <h1>REGISTRO proveedores</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?php echo e(route('home')); ?>">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="">Registro proveedores</a></li>
-                    <li class="breadcrumb-item active">Ver Todos</li>
-                </ol>
-            </nav>
         </div>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('proveedores.create')): ?>
             <a href="<?php echo e(route('proveedores.create')); ?>" class="btn btn-primary MB-3">+ Nuevo Proveedor</a>
         <?php endif; ?>
     </div>
 </div>
- 
     <section class="section">
         <div class="row">
             <div class="col-lg-12">
@@ -47,9 +39,17 @@
                                                      <td class="text-left"><?php echo e($e->nombre); ?></td>
                                                     <td class="text-left"><?php echo e($e->nit); ?></td>
                                                     <td class="text-left"><?php echo e($e->pais); ?></td>
-                                                    <td class="text-left"><?php echo e($e->telefono); ?></td>
+                                                     <td>
+                                                        <?php $__currentLoopData = $e->contacts->where('tipo','telefono'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        Telefono <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </td>
                                                     <td class="text-left"><?php echo e($e->email); ?></td>
-                                                    <td class="text-left"><?php echo e($e->direccion); ?></td>
+                                                    <td>
+                                                        <?php $__currentLoopData = $e->contacts->where('tipo','direccion'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        Direccion <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </td>
                                                     <td class="text-left"><?php echo e($e->tipo_producto); ?></td>
                                                        <td class="text-center">
                                                         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
