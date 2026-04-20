@@ -24,6 +24,7 @@ class Contrato extends Model implements Auditable
         'fecha_inicio',
         'fecha_fin',
         'cantidad_camiones',
+        'toneladas_contrato',
         'monto_total',
         'moneda',
         'estado',
@@ -33,9 +34,10 @@ class Contrato extends Model implements Auditable
     ];
 
     protected $casts = [
-        'fecha_inicio' => 'date',
-        'fecha_fin'    => 'date',
-        'monto_total'  => 'decimal:2',
+        'fecha_inicio'       => 'date',
+        'fecha_fin'          => 'date',
+        'monto_total'        => 'decimal:2',
+        'toneladas_contrato' => 'decimal:3',
     ];
 
     protected static function boot()
@@ -71,5 +73,29 @@ class Contrato extends Model implements Auditable
     public function proveedor()
     {
         return $this->belongsTo(Proveedor::class, 'proveedor_id');
+    }
+
+    public function contratoCamiones()
+    {
+        return $this->hasMany(ContratoCamion::class, 'contrato_id');
+    }
+
+    // Total de toneladas asignadas a camiones en este contrato
+    public function getToneladasAsignadasAttribute(): float
+    {
+        return (float) $this->contratoCamiones()->sum('toneladas');
+    }
+
+    // Total de toneladas ya entregadas al cliente
+    public function getToneladasEntregadasAttribute(): float
+    {
+        return (float) $this->contratoCamiones()->where('estado_entrega', 'Entregado')->sum('toneladas');
+    }
+
+    // Porcentaje de toneladas entregadas respecto al total pactado
+    public function getPorcentajeToneladasAttribute(): float
+    {
+        if (!$this->toneladas_contrato || $this->toneladas_contrato == 0) return 0;
+        return min(100, round(($this->toneladas_entregadas / $this->toneladas_contrato) * 100, 1));
     }
 }

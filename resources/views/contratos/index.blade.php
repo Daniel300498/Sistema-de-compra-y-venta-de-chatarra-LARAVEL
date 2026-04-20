@@ -38,6 +38,7 @@
                                     <th>Fecha Inicio</th>
                                     <th>Fecha Fin</th>
                                     <th>Camiones</th>
+                                    <th>Toneladas</th>
                                     <th>Monto Total</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
@@ -59,6 +60,37 @@
                                     <td>{{ $c->fecha_inicio?->format('d/m/Y') ?? '-' }}</td>
                                     <td>{{ $c->fecha_fin?->format('d/m/Y') ?? '-' }}</td>
                                     <td class="text-center">{{ $c->cantidad_camiones ?? '-' }}</td>
+                                    <td class="text-center">
+                                        @if($c->toneladas_contrato)
+                                            @php
+                                                $total      = (float) $c->toneladas_contrato;
+                                                $entregadas = $c->toneladas_entregadas;
+                                                $asignadas  = $c->toneladas_asignadas;
+                                                $pendientes = max(0, $asignadas - $entregadas);
+                                                $pctEnt     = min(100, round(($entregadas / $total) * 100, 1));
+                                                $pctPen     = min(100 - $pctEnt, round(($pendientes / $total) * 100, 1));
+                                            @endphp
+                                            <div class="progress" style="height:16px; min-width:90px;" title="{{ $pctEnt }}% entregado · {{ $pctPen }}% pendiente">
+                                                @if($pctEnt > 0)
+                                                <div class="progress-bar bg-success" style="width:{{ $pctEnt }}%">
+                                                    @if($pctEnt >= 15){{ $pctEnt }}%@endif
+                                                </div>
+                                                @endif
+                                                @if($pctPen > 0)
+                                                <div class="progress-bar" style="width:{{ $pctPen }}%; background:#38bdf8;">
+                                                    @if($pctPen >= 15){{ $pctPen }}%@endif
+                                                </div>
+                                                @endif
+                                            </div>
+                                            <small class="text-muted">
+                                                <span class="text-success fw-semibold">{{ number_format($entregadas,1) }}t</span>
+                                                / <span style="color:#0ea5e9;">{{ number_format($pendientes,1) }}t</span>
+                                                / {{ number_format($total,1) }}t
+                                            </small>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $c->moneda }} {{ number_format($c->monto_total, 2) }}</td>
                                     <td>
                                         @php
@@ -75,6 +107,11 @@
                                         <div class="btn-group">
                                             <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Opciones</button>
                                             <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('contratos.camiones', $c->uuid) }}">
+                                                        <i class="bi bi-truck"></i> Gestionar Camiones
+                                                    </a>
+                                                </li>
                                                 @can('contratos.edit')
                                                 <li>
                                                     <a class="dropdown-item" href="#" onclick="editarContrato({{ $c->id }}, '{{ $c->uuid }}')">
@@ -181,7 +218,6 @@
                                 @endforeach
                             </select>
                             @error('proveedor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <small class="text-muted">Solo proveedores de Bolivia y países vecinos.</small>
                         </div>
 
                         {{-- Fechas --}}
@@ -205,6 +241,17 @@
                             <input type="number" class="form-control @error('cantidad_camiones') is-invalid @enderror"
                                 name="cantidad_camiones" id="cantidad_camiones" min="1">
                             @error('cantidad_camiones')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Toneladas contrato --}}
+                        <div class="col-md-3">
+                            <label class="form-label">Total Toneladas Contrato</label>
+                            <input type="number" step="0.001"
+                                class="form-control @error('toneladas_contrato') is-invalid @enderror"
+                                name="toneladas_contrato" id="toneladas_contrato"
+                                min="0.001" placeholder="Ej: 500.000">
+                            <small class="text-muted">Toneladas pactadas.</small>
+                            @error('toneladas_contrato')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         {{-- Monto y moneda --}}
@@ -282,6 +329,7 @@
                 document.getElementById('fecha_inicio').value                = c.fecha_inicio ?? '';
                 document.getElementById('fecha_fin').value                   = c.fecha_fin ?? '';
                 document.getElementById('cantidad_camiones').value           = c.cantidad_camiones ?? '';
+                document.getElementById('toneladas_contrato').value          = c.toneladas_contrato ?? '';
                 document.getElementById('moneda').value                      = c.moneda;
                 document.getElementById('monto_total').value                 = c.monto_total;
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalContrato')).show();

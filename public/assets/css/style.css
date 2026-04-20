@@ -741,8 +741,8 @@ h6 {
     font-size: .9rem;
     font-weight: 600;
     color: #fff;
-    transition: 0.3;
-    background: #7a78fc;
+    transition: background 0.3s, color 0.3s;
+    background: #1a2d40;
     padding: 5px 10px;
     border-radius: 4px;
 }
@@ -753,18 +753,28 @@ h6 {
     color: #fff;
 }
 
+/* Estado activo: celeste */
+.sidebar-nav .nav-link.menu-activo {
+    color: #fff;
+    background: #38bdf8;
+}
+
+.sidebar-nav .nav-link.menu-activo i {
+    color: #fff;
+}
+
 .sidebar-nav .nav-link.collapsed {
-    color: #545353;
-    background: #fff;
+    color: #fff;
+    background: #1a2d40;
 }
 
 .sidebar-nav .nav-link.collapsed i {
-    color: #2f2e2e;
+    color: #fff;
 }
 
 .sidebar-nav .nav-link:hover {
     color: #fff;
-    background: #7a78fc;
+    background: #38bdf8;
 }
 
 .sidebar-nav .nav-link:hover i {

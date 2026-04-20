@@ -2,20 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Camion;
 use App\Models\Contrato;
 use App\Models\Cliente;
 use App\Models\Proveedor;
+use App\Models\OperadorTransporte;
 use App\Http\Requests\ContratoRequest;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class ContratoController extends Controller
 {
-    // Países cercanos a Bolivia para filtrar proveedores internacionales
-    const PAISES_CERCANOS = [
-        'BOLIVIA', 'ARGENTINA', 'BRASIL', 'CHILE', 'PERU',
-        'PARAGUAY', 'URUGUAY', 'COLOMBIA', 'ECUADOR', 'VENEZUELA',
-    ];
-
     public function __construct()
     {
         $this->middleware('auth');
@@ -31,7 +27,6 @@ class ContratoController extends Controller
         $clientes   = Cliente::whereNull('deleted_at')->orderBy('nombre')->get();
 
         $proveedores = Proveedor::whereNull('deleted_at')
-                        ->whereIn(\DB::raw('UPPER(pais)'), self::PAISES_CERCANOS)
                         ->orderBy('nombre')
                         ->get();
 
@@ -67,5 +62,29 @@ class ContratoController extends Controller
         $contrato->delete();
         Alert::success('Eliminación', 'Contrato eliminado con éxito.');
         return redirect()->route('contratos.index');
+    }
+
+    public function camiones($uuid)
+    {
+        $contrato = Contrato::with([
+            'cliente',
+            'proveedor',
+            'contratoCamiones.camion.conductorActual.conductor',
+            'contratoCamiones.conductor',
+        ])->where('uuid', $uuid)->firstOrFail();
+
+        $camionesDisponibles = Camion::with(['conductorActual.conductor'])
+            ->whereNull('deleted_at')
+            ->where('estado', 'Activo')
+            ->orderBy('placa')
+            ->get();
+
+        $choferes = OperadorTransporte::whereNull('deleted_at')
+            ->whereIn('tipo_operador', ['chofer', 'ambos'])
+            ->whereNotNull('licencia_numero')
+            ->orderBy('nombre')
+            ->get();
+
+        return view('contratos.camiones', compact('contrato', 'camionesDisponibles', 'choferes'));
     }
 }
