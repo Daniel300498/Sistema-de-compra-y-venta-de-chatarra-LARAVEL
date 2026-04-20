@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Wildside\Userstamps\Userstamps;
@@ -8,29 +7,34 @@ use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
-
-class Cliente extends Model implements Auditable
+class Contacto extends Model implements Auditable
 {
     use HasFactory, Userstamps, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
-        'nombre',
-        'email',
-        'pais',
-        'nit',
+        'uuid',
+        'tipo',
+        'valor',
+        'contactable_id',
+        'contactable_type',
         'created_by',
         'updated_by',
-        'deleted_by',
-        
+        'deleted_by'
     ];
-    public function contacts()
+
+    protected $casts = [
+        'principal' => 'boolean',
+    ];
+    public function contactable()
     {
-        return $this->morphMany(\App\Models\Contacto::class, 'contactable');
+        return $this->morphTo();
     }
+
     protected static function boot()
     {
         parent::boot();
+
         static::creating(function ($model) {
             $model->uuid = Str::uuid()->toString();
         });

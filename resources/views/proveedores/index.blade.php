@@ -12,7 +12,6 @@
         @endcan
     </div>
 </div>
- 
     <section class="section">
         <div class="row">
             <div class="col-lg-12">
@@ -40,9 +39,17 @@
                                                      <td class="text-left">{{$e->nombre}}</td>
                                                     <td class="text-left">{{$e->nit}}</td>
                                                     <td class="text-left">{{$e->pais}}</td>
-                                                    <td class="text-left">{{$e->telefono}}</td>
+                                                     <td>
+                                                        @foreach($e->contacts->where('tipo','telefono') as  $index => $contacto)
+                                                        Telefono {{$index+1}} :{{ $contacto->valor }}<br>
+                                                        @endforeach
+                                                    </td>
                                                     <td class="text-left">{{$e->email}}</td>
-                                                    <td class="text-left">{{$e->direccion}}</td>
+                                                    <td>
+                                                        @foreach($e->contacts->where('tipo','direccion') as  $index => $contacto)
+                                                        Direccion {{$index+1}} :{{ $contacto->valor }}<br>
+                                                        @endforeach
+                                                    </td>
                                                     <td class="text-left">{{$e->tipo_producto}}</td>
                                                        <td class="text-center">
                                                         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">

@@ -25,20 +25,14 @@ class ProveedorRequest extends FormRequest
         return [
            
             'nombre'=>'required',
+            'pais'=>'required',
             'nit'=>[
                 'required',
                 'numeric',
-                Rule::unique('proveedores')->ignore( $this->route('proveedor') )->where('deleted_at',null)
+                Rule::unique('proveedors')->ignore( $this->route('proveedor') )->where('deleted_at',null)
             ],
-        
-            'direccion'=>'required',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('proveedores')->ignore( $this->route('proveedor') )->where('deleted_at',null)
-            ],
-            'telefono'=>'required|numeric',
-
+            'email' => 'required'
         ];
     }
+    
 }

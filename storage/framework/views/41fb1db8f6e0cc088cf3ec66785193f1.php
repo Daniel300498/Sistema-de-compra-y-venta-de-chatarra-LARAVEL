@@ -12,7 +12,6 @@
         <?php endif; ?>
     </div>
 </div>
- 
     <section class="section">
         <div class="row">
             <div class="col-lg-12">
@@ -40,9 +39,17 @@
                                                      <td class="text-left"><?php echo e($e->nombre); ?></td>
                                                     <td class="text-left"><?php echo e($e->nit); ?></td>
                                                     <td class="text-left"><?php echo e($e->pais); ?></td>
-                                                    <td class="text-left"><?php echo e($e->telefono); ?></td>
+                                                     <td>
+                                                        <?php $__currentLoopData = $e->contacts->where('tipo','telefono'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        Telefono <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </td>
                                                     <td class="text-left"><?php echo e($e->email); ?></td>
-                                                    <td class="text-left"><?php echo e($e->direccion); ?></td>
+                                                    <td>
+                                                        <?php $__currentLoopData = $e->contacts->where('tipo','direccion'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                        Direccion <?php echo e($index+1); ?> :<?php echo e($contacto->valor); ?><br>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </td>
                                                     <td class="text-left"><?php echo e($e->tipo_producto); ?></td>
                                                        <td class="text-center">
                                                         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">

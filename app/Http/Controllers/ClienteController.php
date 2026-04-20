@@ -20,20 +20,47 @@ class ClienteController extends Controller
 
     public function index()
     {        
-        $clientes = Cliente::whereNull('deleted_at')->get();     
+        $clientes = Cliente::with('contacts')->whereNull('deleted_at')->get();
         return view('clientes.index',compact('clientes'));
     }
       
     public function create()
     {
         $cliente=new Cliente();
-        $lugares_ci=Parametro::where('tipo','lugar_ci')->get();
-        //dd($deptos);
-        return view('clientes.create',compact('cliente','lugares_ci'));
+        $paises=Parametro::where('tipo','paises')->get();
+        return view('clientes.create',compact('cliente','paises'));
     }
       public function store(ClienteRequest $request)
     {
+        $telefonos = $request->telefonos;
+        $direcciones = $request->direcciones;
         $cliente=Cliente::create($request->all());
+        if($request->has('contacts')) {
+            foreach ($request->contacts as $contact) {
+                if(!empty($contact['valor'])) {
+                    $cliente->contacts()->create($contact);
+                }
+            }
+        }
+       
+        foreach ($telefonos as $telefono) {
+            if (!empty($telefono)) {
+                $cliente->contacts()->create([
+                    'tipo' => 'telefono',
+                    'valor' => $telefono,
+                ]);
+             
+            }
+        }   
+       
+        foreach ($direcciones as $direccion) {
+            if (!empty($direccion)) {
+                $cliente->contacts()->create([
+                    'tipo' => 'direccion',
+                    'valor' => $direccion,
+                ]);
+            }
+        }   
         $cliente->save();
         Alert::success('Registro', 'Cliente Registrado con exito!!!');
         return redirect()->route('clientes.index');
@@ -61,13 +88,13 @@ class ClienteController extends Controller
         $cliente=Cliente::where('uuid',$uuid)->firstOrFail();
         $ciudades=Ciudad::all();
         $formaciones=Parametro::where('tipo','formacion')->get();
-        $lugares_ci=Parametro::where('tipo','lugar_ci')->get();
+        $paises=Parametro::where('tipo','paises')->get();
         $instituciones_formacion=Parametro::where('tipo','institucion_formacion')->get();
         $tipos_cargo=Parametro::where('tipo','tipo_cargo')->get();
         $bancos=Parametro::where('tipo','banco')->get();
         $deptos=Ciudad::select('depto')->distinct()->get();
         $mod= true;
-        return view('clientes.edit',compact('cliente','ciudades','formaciones','lugares_ci','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
+        return view('clientes.edit',compact('cliente','ciudades','formaciones','paises','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
     }
 
     public function update(ClienteRequest $request, Cliente $cliente)
@@ -83,10 +110,6 @@ class ClienteController extends Controller
         $cliente=Cliente::where('uuid',$uuid)->firstOrFail();
         $cliente->delete();
         Alert::success('Eliminacion', 'Cliente Eliminado con exito!!!');
-
         return redirect()->route('clientes.index');
-    }
-
- 
-   
+    }   
 }

@@ -7,9 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ClienteRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -24,13 +21,13 @@ class ClienteRequest extends FormRequest
     {
         return [
             'nombre'=>'required',
-            
-            'email' => [
-                    'required',
-                    'email',
-                    Rule::unique('clientes')->ignore( $this->route('cliente') )->where('deleted_at',null)
-                ],
-            'telefono'=>'required|numeric',     
+            'pais'=>'required',
+            'nit'=>[
+                'required',
+                'numeric',
+                Rule::unique('clientes')->ignore( $this->route('cliente') )->where('deleted_at',null)
+            ],
+            'email'=>'required'    
         ];
     }
 }

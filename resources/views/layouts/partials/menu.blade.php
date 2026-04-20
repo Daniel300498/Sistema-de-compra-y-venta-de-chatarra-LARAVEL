@@ -15,7 +15,21 @@
           </a>
         </li>      
         
-        <li class="nav-item"> 
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['contratos.index']) }}" href="{{ route('contratos.index') }}">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Contratos</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['camiones.index']) }}" href="{{ route('camiones.index') }}">
+            <i class="bi bi-truck"></i>
+            <span>Transporte</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
           <a class="nav-link {{ isActiveRoute(['clientes.index','clientes.create','clientes.edit','clientes.ficha','clientes.consulta']) }}" href="{{ route('clientes.index') }}">
             <i class="bi bi-person-plus"></i>
             <span>Clientes</span>

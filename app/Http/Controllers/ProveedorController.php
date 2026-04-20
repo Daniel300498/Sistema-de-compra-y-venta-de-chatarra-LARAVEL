@@ -27,13 +27,41 @@ class ProveedorController extends Controller
     public function create()
     {
         $proveedor=new Proveedor();
-        $lugares_ci=Parametro::where('tipo','lugar_ci')->get();
-        //dd($deptos);
-        return view('proveedores.create',compact('proveedor','lugares_ci'));
+        $paises=Parametro::where('tipo','paises')->get();
+        return view('proveedores.create',compact('proveedor','paises'));
     }
       public function store(ProveedorRequest $request)
     {
         $proveedor=Proveedor::create($request->all());
+         $telefonos = $request->telefonos;
+        $direcciones = $request->direcciones;
+       if($request->has('contacts')) {
+            foreach ($request->contacts as $contact) {
+                if(!empty($contact['valor'])) {
+                    $proveedor->contacts()->create($contact);
+                }
+            }
+        }
+       
+        foreach ($telefonos as $telefono) {
+            if (!empty($telefono)) {
+                $proveedor->contacts()->create([
+                    'tipo' => 'telefono',
+                    'valor' => $telefono,
+                ]);
+             
+            }
+        }   
+       
+        foreach ($direcciones as $direccion) {
+            if (!empty($direccion)) {
+                $proveedor->contacts()->create([
+                    'tipo' => 'direccion',
+                    'valor' => $direccion,
+                ]);
+            }
+        }   
+
         $proveedor->save();
         Alert::success('Registro', 'proveedor Registrado con exito!!!');
         return redirect()->route('proveedores.index');
@@ -61,13 +89,13 @@ class ProveedorController extends Controller
         $proveedor=Proveedor::where('uuid',$uuid)->firstOrFail();
         $ciudades=Ciudad::all();
         $formaciones=Parametro::where('tipo','formacion')->get();
-        $lugares_ci=Parametro::where('tipo','lugar_ci')->get();
+        $paises=Parametro::where('tipo','paises')->get();
         $instituciones_formacion=Parametro::where('tipo','institucion_formacion')->get();
         $tipos_cargo=Parametro::where('tipo','tipo_cargo')->get();
         $bancos=Parametro::where('tipo','banco')->get();
         $deptos=Ciudad::select('depto')->distinct()->get();
         $mod= true;
-        return view('proveedores.edit',compact('proveedor','ciudades','formaciones','lugares_ci','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
+        return view('proveedores.edit',compact('proveedor','ciudades','formaciones','paises','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
     }
 
     public function update(proveedorRequest $request, Proveedor $proveedor)
