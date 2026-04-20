@@ -6,13 +6,6 @@
     <div class="d-flex flex-row align-items-center justify-content-between">
         <div>     
             <h1>REGISTRO DE CLIENTES</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('home') }}">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="">Registro Clientes</a></li>
-                    <li class="breadcrumb-item active">Ver Todos</li>
-                </ol>
-            </nav>
         </div>
         @can('clientes.create')
             <a href="{{route('clientes.create')}}" class="btn btn-primary MB-3">+ Nuevo Cliente</a>

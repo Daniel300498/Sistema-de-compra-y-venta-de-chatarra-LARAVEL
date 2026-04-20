@@ -6,13 +6,6 @@
     <div class="d-flex flex-row align-items-center justify-content-between">
         <div>     
             <h1>REGISTRO proveedores</h1>
-            <nav>
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?php echo e(route('home')); ?>">Inicio</a></li>
-                    <li class="breadcrumb-item"><a href="">Registro proveedores</a></li>
-                    <li class="breadcrumb-item active">Ver Todos</li>
-                </ol>
-            </nav>
         </div>
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('proveedores.create')): ?>
             <a href="<?php echo e(route('proveedores.create')); ?>" class="btn btn-primary MB-3">+ Nuevo Proveedor</a>
