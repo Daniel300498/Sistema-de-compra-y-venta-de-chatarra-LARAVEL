@@ -26,8 +26,7 @@ class ClienteRequest extends FormRequest
                 'required',
                 'numeric',
                 Rule::unique('clientes')->ignore( $this->route('cliente') )->where('deleted_at',null)
-            ],
-            'email'=>'required'    
+            ]
         ];
     }
 }

@@ -18,7 +18,7 @@
     <div class="d-flex align-items-center justify-content-between">
       <a href="<?php echo e(route('home')); ?>" class="logo d-flex align-items-center">
         <img src="<?php echo e(asset('assets/img/irca.png')); ?>" alt="">
-        <span class="d-none d-lg-block">CONTROL DE CHATARRA </br> Sistema de Gestión</span>
+        <span class="d-none d-lg-block">Sistema de Gestión de </br> Control de Chatarra</span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div>

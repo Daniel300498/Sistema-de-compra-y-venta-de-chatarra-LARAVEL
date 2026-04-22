@@ -19,9 +19,10 @@ class ProveedorController extends Controller
     }
 
     public function index()
-    {      
+    {   
+        $paises=Parametro::where('tipo','paises')->get();      
         $proveedores = Proveedor::whereNull('deleted_at')->get();     
-        return view('proveedores.index',compact('proveedores'));
+        return view('proveedores.index',compact('proveedores','paises'));
     }
       
     public function create()
@@ -67,43 +68,52 @@ class ProveedorController extends Controller
         return redirect()->route('proveedores.index');
     }
 
-    public function show($uuid)
-    {
-        $proveedor=Proveedor::where('uuid',$uuid)->firstOrFail();
-        $pdf = App::make('dompdf.wrapper');
-        $ciudad=Ciudad::find($proveedor->ciudad_id);
-        $institucion_educativa=Parametro::find($proveedor->institucion_formacion_id);
-        $formacion=Parametro::find($proveedor->formacion_id);
-        $banco=Parametro::find($proveedor->banco_id);
-        $seguro_salud=Parametro::find($proveedor->seguro_salud_id);
-      
-        $profesion=Parametro::find($proveedor->profesion_id);
-      
-        $pdf->loadView('proveedores.pdf.ficha',compact('proveedor','ciudad','institucion_educativa','formacion','banco','seguro_salud','profesion'));
-        
-        return $pdf->stream();
-    }
-
     public function edit($uuid)
     {
         $proveedor=Proveedor::where('uuid',$uuid)->firstOrFail();
-        $ciudades=Ciudad::all();
-        $formaciones=Parametro::where('tipo','formacion')->get();
         $paises=Parametro::where('tipo','paises')->get();
-        $instituciones_formacion=Parametro::where('tipo','institucion_formacion')->get();
-        $tipos_cargo=Parametro::where('tipo','tipo_cargo')->get();
-        $bancos=Parametro::where('tipo','banco')->get();
-        $deptos=Ciudad::select('depto')->distinct()->get();
-        $mod= true;
-        return view('proveedores.edit',compact('proveedor','ciudades','formaciones','paises','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
+        return view('proveedores.edit',compact('proveedor','paises'));
     }
 
-    public function update(proveedorRequest $request, Proveedor $proveedor)
-    {
-        $proveedor->update($request->all());
-        Alert::success('Actualizacion', 'Datos del proveedor Actualizado con exito!!!');
+    public function update(ProveedorRequest $request, Proveedor $proveedor)
+        {
+        $proveedor->update($request->only(['nombre','nit','pais','email','tipo_producto']));
+        $ids = [];
+        foreach ($request->telefonos ?? [] as $tel) {
+            if (!$tel) continue;
+            $contact = $proveedor->contacts()->where('tipo', 'telefono')->where('valor', $tel)->first();
+            if ($contact) {
+                $contact->update([
+                    'valor' => $tel
+                ]);
+            } else {
+                $contact = $proveedor->contacts()->create([
+                    'tipo' => 'telefono',
+                    'valor' => $tel
+                ]);
+            }
 
-        return redirect()->route('proveedores.index');
+            $ids[] = $contact->id;
+        }
+
+        foreach ($request->direcciones ?? [] as $dir) {
+            if (!$dir) continue;
+            $contact = $proveedor->contacts()->where('tipo', 'direccion')->where('valor', $dir)->first();
+            if ($contact) {
+                $contact->update([
+                    'valor' => $dir
+                ]);
+            } else {
+                $contact = $proveedor->contacts()->create([
+                    'tipo' => 'direccion',
+                    'valor' => $dir
+                ]);
+            }
+
+            $ids[] = $contact->id;
+        }
+        $proveedor->contacts()->whereNotIn('id', $ids)->delete();
+        return redirect()->route('proveedores.index')->with('success', 'Proveedor actualizado correctamente');
     }
 
 
@@ -114,19 +124,5 @@ class ProveedorController extends Controller
         Alert::success('Eliminacion', 'proveedor Eliminado con exito!!!');
 
         return redirect()->route('proveedores.index');
-    }
-
-    public function tipo_parentesco(Request $request)
-    {
-        $search = $request->search;
-        
-        $nombres = DB::table('empleados')->select('contacto_parentesco')->where('contacto_parentesco', 'like', '%' .$search . '%' )->limit(5)->distinct('contacto_parentesco')->get();
-        $response = array();
-        foreach($nombres as $codigo){
-            $response[] = array("value"=>$codigo->contacto_parentesco);
-        }
-        return response()->json($response);
-    }
- 
-   
+    }   
 }

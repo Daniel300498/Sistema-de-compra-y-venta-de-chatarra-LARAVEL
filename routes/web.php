@@ -31,13 +31,10 @@ use Illuminate\Support\Facades\Route;
     Route::get('users/{uuid}/edit',[App\Http\Controllers\UserController::class,'edit'])->name('users.edit')->middleware('permission:users.edit');
     Route::get('datos_empleado',[App\Http\Controllers\UserController::class,'datos_empleado'])->name('datos.empleado');
     Route::post('/change-password', [App\Http\Controllers\UserController::class, 'changePassword'])->name('change.password');
-    
-
-
 
       //Permisos
-    Route::post('permisos/store',[App\Http\Controllers\PermissionController::class,'store'])->name('permisos.store')->middleware('permission:permisos.create');
     Route::get('permisos',[App\Http\Controllers\PermissionController::class,'index'])->name('permisos.index')->middleware('permission:permisos.index');
+    Route::post('permisos/store',[App\Http\Controllers\PermissionController::class,'store'])->name('permisos.store')->middleware('permission:permisos.create');
     Route::get('permisos/create',[App\Http\Controllers\PermissionController::class,'create'])->name('permisos.create')->middleware('permission:permisos.create');
     Route::put('permisos/{permiso}',[App\Http\Controllers\PermissionController::class,'update'])->name('permisos.update')->middleware('permission:permisos.edit');
     Route::get('permisos/{permiso}',[App\Http\Controllers\PermissionController::class,'show'])->name('permisos.show')->middleware('permission:permisos.show');
@@ -45,15 +42,23 @@ use Illuminate\Support\Facades\Route;
     Route::get('permisos/{permiso}/edit',[App\Http\Controllers\PermissionController::class,'edit'])->name('permisos.edit')->middleware('permission:permisos.edit');
 
     //Proveedores
-    Route::post('proveedor/store',[App\Http\Controllers\ProveedorController::class,'store'])->name('proveedores.store')->middleware('permission:proveedores.create');
     Route::get('proveedores',[App\Http\Controllers\ProveedorController::class,'index'])->name('proveedores.index')->middleware('permission:proveedores.index');
-    Route::post('proveedores/consulta', [App\Http\Controllers\ProveedorController::class, 'consulta'])->name('proveedores.consulta')->middleware('permission:proveedores.index');
     Route::get('proveedor/create',[App\Http\Controllers\ProveedorController::class,'create'])->name('proveedores.create')->middleware('permission:proveedores.create');
-    Route::put('proveedor/{proveedor}',[App\Http\Controllers\ProveedorController::class,'update'])->name('proveedores.update')->middleware('permission:proveedores.edit');
+    Route::post('proveedor/store',[App\Http\Controllers\ProveedorController::class,'store'])->name('proveedores.store')->middleware('permission:proveedores.create');
     Route::get('proveedor/{uuid}',[App\Http\Controllers\ProveedorController::class,'show'])->name('proveedores.show')->middleware('permission:proveedores.show');
-    Route::get('proveedor/{uuid}/destroy',[App\Http\Controllers\ProveedorController::class,'destroy'])->name('proveedores.destroy')->middleware('permission:proveedores.destroy');
     Route::get('proveedor/{uuid}/edit',[App\Http\Controllers\ProveedorController::class,'edit'])->name('proveedores.edit')->middleware('permission:proveedores.edit');
+    Route::put('proveedores/{proveedor}',[App\Http\Controllers\ProveedorController::class,'update'])->name('proveedores.update')->middleware('permission:proveedores.edit');
+    Route::get('proveedor/{uuid}/destroy',[App\Http\Controllers\ProveedorController::class,'destroy'])->name('proveedores.destroy')->middleware('permission:proveedores.destroy');
     
+    //clientes
+    Route::get('clientes', [App\Http\Controllers\ClienteController::class, 'index'])->name('clientes.index')->middleware('permission:clientes.index');
+    Route::get('clientes/create', [App\Http\Controllers\ClienteController::class, 'create'])->name('clientes.create')->middleware('permission:clientes.create');
+    Route::post('clientes/store', [App\Http\Controllers\ClienteController::class, 'store'])->name('clientes.store')->middleware('permission:clientes.create');
+    Route::get('clientes/{uuid}', [App\Http\Controllers\ClienteController::class, 'show'])->name('clientes.show')->middleware('permission:clientes.show');
+    Route::get('clientes/{uuid}/edit', [App\Http\Controllers\ClienteController::class, 'edit'])->name('clientes.edit')->middleware('permission:clientes.edit');
+    Route::put('clientes/{cliente}', [App\Http\Controllers\ClienteController::class, 'update'])->name('clientes.update')->middleware('permission:clientes.edit');
+    Route::get('clientes/{uuid}/destroy', [App\Http\Controllers\ClienteController::class, 'destroy'])->name('clientes.destroy')->middleware('permission:clientes.destroy');
+
     //Camiones
     Route::get('camiones',[App\Http\Controllers\CamionController::class,'index'])->name('camiones.index')->middleware('permission:camiones.index');
     Route::post('camion/store',[App\Http\Controllers\CamionController::class,'store'])->name('camiones.store')->middleware('permission:camiones.create');
@@ -86,13 +91,4 @@ use Illuminate\Support\Facades\Route;
     Route::get('api/camiones/detalle',[App\Http\Controllers\CamionConductorController::class,'camionesConDetalle'])->name('camiones.detalle');
     Route::get('api/camion/{uuid}/historial',[App\Http\Controllers\CamionConductorController::class,'historialConductores'])->name('camiones.historial');
 
-    //clientes
-    Route::post('cliente/store',[App\Http\Controllers\ClienteController::class,'store'])->name('clientes.store')->middleware('permission:clientes.create');
-    Route::get('clientes',[App\Http\Controllers\ClienteController::class,'index'])->name('clientes.index')->middleware('permission:clientes.index');
-    Route::post('clientes/consulta', [App\Http\Controllers\ClienteController::class, 'consulta'])->name('clientes.consulta')->middleware('permission:clientes.index');
-    Route::get('cliente/create',[App\Http\Controllers\ClienteController::class,'create'])->name('clientes.create')->middleware('permission:clientes.create');
-    Route::put('cliente/{cliente}',[App\Http\Controllers\ClienteController::class,'update'])->name('clientes.update')->middleware('permission:clientes.edit');
-    Route::get('cliente/{uuid}',[App\Http\Controllers\ClienteController::class,'show'])->name('clientes.show')->middleware('permission:clientes.show');
-    Route::get('cliente/{uuid}/destroy',[App\Http\Controllers\ClienteController::class,'destroy'])->name('clientes.destroy')->middleware('permission:clientes.destroy');
-    Route::get('cliente/{uuid}/edit',[App\Http\Controllers\ClienteController::class,'edit'])->name('clientes.edit')->middleware('permission:clientes.edit');
-});
+   });

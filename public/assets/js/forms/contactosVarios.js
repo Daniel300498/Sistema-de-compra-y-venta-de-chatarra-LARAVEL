@@ -1,100 +1,74 @@
-
-let telefonoIndex = 1;
-function addTelefono() {
-    telefonoIndex++;
-    const container = document.getElementById('telefonos-container');
-    const items = container.querySelectorAll('.telefono-item');
-
-    if (items.length > 0) {
-        const lastBtnContainer = items[items.length - 1].querySelector('.col-md-2');
-
-        lastBtnContainer.innerHTML = `
-            <button type="button" class="btn btn-danger" onclick="removeTelefono(this)">
-                🗑️
+document.addEventListener('DOMContentLoaded', function () {
+    const telContainer = document.getElementById('telefonos-container');
+    const dirContainer = document.getElementById('direcciones-container');
+    function crearTelefono(valor = '', isFirst = false) {
+        const div = document.createElement('div');
+        div.classList.add('input-group', 'mb-2', 'telefono-item');
+        div.innerHTML = `
+            <input type="text" name="telefonos[]" class="form-control telefono-input"
+                   value="${valor}" placeholder="Ej: 70123456">
+            <button type="button" class="btn btn-danger btn-remove-telefono">
+                <i class="bi bi-trash"></i>
             </button>
-        `;
+            <button type="button" class="btn btn-success btn-add-telefono">
+                <i class="bi bi-plus-lg"></i>
+            </button>`;
+        if (isFirst) {
+            div.querySelector('.btn-remove-telefono').style.display = 'none';
+        }
+        return div;
     }
 
-    const div = document.createElement('div');
-    div.classList.add('row', 'mb-2', 'telefono-item');
-
-    div.innerHTML = `
-        <div class="col-md-10">
-            <input type="text" name="telefonos[]" class="form-control" placeholder="Teléfono ${telefonoIndex}">
-        </div>
-
-        <div class="col-md-2 d-flex align-items-center">
-            <button type="button" class="btn btn-success" onclick="addTelefono()">
-                +
-            </button>
-        </div>
-    `;
-
-    container.appendChild(div);
-}
-
-function removeTelefono(btn) {
-    const container = document.getElementById('telefonos-container');
-
-    btn.closest('.telefono-item').remove();
-    const items = container.querySelectorAll('.telefono-item');
-
-    if (items.length > 0) {
-        const lastBtnContainer = items[items.length - 1].querySelector('.col-md-2');
-        lastBtnContainer.innerHTML = `
-            <button type="button" class="btn btn-success" onclick="addTelefono()">
-                +
-            </button>
-        `;
+    if (telContainer.children.length === 0) {
+        telContainer.appendChild(crearTelefono('', true));
     }
-    telefonoIndex--;
-}
-// direcciones
-let direccionIndex = 1;
-function addDireccion() {
-    direccionIndex++;
+    telContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-add-telefono')) {
+            const inputs = telContainer.querySelectorAll('.telefono-input');
+            const last = inputs[inputs.length - 1];
+            if (last.value.trim() === '') return alert('Completa el teléfono actual');
+            telContainer.appendChild(crearTelefono());
+        }
 
-    const container = document.getElementById('direcciones-container');
-    const items = container.querySelectorAll('.direccion-item');
-    if (items.length > 0) {
-        const lastBtnContainer = items[items.length - 1].querySelector('.col-md-2');
-
-        lastBtnContainer.innerHTML = `
-            <button type="button" class="btn btn-danger" onclick="removeDireccion(this)">
-                🗑️
+        if (e.target.closest('.btn-remove-telefono')) {
+            if (telContainer.children.length === 1)
+                return alert('Debe haber al menos un teléfono');
+            e.target.closest('.telefono-item').remove();
+        }
+    });
+    function crearDireccion(valor = '', isFirst = false) {
+        const div = document.createElement('div');
+        div.classList.add('input-group', 'mb-2', 'direccion-item');
+        div.innerHTML = `
+            <input type="text" name="direcciones[]" class="form-control direccion-input"
+                   value="${valor}" placeholder="Dirección">
+            <button type="button" class="btn btn-danger btn-remove-direccion">
+                <i class="bi bi-trash"></i>
             </button>
-        `;
+            <button type="button" class="btn btn-success btn-add-direccion">
+                <i class="bi bi-plus-lg"></i>
+            </button>`;
+        if (isFirst) {
+            div.querySelector('.btn-remove-direccion').style.display = 'none';
+        }
+        return div;
     }
-
-
-    const div = document.createElement('div');
-    div.classList.add('row', 'mb-2', 'direccion-item');
-
-    div.innerHTML = `
-        <div class="col-md-10">
-            <input type="text" name="direcciones[]" class="form-control" placeholder="Dirección ${direccionIndex}">
-        </div>
-
-        <div class="col-md-2 d-flex align-items-center">
-            <button type="button" class="btn btn-success" onclick="addDireccion()">
-                +
-            </button>
-        </div>
-    `;
-    container.appendChild(div);
-}
-
-function removeDireccion(btn) {
-    const container = document.getElementById('direcciones-container');
-    btn.closest('.direccion-item').remove();
-    const items = container.querySelectorAll('.direccion-item');
-    if (items.length > 0) {
-        const lastBtnContainer = items[items.length - 1].querySelector('.col-md-2');
-        lastBtnContainer.innerHTML = `
-            <button type="button" class="btn btn-success" onclick="addDireccion()">
-                +
-            </button>
-        `;
-    }   
-    direccionIndex--;
-}
+    if (dirContainer.children.length === 0) {
+        dirContainer.appendChild(crearDireccion('', true));
+    }
+    dirContainer.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-add-direccion')) {
+            const inputs = dirContainer.querySelectorAll('.direccion-input');
+            const last = inputs[inputs.length - 1];
+            if (last.value.trim() === '') return alert('Completa la dirección actual');
+            dirContainer.appendChild(crearDireccion());
+        }
+        if (e.target.closest('.btn-remove-direccion')) {
+            if (dirContainer.children.length === 1)
+                return alert('Debe haber al menos una dirección');
+            e.target.closest('.direccion-item').remove();
+        }
+    });
+    window.agregarTelefonoInput = (v = '', first = false) => telContainer.appendChild(crearTelefono(v, first));
+    window.agregarDireccionInput = (v = '', first = false) => dirContainer.appendChild(crearDireccion(v, first));
+});

@@ -1,27 +1,17 @@
-<!-- ======= Sidebar ======= -->
 <aside id="sidebar" class="sidebar" >
-
     <ul class="sidebar-nav" id="sidebar-nav">
-
       <li class="nav-item">
         <a class="nav-link <?php echo e(isActiveRoute('home')); ?>" href="<?php echo e(route('home')); ?>">
-          <i class="bi bi-grid"></i>
+          <i class="bi bi-house"></i>
           <span>Dashboard</span>
         </a>
       </li> 
         <li class="nav-item">
           <a class="nav-link <?php echo e(isActiveRoute(['proveedores.index','proveedores.create','proveedores.edit','proveedores.ficha','proveedores.consulta'])); ?>" href="<?php echo e(route('proveedores.index')); ?>">
-            <i class="bi bi-person-plus"></i><span>Proveedores</span>
+            <i class="bi bi-box-seam"></i><span>Proveedores</span>
           </a>
         </li>      
         
-        <li class="nav-item">
-          <a class="nav-link <?php echo e(isActiveRoute(['contratos.index'])); ?>" href="<?php echo e(route('contratos.index')); ?>">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Contratos</span>
-          </a>
-        </li>
-
         <li class="nav-item">
           <a class="nav-link <?php echo e(isActiveRoute(['camiones.index'])); ?>" href="<?php echo e(route('camiones.index')); ?>">
             <i class="bi bi-truck"></i>
@@ -31,14 +21,22 @@
 
         <li class="nav-item">
           <a class="nav-link <?php echo e(isActiveRoute(['clientes.index','clientes.create','clientes.edit','clientes.ficha','clientes.consulta'])); ?>" href="<?php echo e(route('clientes.index')); ?>">
-            <i class="bi bi-person-plus"></i>
+            <i class="bi bi-people"></i>
             <span>Clientes</span>
           </a>
         </li>
+        
+        <li class="nav-item">
+          <a class="nav-link <?php echo e(isActiveRoute(['contratos.index'])); ?>" href="<?php echo e(route('contratos.index')); ?>">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>Contratos</span>
+          </a>
+        </li>        
+
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('permisos.index')): ?>
         <li class="nav-item">
             <a class="nav-link <?php echo e(isActiveRoute('permisos.*')); ?>" href="<?php echo e(route('permisos.index')); ?>">
-              <i class="bi bi-people"></i>
+              <i class="bi bi-shield-lock"></i>
               <span>Permisos</span>
           </a>
         </li>

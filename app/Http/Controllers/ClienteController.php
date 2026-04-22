@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Ciudad;
 use App\Models\Cliente;
 use App\Models\Parametro;
 use Illuminate\Http\Request;
@@ -21,16 +20,18 @@ class ClienteController extends Controller
     public function index()
     {        
         $clientes = Cliente::with('contacts')->whereNull('deleted_at')->get();
-        return view('clientes.index',compact('clientes'));
+        $paises = Parametro::where('tipo','paises')->get();
+        return view('clientes.index',compact('clientes','paises'));
     }
       
-    public function create()
-    {
-        $cliente=new Cliente();
-        $paises=Parametro::where('tipo','paises')->get();
-        return view('clientes.create',compact('cliente','paises'));
-    }
-      public function store(ClienteRequest $request)
+ public function create()
+{
+    $clientes = Cliente::with('contacts')->get();
+    $paises = Parametro::where('tipo','paises')->get();
+    return view('clientes.index', ['clientes' => $clientes,'paises' => $paises,'abrirModal' => 'create']);
+}
+
+public function store(ClienteRequest $request)
     {
         $telefonos = $request->telefonos;
         $direcciones = $request->direcciones;
@@ -42,7 +43,6 @@ class ClienteController extends Controller
                 }
             }
         }
-       
         foreach ($telefonos as $telefono) {
             if (!empty($telefono)) {
                 $cliente->contacts()->create([
@@ -52,7 +52,6 @@ class ClienteController extends Controller
              
             }
         }   
-       
         foreach ($direcciones as $direccion) {
             if (!empty($direccion)) {
                 $cliente->contacts()->create([
@@ -66,45 +65,55 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index');
     }
 
-    public function show($uuid)
-    {
-        $cliente=Cliente::where('uuid',$uuid)->firstOrFail();
-        $pdf = App::make('dompdf.wrapper');
-        $ciudad=Ciudad::find($cliente->ciudad_id);
-        $institucion_educativa=Parametro::find($cliente->institucion_formacion_id);
-        $formacion=Parametro::find($cliente->formacion_id);
-        $banco=Parametro::find($cliente->banco_id);
-        $seguro_salud=Parametro::find($cliente->seguro_salud_id);
-      
-        $profesion=Parametro::find($cliente->profesion_id);
-      
-        $pdf->loadView('clientes.pdf.ficha',compact('cliente','ciudad','institucion_educativa','formacion','banco','seguro_salud','profesion'));
-        
-        return $pdf->stream();
-    }
-
+ 
     public function edit($uuid)
     {
-        $cliente=Cliente::where('uuid',$uuid)->firstOrFail();
-        $ciudades=Ciudad::all();
-        $formaciones=Parametro::where('tipo','formacion')->get();
+        $cliente=Cliente::with('contacts')->where('uuid',$uuid)->firstOrFail();
+        $clientes = Cliente::with('contacts')->get();
         $paises=Parametro::where('tipo','paises')->get();
-        $instituciones_formacion=Parametro::where('tipo','institucion_formacion')->get();
-        $tipos_cargo=Parametro::where('tipo','tipo_cargo')->get();
-        $bancos=Parametro::where('tipo','banco')->get();
-        $deptos=Ciudad::select('depto')->distinct()->get();
-        $mod= true;
-        return view('clientes.edit',compact('cliente','ciudades','formaciones','paises','instituciones_formacion','tipos_cargo','bancos','deptos','mod'));
+        return view('clientes.index', ['clientes' => $clientes,'paises' => $paises,'abrirModal' => 'edit','clienteEditar' => $cliente]);    
     }
 
     public function update(ClienteRequest $request, Cliente $cliente)
     {
-        $cliente->update($request->all());
-        Alert::success('Actualizacion', 'Datos del Cliente Actualizado con exito!!!');
+        $cliente->update($request->only(['nombre','nit','pais','email']));
+        $ids = [];
+        foreach ($request->telefonos ?? [] as $tel) {
+            if (!$tel) continue;
+            $contact = $cliente->contacts()->where('tipo', 'telefono')->where('valor', $tel)->first();
+            if ($contact) {
+                $contact->update([
+                    'valor' => $tel
+                ]);
+            } else {
+                $contact = $cliente->contacts()->create([
+                    'tipo' => 'telefono',
+                    'valor' => $tel
+                ]);
+            }
 
-        return redirect()->route('clientes.index');
+            $ids[] = $contact->id;
+        }
+
+        foreach ($request->direcciones ?? [] as $dir) {
+            if (!$dir) continue;
+            $contact = $cliente->contacts()->where('tipo', 'direccion')->where('valor', $dir)->first();
+            if ($contact) {
+                $contact->update([
+                    'valor' => $dir
+                ]);
+            } else {
+                $contact = $cliente->contacts()->create([
+                    'tipo' => 'direccion',
+                    'valor' => $dir
+                ]);
+            }
+
+            $ids[] = $contact->id;
+        }
+        $cliente->contacts()->whereNotIn('id', $ids)->delete();
+        return redirect()->route('clientes.index')->with('success', 'Cliente actualizado correctamente');
     }
-
     public function destroy($uuid)
     {
         $cliente=Cliente::where('uuid',$uuid)->firstOrFail();

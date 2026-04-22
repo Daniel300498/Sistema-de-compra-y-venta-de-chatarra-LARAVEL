@@ -30,8 +30,7 @@ class ProveedorRequest extends FormRequest
                 'required',
                 'numeric',
                 Rule::unique('proveedors')->ignore( $this->route('proveedor') )->where('deleted_at',null)
-            ],
-            'email' => 'required'
+            ]
         ];
     }
     

@@ -12,7 +12,7 @@
 <div class="col-lg-6 mt-2">
     {{Form::label('pais','País')}} <span class="text-danger">(*)</span>
     <select id="pais" class="form-control {{ $errors->has('pais') ? ' error' : '' }}" name="pais" value="{{ old('pais',$proveedor->pais) }}"   onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);">
-        <option value="">Seleccione un país</option>
+        <option value="">-- Seleccione un país --</option>
         @foreach($paises as $pais)
             <option value="{{ $pais->descripcion }}" {{ old('pais',$proveedor->pais) == $pais->descripcion ? 'selected' : '' }}>
                 {{ $pais->descripcion }}
@@ -90,8 +90,8 @@
 <hr class="mb-1">
 <div class="row mt-2">
     <div class="text-center">
-        <button type="submit" class="btn btn-primary" style="background-color: var(--second); border-color:var(--second);">{{ $texto }}</button>
-        <a href="{{ route('proveedores.index') }}" class="btn btn-danger" style="background-color: var(--first); border-color:var(--first);">Cancelar</a>
+     <button type="submit" class="btn btn-primary">Guardar</button>
+       <a href="{{ route('proveedores.index') }}" class="btn btn-danger">Salir</a>          
     </div>
 </div>
 
