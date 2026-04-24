@@ -18,8 +18,6 @@ class CamionConductorRequest extends FormRequest
         return [
             'camion_id'     => 'required|exists:camiones,id',
             'conductor_id'  => 'required|exists:operadores_transporte,id',
-            'fecha_inicio'  => 'required|date',
-            'fecha_fin'     => 'nullable|date|after:fecha_inicio',
             'observaciones' => 'nullable|string|max:500',
         ];
     }
@@ -59,8 +57,6 @@ class CamionConductorRequest extends FormRequest
             'camion_id.exists'      => 'El camión seleccionado no existe.',
             'conductor_id.required' => 'Debe seleccionar un conductor.',
             'conductor_id.exists'   => 'El conductor seleccionado no existe.',
-            'fecha_inicio.required' => 'La fecha de inicio es obligatoria.',
-            'fecha_fin.after'       => 'La fecha de fin debe ser posterior a la fecha de inicio.',
         ];
     }
 }

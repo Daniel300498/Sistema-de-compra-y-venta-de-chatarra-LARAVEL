@@ -22,6 +22,12 @@
             <div class="card">
                 <div class="card-body pt-3">
 
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Módulo de gestión del parque vehicular de la empresa. Administra los camiones, sus propietarios y conductores,
+                        y controla qué conductor está asignado a cada vehículo en cada momento.
+                    </p>
+
                     {{-- ===== SLIDER / TABS ===== --}}
                     <ul class="nav nav-tabs" id="transporteTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -45,6 +51,11 @@
 
                         {{-- ========== TAB CAMIONES ========== --}}
                         <div class="tab-pane fade" id="pane-camiones" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-truck me-1"></i>
+                                Registra los vehículos de la flota con sus datos técnicos, propietario asignado, documento RUAT y fotos.
+                                Puedes ver el conductor activo de cada camión en tiempo real.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Camiones Registrados</h5>
                                 @can('camiones.create')
@@ -61,10 +72,9 @@
                                             <th>Tipo</th>
                                             <th>Marca / Modelo</th>
                                             <th>Año</th>
-                                            <th>Cap. (kg)</th>
+                                            <th>Cap. (t)</th>
                                             <th>Color</th>
                                             <th>Propietario</th>
-                                            <th>Conductor Actual</th>
                                             <th>Estado</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -76,10 +86,9 @@
                                             <td>{{ $c->tipo_vehiculo }}</td>
                                             <td>{{ $c->marca }} {{ $c->modelo }}</td>
                                             <td>{{ $c->anio }}</td>
-                                            <td>{{ number_format($c->capacidad_kg, 2) }}</td>
+                                            <td>{{ number_format($c->capacidad_kg / 1000, 3) }} t</td>
                                             <td>{{ $c->color ?? '-' }}</td>
                                             <td>{{ $c->propietario?->nombre_completo ?? '-' }}</td>
-                                            <td>{{ $c->conductorActual?->conductor?->nombre_completo ?? '-' }}</td>
                                             <td>
                                                 @if($c->estado === 'Activo')
                                                     <span class="badge bg-success">{{ $c->estado }}</span>
@@ -95,11 +104,33 @@
                                                     <ul class="dropdown-menu">
                                                         @can('camiones.edit')
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="editarCamion({{ $c }})">
+                                                            <a class="dropdown-item" href="#" onclick="editarCamion({{ $c }}, {{ $c->fotos->toJson() }})">
                                                                 <i class="bi bi-pencil"></i> Modificar
                                                             </a>
                                                         </li>
                                                         @endcan
+                                                        <li>
+                                                            @if($c->fotos->count())
+                                                            <a class="dropdown-item" href="#" onclick="verFotos({{ $c->fotos->toJson() }}, '{{ $c->placa }}')">
+                                                                <i class="bi bi-images"></i> Ver Fotos ({{ $c->fotos->count() }})
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted">
+                                                                <i class="bi bi-images"></i> Sin fotos
+                                                            </span>
+                                                            @endif
+                                                        </li>
+                                                        <li>
+                                                            @if($c->documento_ruat)
+                                                            <a class="dropdown-item" href="{{ route('camiones.ruat', $c->uuid) }}" target="_blank">
+                                                                <i class="bi bi-file-earmark-pdf"></i> Ver RUAT
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted">
+                                                                <i class="bi bi-file-earmark-pdf"></i> Sin RUAT
+                                                            </span>
+                                                            @endif
+                                                        </li>
                                                         @can('camiones.destroy')
                                                         <li>
                                                             <a class="dropdown-item text-danger" href="{{ route('camiones.destroy', $c->uuid) }}"
@@ -120,6 +151,11 @@
 
                         {{-- ========== TAB OPERADORES ========== --}}
                         <div class="tab-pane fade" id="pane-operadores" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-person-workspace me-1"></i>
+                                Administra las personas vinculadas al transporte: propietarios de vehículos y conductores.
+                                Puedes registrar sus datos personales, licencia de conducir y documentos de identidad.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Propietarios y Conductores</h5>
                                 @can('operadores.create')
@@ -133,11 +169,11 @@
                                     <thead>
                                         <tr>
                                             <th>Nombre</th>
-                                            <th>C.I.</th>
+                                            <th>Doc. Identidad</th>
                                             <th>Teléfono</th>
                                             <th>Tipo</th>
                                             <th>Licencia</th>
-                                            <th>Categoría</th>
+                                            <th>País Lic.</th>
                                             <th>Venc. Licencia</th>
                                             <th>Estado</th>
                                             <th>Acciones</th>
@@ -147,7 +183,12 @@
                                         @foreach($operadores as $o)
                                         <tr>
                                             <td>{{ $o->nombre_completo }}</td>
-                                            <td>{{ $o->ci }}</td>
+                                            <td>
+                                                {{ $o->ci }}
+                                                @if($o->ci_pais)
+                                                    <small class="text-muted d-block">{{ $o->ci_pais }}</small>
+                                                @endif
+                                            </td>
                                             <td>{{ $o->telefono ?? '-' }}</td>
                                             <td>
                                                 @if($o->tipo_operador === 'ambos')
@@ -159,7 +200,7 @@
                                                 @endif
                                             </td>
                                             <td>{{ $o->licencia_numero ?? '-' }}</td>
-                                            <td>{{ $o->licencia_categoria ?? '-' }}</td>
+                                            <td>{{ $o->licencia_pais ?? '-' }}</td>
                                             <td>
                                                 @if($o->licencia_vencimiento)
                                                     @if($o->licencia_vencimiento->isPast())
@@ -185,6 +226,26 @@
                                                             </a>
                                                         </li>
                                                         @endcan
+                                                        <li>
+                                                            @if($o->doc_carnet)
+                                                            <a class="dropdown-item" href="{{ route('operadores.carnet', $o->uuid) }}" target="_blank">
+                                                                <i class="bi bi-person-badge"></i> Ver Carnet
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted"><i class="bi bi-person-badge"></i> Sin carnet</span>
+                                                            @endif
+                                                        </li>
+                                                        @if(in_array($o->tipo_operador, ['chofer','ambos']))
+                                                        <li>
+                                                            @if($o->doc_licencia)
+                                                            <a class="dropdown-item" href="{{ route('operadores.licencia', $o->uuid) }}" target="_blank">
+                                                                <i class="bi bi-card-text"></i> Ver Licencia
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted"><i class="bi bi-card-text"></i> Sin licencia</span>
+                                                            @endif
+                                                        </li>
+                                                        @endif
                                                         @can('operadores.destroy')
                                                         <li>
                                                             <a class="dropdown-item text-danger" href="{{ route('operadores.destroy', $o->uuid) }}"
@@ -205,6 +266,11 @@
 
                         {{-- ========== TAB ASIGNACIONES ========== --}}
                         <div class="tab-pane fade" id="pane-asignaciones" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-person-check me-1"></i>
+                                Controla qué conductor opera cada camión y en qué período. Al finalizar una asignación queda registrada en el historial,
+                                permitiendo tener trazabilidad completa del uso de cada vehículo.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Asignación de Conductores a Camiones</h5>
                                 @can('conductores.create')
@@ -278,29 +344,55 @@
                 <h5 class="modal-title"><i class="bi bi-truck"></i> <span id="tituloCamion">Nuevo Camión</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formCamion" method="POST" action="{{ route('camiones.store') }}">
+            <form id="formCamion" method="POST" action="{{ route('camiones.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="methodCamion" value="POST">
                 <div class="modal-body">
                     <p>Los campos con <strong class="text-danger">(*)</strong> son obligatorios.</p>
                     <div class="row g-3">
 
-                        {{-- Fila 1: Placa / Tipo / Estado --}}
-                        <div class="col-md-4">
+                        {{-- Fila 1: País placa / Placa / Tipo / Estado --}}
+                        <div class="col-md-3">
+                            <label class="form-label">País de la Placa <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('placa_pais') is-invalid @enderror"
+                                name="placa_pais" id="cam_placa_pais"
+                                onchange="actualizarFormatoPlaca()" required>
+                                <option value="">-- Seleccione --</option>
+                                <optgroup label="Bolivia">
+                                    <option value="Bolivia" selected>Bolivia</option>
+                                </optgroup>
+                                <optgroup label="Países limítrofes">
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                </optgroup>
+                                <optgroup label="Otros">
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="México">México</option>
+                                    <option value="España">España</option>
+                                    <option value="Otro">Otro</option>
+                                </optgroup>
+                            </select>
+                            @error('placa_pais')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">Placa <span class="text-danger">(*)</span></label>
                             <input type="text"
                                 class="form-control @error('placa') is-invalid @enderror"
                                 name="placa" id="cam_placa"
                                 placeholder="Ej: 2345-ABC"
-                                onkeyup="this.value=this.value.toUpperCase()"
+                                oninput="aplicarMascaraPlaca(this)"
                                 maxlength="10"
-                                pattern="[0-9]{4}-[A-Z]{3}"
-                                title="Formato: 4 dígitos, guion y 3 letras (ej: 2345-ABC)"
                                 required>
-                            <small class="text-muted">Formato Bolivia: 2345-ABC</small>
+                            <small id="cam_placa_hint" class="text-muted">Bolivia: 2345-ABC (4 dígitos-3 letras)</small>
                             @error('placa')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Tipo Vehículo <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('tipo_vehiculo') is-invalid @enderror" name="tipo_vehiculo" id="cam_tipo" required>
                                 <option value="">-- Seleccione --</option>
@@ -310,7 +402,7 @@
                             </select>
                             @error('tipo_vehiculo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Estado <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('estado') is-invalid @enderror" name="estado" id="cam_estado" required>
                                 @foreach(['Activo','Inactivo','En mantenimiento'] as $est)
@@ -358,16 +450,16 @@
 
                         {{-- Fila 3: Capacidad / Color / Propietario --}}
                         <div class="col-md-4">
-                            <label class="form-label">Capacidad (kg) <span class="text-danger">(*)</span></label>
+                            <label class="form-label">Capacidad (toneladas) <span class="text-danger">(*)</span></label>
                             <input type="text"
-                                class="form-control @error('capacidad_kg') is-invalid @enderror"
-                                name="capacidad_kg" id="cam_capacidad"
+                                class="form-control @error('capacidad_tn') is-invalid @enderror"
+                                name="capacidad_tn" id="cam_capacidad"
                                 inputmode="decimal"
-                                placeholder="Ej: 25.500"
+                                placeholder="Ej: 25.5"
                                 autocomplete="off"
                                 required>
-                            <small id="capacidad_hint" class="text-muted">Entre 10.000 kg y 50.000 kg — 3 decimales con punto.</small>
-                            @error('capacidad_kg')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <small id="capacidad_hint" class="text-muted">Entre 3.5 t y 35 t — máximo 3 decimales.</small>
+                            @error('capacidad_tn')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Color</label>
@@ -379,13 +471,57 @@
                                 placeholder="Ej: BLANCO">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Propietario</label>
-                            <select class="form-select" name="propietario_id" id="cam_propietario">
-                                <option value="">-- Sin propietario --</option>
+                            <label class="form-label">Propietario <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('propietario_id') is-invalid @enderror"
+                                name="propietario_id" id="cam_propietario" required>
+                                <option value="">-- Seleccione propietario --</option>
                                 @foreach($operadores->whereIn('tipo_operador', ['propietario','ambos']) as $op)
                                     <option value="{{ $op->id }}">{{ $op->nombre_completo }} ({{ $op->ci }})</option>
                                 @endforeach
                             </select>
+                            @error('propietario_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Documento RUAT --}}
+                        <div class="col-md-6">
+                            <label class="form-label">Documento RUAT <small class="text-muted">(PDF, máx. 5 MB)</small></label>
+                            <input type="file" class="form-control @error('documento_ruat') is-invalid @enderror"
+                                name="documento_ruat" id="cam_ruat" accept=".pdf">
+                            <div id="ruatActualInfo" class="mt-1 d-none">
+                                <span class="text-success"><i class="bi bi-file-earmark-pdf"></i> Ya tiene RUAT cargado.</span>
+                                <small class="text-muted">Seleccionar uno nuevo lo reemplazará.</small>
+                            </div>
+                            @error('documento_ruat')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Fotos del camión --}}
+                        <div class="col-12">
+                            <label class="form-label">Fotos del Camión <small class="text-muted">(JPG/PNG/WEBP, máx. 5 fotos, 4 MB c/u)</small></label>
+
+                            {{-- Input oculto — se activa con el botón --}}
+                            <input type="file" id="cam_fotos_input" accept=".jpg,.jpeg,.png,.webp"
+                                class="d-none" onchange="agregarFotosNuevas(this)">
+
+                            {{-- Botón para agregar fotos --}}
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarFoto"
+                                    onclick="document.getElementById('cam_fotos_input').click()">
+                                    <i class="bi bi-plus-lg"></i> Agregar foto
+                                </button>
+                                <small class="text-muted ms-2" id="fotosContadorLabel">0 / 5 fotos</small>
+                            </div>
+
+                            {{-- Lista visual de fotos a subir (nuevas) --}}
+                            <div id="fotosNuevasLista" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                            {{-- Fotos ya guardadas en BD (modo edición) --}}
+                            <div id="galeriaFotos" class="d-none">
+                                <label class="form-label text-muted mb-1"><i class="bi bi-images"></i> Fotos guardadas</label>
+                                <div id="galeriaFotosContenido" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+
+                            @error('fotos')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            @error('fotos.*')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
 
                     </div>
@@ -399,6 +535,21 @@
     </div>
 </div>
 
+{{-- ===== MODAL GALERÍA DE FOTOS ===== --}}
+<div class="modal fade" id="modalGaleria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-images"></i> Fotos — <span id="galeriaPlaca"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="galeriaViewer" class="row g-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- ===== MODAL OPERADOR ===== --}}
 <div class="modal fade" id="modalOperador" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -407,39 +558,87 @@
                 <h5 class="modal-title"><i class="bi bi-person-workspace"></i> <span id="tituloOperador">Nuevo Operador</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formOperador" method="POST" action="{{ route('operadores.store') }}">
+            <form id="formOperador" method="POST" action="{{ route('operadores.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="methodOperador" value="POST">
                 <div class="modal-body">
                     <p>Los campos con <strong class="text-danger">(*)</strong> son obligatorios.</p>
                     <div class="row g-3">
+
+                        {{-- Fila 1: Nombre | Apellido | Email --}}
                         <div class="col-md-4">
                             <label class="form-label">Nombre <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('nombre') is-invalid @enderror" name="nombre" id="op_nombre" onkeyup="this.value=this.value.toUpperCase()" required>
+                            <input type="text" class="form-control @error('nombre') is-invalid @enderror" name="nombre" id="op_nombre"
+                                onkeypress="return /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]$/.test(event.key)"
+                                oninput="this.value=this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g,'').toUpperCase()"
+                                required>
                             @error('nombre')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Apellido <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('apellido') is-invalid @enderror" name="apellido" id="op_apellido" onkeyup="this.value=this.value.toUpperCase()" required>
+                            <input type="text" class="form-control @error('apellido') is-invalid @enderror" name="apellido" id="op_apellido"
+                                onkeypress="return /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]$/.test(event.key)"
+                                oninput="this.value=this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g,'').toUpperCase()"
+                                required>
                             @error('apellido')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">C.I. <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('ci') is-invalid @enderror" name="ci" id="op_ci" maxlength="20" required>
-                            @error('ci')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" name="telefono" id="op_telefono" maxlength="20">
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" id="op_email">
+                            <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                name="email" id="op_email"
+                                oninput="validarEmail(this)"
+                                placeholder="correo@ejemplo.com">
+                            <div id="op_email_feedback" class="form-text d-none"></div>
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+
+                        {{-- Fila 2: País del Documento | N° Documento | Tipo Operador --}}
                         <div class="col-md-4">
-                            <label class="form-label">Dirección</label>
-                            <input type="text" class="form-control" name="direccion" id="op_direccion" onkeyup="this.value=this.value.toUpperCase()">
+                            <label class="form-label">País del Documento <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('ci_pais') is-invalid @enderror" name="ci_pais" id="op_ci_pais" onchange="actualizarFormatoCI()" required>
+                                <option value="">-- Seleccione país --</option>
+                                <optgroup label="Bolivia">
+                                    <option value="Bolivia">Bolivia</option>
+                                </optgroup>
+                                <optgroup label="Países limítrofes">
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Brasil">Brasil</option>
+                                    <option value="Chile">Chile</option>
+                                    <option value="Paraguay">Paraguay</option>
+                                    <option value="Perú">Perú</option>
+                                </optgroup>
+                                <optgroup label="Resto de Sudamérica">
+                                    <option value="Colombia">Colombia</option>
+                                    <option value="Ecuador">Ecuador</option>
+                                    <option value="Uruguay">Uruguay</option>
+                                    <option value="Venezuela">Venezuela</option>
+                                    <option value="Guyana">Guyana</option>
+                                    <option value="Guyana Francesa">Guyana Francesa</option>
+                                    <option value="Surinam">Surinam</option>
+                                </optgroup>
+                                <optgroup label="Centroamérica y otros">
+                                    <option value="México">México</option>
+                                    <option value="Panamá">Panamá</option>
+                                    <option value="Costa Rica">Costa Rica</option>
+                                    <option value="Guatemala">Guatemala</option>
+                                    <option value="Honduras">Honduras</option>
+                                    <option value="El Salvador">El Salvador</option>
+                                    <option value="Nicaragua">Nicaragua</option>
+                                    <option value="Cuba">Cuba</option>
+                                    <option value="República Dominicana">República Dominicana</option>
+                                    <option value="Estados Unidos">Estados Unidos</option>
+                                    <option value="Canadá">Canadá</option>
+                                    <option value="España">España</option>
+                                    <option value="Otro">Otro</option>
+                                </optgroup>
+                            </select>
+                            @error('ci_pais')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">N° Documento de Identidad <span class="text-danger">(*)</span></label>
+                            <input type="text" class="form-control @error('ci') is-invalid @enderror" name="ci" id="op_ci" maxlength="20" required>
+                            <small id="op_ci_hint" class="text-muted">Seleccione primero el país del documento</small>
+                            @error('ci')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Tipo Operador <span class="text-danger">(*)</span></label>
@@ -450,6 +649,43 @@
                             </select>
                             @error('tipo_operador')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+
+                        {{-- Fila 3: Teléfono | Dirección | Estado --}}
+                        <div class="col-md-5">
+                            <label class="form-label">Teléfono <span class="text-danger">(*)</span></label>
+                            <div class="input-group">
+                                <select id="op_telefono_pais" class="form-select flex-grow-0" style="max-width:130px"
+                                    onchange="actualizarPrefijoTelefono()">
+                                    <option value="Bolivia" data-code="+591" data-maxlen="8" data-placeholder="Ej: 70000000">🇧🇴 +591</option>
+                                    <option value="Argentina" data-code="+54" data-maxlen="10" data-placeholder="Ej: 1150000000">🇦🇷 +54</option>
+                                    <option value="Brasil" data-code="+55" data-maxlen="11" data-placeholder="Ej: 11900000000">🇧🇷 +55</option>
+                                    <option value="Chile" data-code="+56" data-maxlen="9" data-placeholder="Ej: 912345678">🇨🇱 +56</option>
+                                    <option value="Paraguay" data-code="+595" data-maxlen="9" data-placeholder="Ej: 981000000">🇵🇾 +595</option>
+                                    <option value="Perú" data-code="+51" data-maxlen="9" data-placeholder="Ej: 912345678">🇵🇪 +51</option>
+                                    <option value="Colombia" data-code="+57" data-maxlen="10" data-placeholder="Ej: 3001234567">🇨🇴 +57</option>
+                                    <option value="Ecuador" data-code="+593" data-maxlen="10" data-placeholder="Ej: 0991234567">🇪🇨 +593</option>
+                                    <option value="Uruguay" data-code="+598" data-maxlen="8" data-placeholder="Ej: 91234567">🇺🇾 +598</option>
+                                    <option value="Venezuela" data-code="+58" data-maxlen="10" data-placeholder="Ej: 4121234567">🇻🇪 +58</option>
+                                    <option value="México" data-code="+52" data-maxlen="10" data-placeholder="Ej: 5512345678">🇲🇽 +52</option>
+                                    <option value="Estados Unidos" data-code="+1" data-maxlen="10" data-placeholder="Ej: 2025550100">🇺🇸 +1</option>
+                                    <option value="Canadá" data-code="+1" data-maxlen="10" data-placeholder="Ej: 4165550100">🇨🇦 +1</option>
+                                    <option value="España" data-code="+34" data-maxlen="9" data-placeholder="Ej: 612345678">🇪🇸 +34</option>
+                                </select>
+                                <input type="hidden" name="telefono_prefijo" id="op_telefono_prefijo" value="+591">
+                                <input type="text" class="form-control @error('telefono') is-invalid @enderror"
+                                    name="telefono" id="op_telefono"
+                                    maxlength="8" placeholder="Ej: 70000000"
+                                    oninput="validarTelefono(this)"
+                                    required>
+                                @error('telefono')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div id="op_telefono_feedback" class="form-text d-none"></div>
+                            <small id="op_telefono_hint" class="text-muted">Bolivia: 8 dígitos comenzando en 6 o 7</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" class="form-control" name="direccion" id="op_direccion" onkeyup="this.value=this.value.toUpperCase()">
+                        </div>
                         <div class="col-md-3">
                             <label class="form-label">Estado <span class="text-danger">(*)</span></label>
                             <select class="form-select" name="estado" id="op_estado">
@@ -457,30 +693,65 @@
                                 <option value="Inactivo">Inactivo</option>
                             </select>
                         </div>
+
                     </div>
 
                     {{-- Sección licencia (se muestra/oculta según tipo) --}}
-                    <div id="seccionLicencia" class="row g-3 mt-1 border rounded p-2 bg-light" style="display:none!important">
-                        <h6 class="text-primary"><i class="bi bi-card-text"></i> Datos de Licencia</h6>
+                    <div id="seccionLicencia" class="row g-3 mt-2 border rounded p-2 bg-light" style="display:none!important">
+                        <h6 class="text-primary mb-0"><i class="bi bi-card-text"></i> Datos de Licencia de Conducir</h6>
                         <div class="col-md-4">
                             <label class="form-label">N° Licencia <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('licencia_numero') is-invalid @enderror" name="licencia_numero" id="op_licencia_num" maxlength="30">
+                            <input type="text" class="form-control @error('licencia_numero') is-invalid @enderror"
+                                name="licencia_numero" id="op_licencia_num" maxlength="30"
+                                onkeyup="this.value=this.value.toUpperCase()">
                             @error('licencia_numero')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Categoría <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('licencia_categoria') is-invalid @enderror" name="licencia_categoria" id="op_licencia_cat">
+                            <label class="form-label">País de Expedición <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('licencia_pais') is-invalid @enderror" name="licencia_pais" id="op_licencia_pais">
                                 <option value="">-- Seleccione --</option>
-                                @foreach(['A','B','C','D','E','F','G'] as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @foreach(['Bolivia','Argentina','Brasil','Chile','Paraguay','Perú'] as $pais)
+                                    <option value="{{ $pais }}">{{ $pais }}</option>
                                 @endforeach
                             </select>
-                            @error('licencia_categoria')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('licencia_pais')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Vencimiento <span class="text-danger">(*)</span></label>
-                            <input type="date" class="form-control @error('licencia_vencimiento') is-invalid @enderror" name="licencia_vencimiento" id="op_licencia_venc">
+                            <label class="form-label">Fecha de Vencimiento <span class="text-danger">(*)</span></label>
+                            <input type="date" class="form-control @error('licencia_vencimiento') is-invalid @enderror"
+                                name="licencia_vencimiento" id="op_licencia_venc">
                             @error('licencia_vencimiento')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    {{-- Documentos --}}
+                    <div class="row g-3 mt-2 border rounded p-2">
+                        <h6 class="text-secondary mb-0"><i class="bi bi-paperclip"></i> Documentos <small class="text-muted">(PDF, JPG o PNG, máx. 5 MB c/u)</small></h6>
+
+                        {{-- Carnet de identidad — siempre visible --}}
+                        <div class="col-md-6">
+                            <label class="form-label">Carnet de Identidad</label>
+                            <input type="file" class="form-control @error('doc_carnet') is-invalid @enderror"
+                                name="doc_carnet" id="op_doc_carnet"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp">
+                            <div id="op_carnet_info" class="mt-1 d-none">
+                                <span class="text-success small"><i class="bi bi-check-circle"></i> Ya tiene carnet cargado.</span>
+                                <small class="text-muted">Seleccionar uno nuevo lo reemplazará.</small>
+                            </div>
+                            @error('doc_carnet')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Licencia — solo visible si es chofer o ambos --}}
+                        <div class="col-md-6 d-none" id="seccionDocLicencia">
+                            <label class="form-label">Documento de Licencia de Conducir</label>
+                            <input type="file" class="form-control @error('doc_licencia') is-invalid @enderror"
+                                name="doc_licencia" id="op_doc_licencia"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp">
+                            <div id="op_licencia_info" class="mt-1 d-none">
+                                <span class="text-success small"><i class="bi bi-check-circle"></i> Ya tiene licencia cargada.</span>
+                                <small class="text-muted">Seleccionar una nueva la reemplazará.</small>
+                            </div>
+                            @error('doc_licencia')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -508,33 +779,29 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Camión <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('camion_id') is-invalid @enderror" name="camion_id" required>
+                            <select class="form-select @error('camion_id') is-invalid @enderror"
+                                name="camion_id" id="asig_camion_id"
+                                onchange="cargarConductoresCamion(this)" required>
                                 <option value="">-- Seleccione camión --</option>
                                 @foreach($camiones as $c)
-                                    <option value="{{ $c->id }}">{{ $c->placa }} - {{ $c->marca }} {{ $c->modelo }}</option>
+                                    <option value="{{ $c->id }}" data-uuid="{{ $c->uuid }}">
+                                        {{ $c->placa }} — {{ $c->marca }} {{ $c->modelo }} ({{ number_format($c->capacidad_kg/1000,1) }} t)
+                                    </option>
                                 @endforeach
                             </select>
                             @error('camion_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
                             <label class="form-label">Conductor <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('conductor_id') is-invalid @enderror" name="conductor_id" required>
-                                <option value="">-- Seleccione conductor --</option>
-                                @foreach($choferes as $ch)
-                                    <option value="{{ $ch->id }}">{{ $ch->nombre_completo }} — Lic: {{ $ch->licencia_numero }} ({{ $ch->licencia_categoria }})</option>
-                                @endforeach
+                            <select class="form-select @error('conductor_id') is-invalid @enderror"
+                                name="conductor_id" id="asig_conductor_id" required disabled>
+                                <option value="">— Primero seleccione un camión —</option>
                             </select>
+                            <div id="asig_conductor_hint" class="form-text text-muted d-none">
+                                <i class="bi bi-info-circle"></i>
+                                Se muestran todos los conductores disponibles, excluyendo los que ya están asignados a este camión.
+                            </div>
                             @error('conductor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Fecha Inicio <span class="text-danger">(*)</span></label>
-                            <input type="date" class="form-control @error('fecha_inicio') is-invalid @enderror" name="fecha_inicio" value="{{ date('Y-m-d') }}" required>
-                            @error('fecha_inicio')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Fecha Fin</label>
-                            <input type="date" class="form-control @error('fecha_fin') is-invalid @enderror" name="fecha_fin">
-                            @error('fecha_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-12">
                             <label class="form-label">Observaciones</label>
@@ -554,7 +821,47 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('assets/js/tablas/basica.js') }}" type="text/javascript"></script>
+<script>
+    const _dtOpciones = {
+        language: {
+            processing: "Procesando...",
+            lengthMenu: 'Filtrar <select>' +
+                '<option value="10">10</option>' +
+                '<option value="20">20</option>' +
+                '<option value="30">30</option>' +
+                '<option value="50">50</option>' +
+                '<option value="-1">Todos</option>' +
+                '</select> Registros',
+            paginate:   { sFirst: "Primero", sLast: "Último" },
+            info:       "Pagina _PAGE_ de _PAGES_",
+            search:     "Buscador Gral",
+            emptyTable: "No existen datos registrados.",
+            infoEmpty:  "",
+        },
+        orderCellsTop: true,
+        fixedHeader:   true,
+        ordering:      false,
+        pageLength:    50,
+    };
+
+    let _dtCamiones, _dtOperadores, _dtAsignaciones;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        _dtCamiones    = $('#tablaCamiones').DataTable(_dtOpciones);
+        _dtOperadores  = $('#tablaOperadores').DataTable(_dtOpciones);
+        _dtAsignaciones = $('#tablaAsignaciones').DataTable(_dtOpciones);
+
+        // Ajustar anchos al mostrar cada tab (DataTables no puede calcularlos en tabs ocultos)
+        document.querySelectorAll('#transporteTabs button[data-bs-toggle="tab"]').forEach(function(btn) {
+            btn.addEventListener('shown.bs.tab', function () {
+                const target = btn.getAttribute('data-bs-target');
+                if (target === '#pane-camiones')     _dtCamiones.columns.adjust();
+                if (target === '#pane-operadores')   _dtOperadores.columns.adjust();
+                if (target === '#pane-asignaciones') _dtAsignaciones.columns.adjust();
+            });
+        });
+    });
+</script>
 <script>
     // Activar tab correcto al redirigir con parámetro ?tab=
     document.addEventListener('DOMContentLoaded', function () {
@@ -579,20 +886,341 @@
             bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-operadores')).show();
             toggleLicencia();
         @endif
-        @if($errors->has('camion_id') || $errors->has('conductor_id') || $errors->has('fecha_inicio'))
+        @if($errors->has('camion_id') || $errors->has('conductor_id'))
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAsignacion')).show();
             bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-asignaciones')).show();
         @endif
     });
 
     // Mostrar/ocultar sección licencia según tipo operador
+    // Prefijos telefónicos por país
+    const _prefijos = {
+        'Bolivia': { code: '+591', hint: '8 dígitos, comienza en 6 o 7', pattern: /^[67]\d{7}$/ },
+        'Argentina': { code: '+54', hint: 'Ej: 1150000000', pattern: /^\d{8,10}$/ },
+        'Brasil': { code: '+55', hint: 'Ej: 11900000000', pattern: /^\d{9,11}$/ },
+        'Chile': { code: '+56', hint: 'Ej: 912345678', pattern: /^\d{9}$/ },
+        'Paraguay': { code: '+595', hint: 'Ej: 0981000000', pattern: /^\d{8,10}$/ },
+        'Perú': { code: '+51', hint: 'Ej: 912345678', pattern: /^\d{9}$/ },
+        'Colombia': { code: '+57', hint: 'Ej: 3001234567', pattern: /^\d{10}$/ },
+        'Ecuador': { code: '+593', hint: 'Ej: 0991234567', pattern: /^\d{9,10}$/ },
+        'Uruguay': { code: '+598', hint: 'Ej: 91234567', pattern: /^\d{8}$/ },
+        'Venezuela': { code: '+58', hint: 'Ej: 4121234567', pattern: /^\d{10}$/ },
+        'México': { code: '+52', hint: 'Ej: 5512345678', pattern: /^\d{10}$/ },
+        'Estados Unidos': { code: '+1', hint: 'Ej: 2025550100', pattern: /^\d{10}$/ },
+        'Canadá': { code: '+1', hint: 'Ej: 4165550100', pattern: /^\d{10}$/ },
+        'España': { code: '+34', hint: 'Ej: 612345678', pattern: /^\d{9}$/ },
+    };
+
+    function actualizarPrefijoTelefono() {
+        const sel    = document.getElementById('op_telefono_pais');
+        const opt    = sel.options[sel.selectedIndex];
+        const code   = opt ? (opt.dataset.code || '+') : '+';
+        const pais   = opt ? opt.value : '';
+        const maxlen = opt && opt.dataset.maxlen ? parseInt(opt.dataset.maxlen) : 15;
+        const ph     = opt && opt.dataset.placeholder ? opt.dataset.placeholder : 'Número';
+        const info   = _prefijos[pais] || { hint: 'Ingrese el número sin código de país' };
+
+        const inp = document.getElementById('op_telefono');
+        document.getElementById('op_telefono_prefijo').value = code;
+        document.getElementById('op_telefono_hint').textContent = info.hint;
+        inp.maxLength   = maxlen;
+        inp.placeholder = ph;
+        inp.value       = ''; // limpiar al cambiar país
+        // limpiar feedback al cambiar país
+        const fb = document.getElementById('op_telefono_feedback');
+        fb.className = 'form-text d-none';
+        inp.classList.remove('is-valid', 'is-invalid');
+    }
+
+    function validarTelefono(input) {
+        // solo dígitos
+        input.value = input.value.replace(/[^0-9]/g, '');
+
+        const pais   = document.getElementById('op_telefono_pais').value;
+        const info   = _prefijos[pais];
+        const fb     = document.getElementById('op_telefono_feedback');
+        const val    = input.value;
+        const maxlen = parseInt(input.maxLength) || 15;
+
+        if (!val) {
+            fb.className = 'form-text d-none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+
+        if (!info || !info.pattern) {
+            fb.className = 'form-text d-none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+
+        const completo = val.length === maxlen;
+        const valido   = info.pattern.test(val);
+
+        if (valido && completo) {
+            // longitud correcta Y patrón OK → verde
+            fb.className   = 'form-text text-success';
+            fb.textContent = '✓ Número válido';
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        } else if (!valido && completo) {
+            // longitud completa pero patrón falla → rojo
+            fb.className   = 'form-text text-danger';
+            fb.textContent = '✗ Formato incorrecto — ' + info.hint;
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+        } else {
+            // aún escribiendo → sin color, sin mensaje
+            fb.className = 'form-text d-none';
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+    }
+
+    // Reglas de formato de documento por país
+    const _formatosCI = {
+        // Solo dígitos
+        'Bolivia':            { tipo: 'digits', maxlen: 10, hint: 'Solo números, ej: 1234567' },
+        'Brasil':             { tipo: 'digits', maxlen: 11, hint: 'CPF: 11 dígitos, ej: 12345678901' },
+        'Paraguay':           { tipo: 'digits', maxlen: 8,  hint: '8 dígitos, ej: 12345678' },
+        'Ecuador':            { tipo: 'digits', maxlen: 10, hint: '10 dígitos (cédula), ej: 1234567890' },
+        'Uruguay':            { tipo: 'digits', maxlen: 8,  hint: '8 dígitos, ej: 12345678' },
+        // Alfanumérico (letras y números)
+        'Argentina':          { tipo: 'alphanum', maxlen: 9,  hint: 'DNI: 7-9 dígitos, ej: 12345678' },
+        'Chile':              { tipo: 'alphanum', maxlen: 10, hint: 'RUN con dígito verificador, ej: 12345678K' },
+        'Perú':               { tipo: 'alphanum', maxlen: 9,  hint: 'DNI: 8 dígitos o Pasaporte, ej: 12345678' },
+        'Colombia':           { tipo: 'alphanum', maxlen: 11, hint: 'Cédula de ciudadanía, ej: 1234567890' },
+        'Venezuela':          { tipo: 'alphanum', maxlen: 9,  hint: 'V-12345678 (sin el prefijo)' },
+        'Guyana':             { tipo: 'alphanum', maxlen: 15, hint: 'Pasaporte o ID nacional' },
+        'Guyana Francesa':    { tipo: 'alphanum', maxlen: 15, hint: 'Pasaporte o ID nacional' },
+        'Surinam':            { tipo: 'alphanum', maxlen: 15, hint: 'ID nacional o Pasaporte' },
+        'México':             { tipo: 'alphanum', maxlen: 18, hint: 'CURP: 18 caracteres' },
+        'Panamá':             { tipo: 'alphanum', maxlen: 15, hint: 'Cédula: ej: 8-123-456' },
+        'Costa Rica':         { tipo: 'alphanum', maxlen: 10, hint: 'Cédula: 9-10 dígitos' },
+        'Guatemala':          { tipo: 'alphanum', maxlen: 13, hint: 'DPI: 13 dígitos' },
+        'Honduras':           { tipo: 'alphanum', maxlen: 13, hint: 'DNI: 13 dígitos' },
+        'El Salvador':        { tipo: 'alphanum', maxlen: 10, hint: 'DUI: 9 dígitos' },
+        'Nicaragua':          { tipo: 'alphanum', maxlen: 16, hint: 'Cédula: 14-16 caracteres' },
+        'Cuba':               { tipo: 'alphanum', maxlen: 11, hint: '11 dígitos' },
+        'República Dominicana': { tipo: 'alphanum', maxlen: 11, hint: 'Cédula: 11 dígitos' },
+        'Estados Unidos':     { tipo: 'alphanum', maxlen: 20, hint: 'Número de pasaporte o SSN' },
+        'Canadá':             { tipo: 'alphanum', maxlen: 20, hint: 'Número de pasaporte o SIN' },
+        'España':             { tipo: 'alphanum', maxlen: 10, hint: 'DNI (8 dígitos + letra) o NIE' },
+        'Otro':               { tipo: 'alphanum', maxlen: 20, hint: 'Ingrese el número de documento' },
+    };
+
+    function actualizarFormatoCI() {
+        const pais   = document.getElementById('op_ci_pais').value;
+        const input  = document.getElementById('op_ci');
+        const hint   = document.getElementById('op_ci_hint');
+        const regla  = _formatosCI[pais];
+
+        input.value = ''; // limpiar al cambiar país
+
+        if (!regla) {
+            input.removeAttribute('maxlength');
+            input.removeAttribute('pattern');
+            input.oninput = null;
+            hint.textContent = 'Seleccione primero el país del documento';
+            return;
+        }
+
+        input.maxLength = regla.maxlen;
+        hint.textContent = regla.hint;
+
+        if (regla.tipo === 'digits') {
+            input.oninput = function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            };
+            input.pattern = '[0-9]+';
+        } else {
+            input.oninput = function() {
+                this.value = this.value.replace(/[^a-zA-Z0-9\-]/g, '').toUpperCase();
+            };
+            input.pattern = '[a-zA-Z0-9\\-]+';
+        }
+    }
+
+    function validarEmail(input) {
+        const fb = document.getElementById('op_email_feedback');
+        const val = input.value.trim();
+        if (!val) {
+            fb.className = 'form-text d-none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        if (ok) {
+            fb.className = 'form-text text-success';
+            fb.textContent = '✓ Formato de correo válido';
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        } else {
+            fb.className = 'form-text text-danger';
+            fb.textContent = '✗ Formato incorrecto. Ej: nombre@dominio.com';
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+        }
+    }
+
+    // Formatos de placa por país
+    const _formatosPlaca = {
+        'Bolivia':    { maxlen: 10, placeholder: 'Ej: 2345-ABC',    hint: '4 dígitos + guion + 3 letras (2345-ABC)',          pattern: /^[0-9]{4}-[A-Z]{3}$/ },
+        'Argentina':  { maxlen: 8,  placeholder: 'Ej: AB123CD',     hint: '2 letras + 3 dígitos + 2 letras (AB123CD) o 3+3',  pattern: /^[A-Z]{2}[0-9]{3}[A-Z]{2}$|^[A-Z]{3}[0-9]{3}$/ },
+        'Brasil':     { maxlen: 8,  placeholder: 'Ej: ABC1D23',     hint: '3 letras + 1 dígito + 1 letra + 2 dígitos',        pattern: /^[A-Z]{3}[0-9][A-Z][0-9]{2}$|^[A-Z]{3}[0-9]{4}$/ },
+        'Chile':      { maxlen: 7,  placeholder: 'Ej: ABCD12',      hint: '4 letras + 2 dígitos o 2 letras + 4 dígitos',      pattern: /^[A-Z]{4}[0-9]{2}$|^[A-Z]{2}[0-9]{4}$/ },
+        'Paraguay':   { maxlen: 8,  placeholder: 'Ej: ABCD123',     hint: '4 letras + 3 dígitos',                             pattern: /^[A-Z]{4}[0-9]{3}$/ },
+        'Perú':       { maxlen: 7,  placeholder: 'Ej: ABC-123',     hint: '3 letras + guion + 3 dígitos',                     pattern: /^[A-Z]{3}-?[0-9]{3}$/ },
+        'Colombia':   { maxlen: 7,  placeholder: 'Ej: ABC123',      hint: '3 letras + 3 dígitos',                             pattern: /^[A-Z]{3}[0-9]{3}$/ },
+        'Ecuador':    { maxlen: 8,  placeholder: 'Ej: ABC-1234',    hint: '3 letras + guion + 4 dígitos',                     pattern: /^[A-Z]{3}-?[0-9]{4}$/ },
+        'Uruguay':    { maxlen: 7,  placeholder: 'Ej: ABC1234',     hint: '3 letras + 4 dígitos',                             pattern: /^[A-Z]{3}[0-9]{4}$/ },
+        'Venezuela':  { maxlen: 8,  placeholder: 'Ej: AB123CD',     hint: '2 letras + 3 dígitos + 2 letras',                  pattern: /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/ },
+        'México':     { maxlen: 8,  placeholder: 'Ej: ABC1234',     hint: '3 letras + 4 dígitos (varía por estado)',          pattern: /^[A-Z0-9]{5,8}$/ },
+        'España':     { maxlen: 8,  placeholder: 'Ej: 1234-ABC',    hint: '4 dígitos + guion + 3 letras',                    pattern: /^[0-9]{4}-?[A-Z]{3}$/ },
+        'Otro':       { maxlen: 15, placeholder: 'Ingrese la placa', hint: 'Ingrese la placa tal como aparece',               pattern: /^[A-Z0-9\-]{2,15}$/ },
+    };
+
+    function actualizarFormatoPlaca() {
+        const pais  = document.getElementById('cam_placa_pais').value;
+        const input = document.getElementById('cam_placa');
+        const hint  = document.getElementById('cam_placa_hint');
+        const regla = _formatosPlaca[pais];
+
+        input.value = ''; // limpiar al cambiar país
+        input.classList.remove('is-valid', 'is-invalid');
+
+        if (!regla) {
+            input.maxLength   = 15;
+            input.placeholder = 'Ingrese la placa';
+            hint.textContent  = 'Seleccione primero el país';
+            return;
+        }
+
+        input.maxLength   = regla.maxlen;
+        input.placeholder = regla.placeholder;
+        hint.textContent  = regla.hint;
+    }
+
+    function aplicarMascaraPlaca(input) {
+        const pais  = document.getElementById('cam_placa_pais').value;
+        const regla = _formatosPlaca[pais];
+        let val     = input.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
+        const cur   = input.selectionStart;
+
+        switch (pais) {
+            case 'Bolivia':
+                // 4 dígitos + guion + 3 letras → 2345-ABC
+                val = val.replace(/[^0-9A-Z\-]/g, '');
+                // extraer solo dígitos y letras sin el guión
+                let digits = val.replace(/\-/g, '');
+                let nums   = digits.replace(/[^0-9]/g, '').slice(0, 4);
+                let lets   = digits.replace(/[^A-Z]/g, '').slice(0, 3);
+                val = nums.length === 4 ? nums + '-' + lets : nums;
+                break;
+
+            case 'España':
+                // 4 dígitos + guion + 3 letras → 1234-ABC
+                val = val.replace(/[^0-9A-Z\-]/g, '');
+                let sNums = val.replace(/\-/g, '').replace(/[^0-9]/g, '').slice(0, 4);
+                let sLets = val.replace(/\-/g, '').replace(/[^A-Z]/g, '').slice(0, 3);
+                val = sNums.length === 4 ? sNums + '-' + sLets : sNums;
+                break;
+
+            case 'Perú':
+                // 3 letras + guion + 3 dígitos → ABC-123
+                val = val.replace(/[^A-Z0-9\-]/g, '');
+                let pLets = val.replace(/\-/g, '').replace(/[^A-Z]/g, '').slice(0, 3);
+                let pNums = val.replace(/\-/g, '').replace(/[^0-9]/g, '').slice(0, 3);
+                val = pLets.length === 3 ? pLets + '-' + pNums : pLets;
+                break;
+
+            case 'Ecuador':
+                // 3 letras + guion + 4 dígitos → ABC-1234
+                val = val.replace(/[^A-Z0-9\-]/g, '');
+                let eLets = val.replace(/\-/g, '').replace(/[^A-Z]/g, '').slice(0, 3);
+                let eNums = val.replace(/\-/g, '').replace(/[^0-9]/g, '').slice(0, 4);
+                val = eLets.length === 3 ? eLets + '-' + eNums : eLets;
+                break;
+
+            case 'Argentina':
+                // AB123CD (nuevo) o ABC123 (viejo) — solo alfanumérico, sin guión
+                val = val.replace(/[^A-Z0-9]/g, '').slice(0, 8);
+                break;
+
+            case 'Brasil':
+                // ABC1D23 (Mercosur) o ABC1234 — alfanumérico
+                val = val.replace(/[^A-Z0-9]/g, '').slice(0, 8);
+                break;
+
+            case 'Chile':
+                // ABCD12 o AB1234 — alfanumérico
+                val = val.replace(/[^A-Z0-9]/g, '').slice(0, 7);
+                break;
+
+            case 'Paraguay':
+                // ABCD123 — 4 letras + 3 dígitos
+                val = val.replace(/[^A-Z0-9]/g, '');
+                let pyLets = val.replace(/[^A-Z]/g, '').slice(0, 4);
+                let pyNums = val.replace(/[^0-9]/g, '').slice(0, 3);
+                val = pyLets + pyNums;
+                break;
+
+            case 'Colombia':
+                // ABC123 — 3 letras + 3 dígitos
+                val = val.replace(/[^A-Z0-9]/g, '');
+                let coLets = val.replace(/[^A-Z]/g, '').slice(0, 3);
+                let coNums = val.replace(/[^0-9]/g, '').slice(0, 3);
+                val = coLets + coNums;
+                break;
+
+            case 'Uruguay':
+                // ABC1234 — 3 letras + 4 dígitos
+                val = val.replace(/[^A-Z0-9]/g, '');
+                let uyLets = val.replace(/[^A-Z]/g, '').slice(0, 3);
+                let uyNums = val.replace(/[^0-9]/g, '').slice(0, 4);
+                val = uyLets + uyNums;
+                break;
+
+            case 'Venezuela':
+                // AB123CD — 2 letras + 3 dígitos + 2 letras
+                val = val.replace(/[^A-Z0-9]/g, '').slice(0, 8);
+                break;
+
+            default:
+                // Otros: solo alfanumérico y guión
+                val = val.replace(/[^A-Z0-9\-]/g, '');
+                if (regla) val = val.slice(0, regla.maxlen);
+                break;
+        }
+
+        input.value = val;
+
+        // Validación visual al completar
+        if (regla && regla.pattern && val.length >= (regla.maxlen - 2)) {
+            if (regla.pattern.test(val)) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            } else if (val.length === regla.maxlen) {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+            } else {
+                input.classList.remove('is-valid', 'is-invalid');
+            }
+        } else {
+            input.classList.remove('is-valid', 'is-invalid');
+        }
+    }
+
     function toggleLicencia() {
         const tipo = document.getElementById('op_tipo').value;
-        const seccion = document.getElementById('seccionLicencia');
-        if (tipo === 'chofer' || tipo === 'ambos') {
-            seccion.style.removeProperty('display');
+        const seccionLic = document.getElementById('seccionLicencia');
+        const seccionDocLic = document.getElementById('seccionDocLicencia');
+        const esCondutor = tipo === 'chofer' || tipo === 'ambos';
+        if (esCondutor) {
+            seccionLic.style.removeProperty('display');
+            seccionDocLic.classList.remove('d-none');
         } else {
-            seccion.style.display = 'none';
+            seccionLic.style.display = 'none';
+            seccionDocLic.classList.add('d-none');
         }
     }
 
@@ -641,100 +1269,267 @@
             }
         });
 
-        // Validación en tiempo real de capacidad
+        // Validación en tiempo real de capacidad en toneladas
         const capInput = document.getElementById('cam_capacidad');
         const capHint  = document.getElementById('capacidad_hint');
-        const capMin   = 10;
-        const capMax   = 50000;
+        const capMin   = 3.5;
+        const capMax   = 35;
 
         capInput.addEventListener('keydown', function (e) {
-            // Permitir teclas de control (backspace, delete, flechas, tab)
             const teclaControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key);
             if (teclaControl) return;
-
-            // Solo dígitos y punto
             if (!/[0-9.]/.test(e.key)) { e.preventDefault(); return; }
-
-            // Solo un punto
             if (e.key === '.' && this.value.includes('.')) { e.preventDefault(); return; }
-
-            const valorFuturo = this.value + e.key;
-            const partes = valorFuturo.split('.');
-
-            // Bloquear si la parte entera supera 50000
-            const parteEntera = parseInt(partes[0] || '0');
-            if (!this.value.includes('.') && parteEntera > capMax) {
-                e.preventDefault();
-                return;
-            }
-
-            // Bloquear si los decimales ya tienen 3 dígitos
-            if (partes[1] !== undefined && partes[1].length >= 3 && e.key !== '.') {
-                e.preventDefault();
-                return;
-            }
+            const partes = (this.value + e.key).split('.');
+            if (parseInt(partes[0] || '0') > capMax) { e.preventDefault(); return; }
+            if (partes[1] !== undefined && partes[1].length >= 3 && e.key !== '.') { e.preventDefault(); return; }
         });
 
         capInput.addEventListener('input', function () {
-            // Limpiar caracteres no válidos (por si pegan texto)
             let val = this.value.replace(/[^0-9.]/g, '');
             const partes = val.split('.');
             if (partes.length > 2) val = partes[0] + '.' + partes.slice(1).join('');
-            if (partes[1] !== undefined && partes[1].length > 3) {
+            if (partes[1] !== undefined && partes[1].length > 3)
                 val = partes[0] + '.' + partes[1].substring(0, 3);
-            }
-            // Truncar parte entera si supera el máximo
-            if (parseInt(partes[0] || '0') > capMax) {
+            if (parseFloat(partes[0] || '0') > capMax)
                 val = String(capMax) + (partes[1] !== undefined ? '.' + partes[1] : '');
-            }
             this.value = val;
 
             const num = parseFloat(val);
             if (val === '' || isNaN(num)) {
                 this.classList.remove('is-invalid', 'is-valid');
-                capHint.className = 'text-muted';
-                capHint.textContent = 'Entre 10.000 kg y 50,000 kg — máximo 3 decimales con punto.';
+                capHint.className   = 'text-muted';
+                capHint.textContent = 'Entre 3.5 t y 35 t — máximo 3 decimales.';
                 return;
             }
             if (num < capMin) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                capHint.className = 'text-danger';
-                capHint.textContent = '⚠ La capacidad mínima es 10 kg.';
+                this.classList.add('is-invalid'); this.classList.remove('is-valid');
+                capHint.className   = 'text-danger';
+                capHint.textContent = '⚠ La capacidad mínima es 3.5 t.';
+            } else if (num > capMax) {
+                this.classList.add('is-invalid'); this.classList.remove('is-valid');
+                capHint.className   = 'text-danger';
+                capHint.textContent = '⚠ La capacidad máxima es 35 t.';
             } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-                capHint.className = 'text-success';
-                capHint.textContent = '✓ Capacidad válida';
+                this.classList.remove('is-invalid'); this.classList.add('is-valid');
+                capHint.className   = 'text-success';
+                capHint.textContent = '✓ Capacidad válida (' + (num * 1000).toLocaleString() + ' kg)';
             }
         });
     });
 
+    // ── Gestión de fotos nuevas (lista visual) ────────────────────────────────
+    let _fotosNuevas = []; // DataTransfer acumulado de archivos nuevos
+    let _fotosGuardadas = 0; // cuántas fotos ya existen en BD
+
+    function _actualizarContador() {
+        const total = _fotosNuevas.length + _fotosGuardadas;
+        document.getElementById('fotosContadorLabel').innerText = total + ' / 5 fotos';
+        const btn = document.getElementById('btnAgregarFoto');
+        btn.disabled = total >= 5;
+    }
+
+    function agregarFotosNuevas(input) {
+        const maxTotal = 5;
+        const disponibles = maxTotal - _fotosNuevas.length - _fotosGuardadas;
+        const lista = document.getElementById('fotosNuevasLista');
+
+        Array.from(input.files).slice(0, disponibles).forEach(function(file) {
+            const idx = _fotosNuevas.length;
+            _fotosNuevas.push(file);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const card = document.createElement('div');
+                card.className = 'position-relative border rounded';
+                card.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                card.id = 'nueva-foto-' + idx;
+                card.innerHTML = `
+                    <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" title="${file.name}">
+                    <button type="button" onclick="quitarFotoNueva(${idx})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Quitar">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center"
+                        style="font-size:9px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${file.name}
+                    </div>`;
+                lista.appendChild(card);
+                _actualizarContador();
+                _sincronizarInputFotos();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        input.value = ''; // limpiar para permitir seleccionar el mismo archivo
+    }
+
+    function quitarFotoNueva(idx) {
+        _fotosNuevas.splice(idx, 1);
+        // Rebuild lista visual
+        const lista = document.getElementById('fotosNuevasLista');
+        lista.innerHTML = '';
+        const copia = [..._fotosNuevas];
+        _fotosNuevas = [];
+        _fotosGuardadas = parseInt(document.getElementById('fotosContadorLabel').innerText.split('/')[0]) - 0;
+        // recalcular guardadas
+        _fotosGuardadas = document.querySelectorAll('#galeriaFotosContenido .position-relative').length;
+        copia.forEach(function(file, i) {
+            _fotosNuevas.push(file);
+            const reader = new FileReader();
+            const capturedIdx = i;
+            reader.onload = function(e) {
+                const card = document.createElement('div');
+                card.className = 'position-relative border rounded';
+                card.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                card.id = 'nueva-foto-' + capturedIdx;
+                card.innerHTML = `
+                    <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" title="${file.name}">
+                    <button type="button" onclick="quitarFotoNueva(${capturedIdx})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Quitar">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center"
+                        style="font-size:9px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${file.name}
+                    </div>`;
+                lista.appendChild(card);
+                _actualizarContador();
+            };
+            reader.readAsDataURL(file);
+        });
+        _sincronizarInputFotos();
+    }
+
+    function _sincronizarInputFotos() {
+        // Asignar los archivos acumulados al input real usando DataTransfer
+        const input = document.getElementById('cam_fotos_input');
+        const dt = new DataTransfer();
+        _fotosNuevas.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+        // Cambiar el name para que se envíe como fotos[]
+        input.name = 'fotos[]';
+        input.multiple = true;
+    }
+
     // Reset y abrir modal camión en modo Nuevo
     function resetModalCamion() {
         document.getElementById('tituloCamion').innerText = 'Nuevo Camión';
-        document.getElementById('btnCamion').innerText = 'Registrar';
-        document.getElementById('methodCamion').value = 'POST';
-        document.getElementById('formCamion').action = '{{ route("camiones.store") }}';
+        document.getElementById('btnCamion').innerText    = 'Registrar';
+        document.getElementById('methodCamion').value     = 'POST';
+        document.getElementById('formCamion').action      = '{{ route("camiones.store") }}';
         document.getElementById('formCamion').reset();
+        document.getElementById('ruatActualInfo').classList.add('d-none');
+        document.getElementById('galeriaFotos').classList.add('d-none');
+        document.getElementById('galeriaFotosContenido').innerHTML = '';
+        document.getElementById('fotosNuevasLista').innerHTML = '';
+        _fotosNuevas = [];
+        _fotosGuardadas = 0;
+        _actualizarContador();
+        // Limpiar el input de fotos
+        const inputFotos = document.getElementById('cam_fotos_input');
+        inputFotos.value = '';
+        const dtVacio = new DataTransfer();
+        inputFotos.files = dtVacio.files;
     }
 
     // Llenar modal camión en modo Editar
-    function editarCamion(camion) {
+    function editarCamion(camion, fotos) {
+        // Limpiar estado de fotos nuevas
+        _fotosNuevas = [];
+        document.getElementById('fotosNuevasLista').innerHTML = '';
+        const inputFotos = document.getElementById('cam_fotos_input');
+        inputFotos.value = '';
+        const dtVacio = new DataTransfer();
+        inputFotos.files = dtVacio.files;
+
         document.getElementById('tituloCamion').innerText = 'Editar Camión';
-        document.getElementById('btnCamion').innerText = 'Actualizar';
-        document.getElementById('methodCamion').value = 'PUT';
-        document.getElementById('formCamion').action = '/camion/' + camion.id;
-        document.getElementById('cam_placa').value      = camion.placa;
-        document.getElementById('cam_tipo').value       = camion.tipo_vehiculo;
-        document.getElementById('cam_marca').value      = camion.marca;
-        document.getElementById('cam_modelo').value     = camion.modelo;
-        document.getElementById('cam_anio').value       = camion.anio;
-        document.getElementById('cam_capacidad').value  = camion.capacidad_kg;
-        document.getElementById('cam_color').value      = camion.color ?? '';
-        document.getElementById('cam_estado').value     = camion.estado;
-        document.getElementById('cam_propietario').value = camion.propietario_id ?? '';
+        document.getElementById('btnCamion').innerText    = 'Actualizar';
+        document.getElementById('methodCamion').value     = 'PUT';
+        document.getElementById('formCamion').action      = '/camion/' + camion.id;
+        document.getElementById('cam_placa_pais').value   = camion.placa_pais ?? 'Bolivia';
+        actualizarFormatoPlaca();
+        document.getElementById('cam_placa').value        = camion.placa;
+        document.getElementById('cam_tipo').value         = camion.tipo_vehiculo;
+        document.getElementById('cam_marca').value        = camion.marca;
+        document.getElementById('cam_modelo').value       = camion.modelo;
+        document.getElementById('cam_anio').value         = camion.anio;
+        document.getElementById('cam_capacidad').value    = (camion.capacidad_kg / 1000).toFixed(3);
+        document.getElementById('cam_color').value        = camion.color ?? '';
+        document.getElementById('cam_estado').value       = camion.estado;
+        document.getElementById('cam_propietario').value  = camion.propietario_id ?? '';
+        document.getElementById('cam_ruat').value         = '';
+
+        // Info RUAT
+        const ruatInfo = document.getElementById('ruatActualInfo');
+        camion.documento_ruat ? ruatInfo.classList.remove('d-none') : ruatInfo.classList.add('d-none');
+
+        // Fotos guardadas en BD
+        const galeria   = document.getElementById('galeriaFotos');
+        const contenido = document.getElementById('galeriaFotosContenido');
+        contenido.innerHTML = '';
+
+        if (fotos && fotos.length > 0) {
+            galeria.classList.remove('d-none');
+            _fotosGuardadas = fotos.length;
+            fotos.forEach(function(foto) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'position-relative border rounded';
+                wrapper.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                wrapper.id = 'foto-' + foto.id;
+                wrapper.innerHTML = `
+                    <img src="/storage/${foto.ruta}" style="width:100%;height:100%;object-fit:cover;" title="Foto guardada">
+                    <button type="button" onclick="eliminarFoto(${foto.id})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Eliminar foto">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-success bg-opacity-75 text-white text-center"
+                        style="font-size:9px;padding:1px;">Guardada</div>`;
+                contenido.appendChild(wrapper);
+            });
+        } else {
+            galeria.classList.add('d-none');
+            _fotosGuardadas = 0;
+        }
+
+        _actualizarContador();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCamion')).show();
+    }
+
+    function verFotos(fotos, placa) {
+        document.getElementById('galeriaPlaca').innerText = placa;
+        const viewer = document.getElementById('galeriaViewer');
+        viewer.innerHTML = '';
+        fotos.forEach(function(foto) {
+            viewer.innerHTML += `
+                <div class="col-6 col-md-4">
+                    <a href="/storage/${foto.ruta}" target="_blank">
+                        <img src="/storage/${foto.ruta}"
+                            class="img-fluid rounded border"
+                            style="width:100%;height:180px;object-fit:cover;"
+                            title="Ver foto completa">
+                    </a>
+                </div>`;
+        });
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalGaleria')).show();
+    }
+
+    function eliminarFoto(fotoId) {
+        if (!confirm('¿Eliminar esta foto?')) return;
+        fetch('{{ url("camion/foto") }}/' + fotoId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            }
+        }).then(r => r.json()).then(data => {
+            if (data.ok) {
+                const el = document.getElementById('foto-' + fotoId);
+                if (el) el.remove();
+                _fotosGuardadas = document.querySelectorAll('#galeriaFotosContenido .position-relative').length;
+                if (_fotosGuardadas === 0) {
+                    document.getElementById('galeriaFotos').classList.add('d-none');
+                }
+                _actualizarContador();
+            }
+        });
     }
 
     // Reset modal operador
@@ -745,6 +1540,20 @@
         document.getElementById('formOperador').action = '{{ route("operadores.store") }}';
         document.getElementById('formOperador').reset();
         document.getElementById('seccionLicencia').style.display = 'none';
+        document.getElementById('seccionDocLicencia').classList.add('d-none');
+        document.getElementById('op_carnet_info').classList.add('d-none');
+        document.getElementById('op_licencia_info').classList.add('d-none');
+        // Reset formato CI y selector de teléfono
+        actualizarFormatoCI();
+        document.getElementById('op_telefono_pais').value = 'Bolivia';
+        document.getElementById('op_telefono_prefijo').value = '+591';
+        document.getElementById('op_telefono_hint').textContent = 'Bolivia: 8 dígitos comenzando en 6 o 7';
+        const telFb = document.getElementById('op_telefono_feedback');
+        telFb.className = 'form-text d-none';
+        document.getElementById('op_telefono').classList.remove('is-valid', 'is-invalid');
+        const emailFb = document.getElementById('op_email_feedback');
+        emailFb.className = 'form-text d-none';
+        document.getElementById('op_email').classList.remove('is-valid', 'is-invalid');
     }
 
     // Llenar modal operador en modo Editar
@@ -754,18 +1563,88 @@
         document.getElementById('methodOperador').value = 'PUT';
         document.getElementById('formOperador').action = '/operador/' + op.id;
         document.getElementById('op_nombre').value   = op.nombre;
-        document.getElementById('op_apellido').value = op.apellido;
-        document.getElementById('op_ci').value       = op.ci;
-        document.getElementById('op_telefono').value = op.telefono ?? '';
-        document.getElementById('op_email').value    = op.email ?? '';
+        document.getElementById('op_apellido').value  = op.apellido;
+        document.getElementById('op_ci_pais').value   = op.ci_pais ?? '';
+        actualizarFormatoCI();
+        document.getElementById('op_ci').value        = op.ci;
+        document.getElementById('op_telefono').value  = op.telefono ?? '';
+        document.getElementById('op_email').value     = op.email ?? '';
+        // El prefijo de teléfono se deja en Bolivia por defecto al editar (el número ya está guardado con prefijo)
+        document.getElementById('op_telefono_pais').value = 'Bolivia';
+        actualizarPrefijoTelefono();
         document.getElementById('op_direccion').value= op.direccion ?? '';
         document.getElementById('op_tipo').value     = op.tipo_operador;
         document.getElementById('op_estado').value   = op.estado;
         document.getElementById('op_licencia_num').value  = op.licencia_numero ?? '';
-        document.getElementById('op_licencia_cat').value  = op.licencia_categoria ?? '';
+        document.getElementById('op_licencia_pais').value = op.licencia_pais ?? '';
         document.getElementById('op_licencia_venc').value = op.licencia_vencimiento ?? '';
+
+        // Mostrar info documentos existentes
+        op.doc_carnet
+            ? document.getElementById('op_carnet_info').classList.remove('d-none')
+            : document.getElementById('op_carnet_info').classList.add('d-none');
+        op.doc_licencia
+            ? document.getElementById('op_licencia_info').classList.remove('d-none')
+            : document.getElementById('op_licencia_info').classList.add('d-none');
+
         toggleLicencia();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalOperador')).show();
     }
+
+    // ── Asignación: carga conductores relacionados al camión seleccionado ────
+    function cargarConductoresCamion(select) {
+        const option = select.options[select.selectedIndex];
+        const uuid   = option ? option.dataset.uuid : null;
+        const selectConductor = document.getElementById('asig_conductor_id');
+        const hint            = document.getElementById('asig_conductor_hint');
+
+        selectConductor.innerHTML = '<option value="">— Cargando... —</option>';
+        selectConductor.disabled  = true;
+        hint.classList.add('d-none');
+
+        if (!uuid) {
+            selectConductor.innerHTML = '<option value="">— Primero seleccione un camión —</option>';
+            return;
+        }
+
+        fetch('{{ url("api/camion") }}/' + uuid + '/conductores-disponibles', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(conductores => {
+            selectConductor.innerHTML = '';
+
+            if (conductores.length === 0) {
+                selectConductor.innerHTML = '<option value="">— Todos los conductores ya están asignados a este camión —</option>';
+                selectConductor.disabled = true;
+                hint.classList.add('d-none');
+                return;
+            }
+
+            selectConductor.innerHTML = '<option value="">— Seleccione conductor —</option>';
+            conductores.forEach(function(c) {
+                const op = document.createElement('option');
+                op.value       = c.id;
+                op.textContent = c.nombre + ' — Lic: ' + (c.licencia || 'S/N');
+                selectConductor.appendChild(op);
+            });
+
+            selectConductor.disabled = false;
+            hint.classList.remove('d-none');
+        })
+        .catch(() => {
+            selectConductor.innerHTML = '<option value="">— Error al cargar conductores —</option>';
+            selectConductor.disabled = true;
+        });
+    }
+
+    // Limpiar conductor al abrir el modal de asignación
+    document.getElementById('modalAsignacion').addEventListener('show.bs.modal', function () {
+        const sel = document.getElementById('asig_camion_id');
+        sel.value = '';
+        document.getElementById('asig_conductor_id').innerHTML = '<option value="">— Primero seleccione un camión —</option>';
+        document.getElementById('asig_conductor_id').disabled = true;
+        document.getElementById('asig_conductor_hint').classList.add('d-none');
+    });
 </script>
 @endsection

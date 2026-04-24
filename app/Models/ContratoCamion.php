@@ -17,6 +17,7 @@ class ContratoCamion extends Model
         'contrato_id',
         'camion_id',
         'toneladas',
+        'fecha_asignacion',
         'estado_entrega',
         'conductor_id',
         'observaciones',
@@ -25,7 +26,8 @@ class ContratoCamion extends Model
     ];
 
     protected $casts = [
-        'toneladas' => 'decimal:3',
+        'toneladas'        => 'decimal:3',
+        'fecha_asignacion' => 'date',
     ];
 
     protected static function boot()

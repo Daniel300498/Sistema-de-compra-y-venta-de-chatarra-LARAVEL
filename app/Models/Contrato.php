@@ -28,6 +28,7 @@ class Contrato extends Model implements Auditable
         'monto_total',
         'moneda',
         'estado',
+        'documento_pdf',
         'created_by',
         'updated_by',
         'deleted_by',

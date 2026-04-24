@@ -24,6 +24,11 @@
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Usuarios Registrados</h5>
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Administra las cuentas de acceso al sistema. Cada usuario tiene un rol asignado que determina las acciones que puede realizar.
+                Crea, edita o desactiva usuarios según las necesidades del equipo de trabajo.
+            </p>
            <!--CONTENIDO -->
             <div class="table-responsive">
                 <table cellspacing="0" width="100%" id="datos" class="table table-hover table-bordered table-sm">

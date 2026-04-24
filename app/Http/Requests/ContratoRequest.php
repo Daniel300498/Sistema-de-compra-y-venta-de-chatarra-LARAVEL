@@ -25,6 +25,7 @@ class ContratoRequest extends FormRequest
             'monto_total'       => 'required|numeric|min:0',
             'moneda'            => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
             'estado'            => 'required|in:Borrador,Activo,Finalizado,Cancelado',
+            'documento_pdf'     => 'nullable|file|mimes:pdf|max:30720',
         ];
     }
 
@@ -40,7 +41,10 @@ class ContratoRequest extends FormRequest
             'monto_total.required'    => 'El monto total es obligatorio.',
             'monto_total.numeric'     => 'El monto total debe ser un número.',
             'moneda.required'         => 'La moneda es obligatoria.',
-            'estado.required'         => 'El estado es obligatorio.',
+            'estado.required'             => 'El estado es obligatorio.',
+            'documento_pdf.file'          => 'El documento debe ser un archivo.',
+            'documento_pdf.mimes'         => 'Solo se permiten archivos PDF.',
+            'documento_pdf.max'           => 'El PDF no puede superar los 30 MB.',
         ];
     }
 }

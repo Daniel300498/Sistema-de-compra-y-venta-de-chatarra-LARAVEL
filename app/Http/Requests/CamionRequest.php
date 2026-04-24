@@ -15,8 +15,8 @@ class CamionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'placa' => ['required', 'string', 'max:10',
-                'regex:/^[0-9]{4}-[A-Z]{3}$/',
+            'placa_pais'    => 'required|string|max:100',
+            'placa'         => ['required', 'string', 'max:15',
                 Rule::unique('camiones')->ignore($this->route('camion'))->whereNull('deleted_at')
             ],
             'tipo_vehiculo' => ['required', Rule::in(['Camión','Volqueta','Trailer','Furgón'])],
@@ -28,19 +28,22 @@ class CamionRequest extends FormRequest
             ])],
             'modelo'        => 'required|string|max:50',
             'anio'          => 'required|integer|min:1970|max:' . date('Y'),
-            'capacidad_kg'  => 'required|numeric|min:10|max:50000|regex:/^\d+(\.\d{1,3})?$/',
+            'capacidad_tn'  => 'required|numeric|min:3.5|max:35',
             'color'         => 'nullable|string|max:30',
             'estado'        => 'required|in:Activo,Inactivo,En mantenimiento',
-            'propietario_id'=> 'nullable|exists:operadores_transporte,id',
+            'propietario_id'  => 'required|exists:operadores_transporte,id',
+            'documento_ruat'  => 'nullable|file|mimes:pdf|max:5120',
+            'fotos'           => 'nullable|array|max:5',
+            'fotos.*'         => 'file|mimes:jpg,jpeg,png,webp|max:4096',
         ];
     }
 
     public function messages(): array
     {
         return [
+            'placa_pais.required'    => 'El país de la placa es obligatorio.',
             'placa.required'         => 'La placa es obligatoria.',
             'placa.unique'           => 'Esta placa ya está registrada.',
-            'placa.regex'            => 'La placa debe tener el formato boliviano: 4 dígitos, guion y 3 letras (ej: 2345-ABC).',
             'tipo_vehiculo.required' => 'El tipo de vehículo es obligatorio.',
             'tipo_vehiculo.in'       => 'El tipo de vehículo no es válido.',
             'marca.required'         => 'La marca es obligatoria.',
@@ -49,11 +52,17 @@ class CamionRequest extends FormRequest
             'anio.required'          => 'El año es obligatorio.',
             'anio.min'               => 'El año mínimo permitido es 1970.',
             'anio.max'               => 'El año no puede ser mayor a ' . date('Y') . '.',
-            'capacidad_kg.required'  => 'La capacidad en kg es obligatoria.',
-            'capacidad_kg.min'       => 'La capacidad mínima es 10 kg.',
-            'capacidad_kg.max'       => 'La capacidad máxima es 50,000 kg.',
-            'capacidad_kg.regex'     => 'La capacidad permite máximo 3 decimales separados por punto.',
-            'estado.required'        => 'El estado es obligatorio.',
+            'capacidad_tn.required'  => 'La capacidad es obligatoria.',
+            'capacidad_tn.min'       => 'La capacidad mínima es 3.5 toneladas.',
+            'capacidad_tn.max'       => 'La capacidad máxima es 35 toneladas.',
+            'propietario_id.required' => 'El propietario es obligatorio.',
+            'propietario_id.exists'   => 'El propietario seleccionado no existe.',
+            'estado.required'         => 'El estado es obligatorio.',
+            'documento_ruat.mimes'    => 'El RUAT debe ser un archivo PDF.',
+            'documento_ruat.max'      => 'El RUAT no puede superar los 5 MB.',
+            'fotos.max'               => 'Se permiten máximo 5 fotos.',
+            'fotos.*.mimes'           => 'Las fotos deben ser JPG, PNG o WEBP.',
+            'fotos.*.max'             => 'Cada foto no puede superar los 4 MB.',
         ];
     }
 }

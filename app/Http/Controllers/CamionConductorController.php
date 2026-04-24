@@ -18,7 +18,9 @@ class CamionConductorController extends Controller
 
     public function store(CamionConductorRequest $request)
     {
-        CamionConductor::create($request->all());
+        CamionConductor::create(array_merge($request->validated(), [
+            'fecha_inicio' => now()->toDateString(),
+        ]));
         Alert::success('Asignación', 'Conductor asignado al camión con éxito.');
         return redirect()->route('camiones.index', ['tab' => 'conductores']);
     }
@@ -57,6 +59,70 @@ class CamionConductorController extends Controller
         });
 
         return response()->json($camiones);
+    }
+
+    // Endpoint: todos los conductores con licencia que NO están asignados activamente a este camión
+    public function conductoresDisponibles($uuid)
+    {
+        $camion = Camion::where('uuid', $uuid)->firstOrFail();
+
+        // IDs ya asignados activamente a este camión
+        $asignadosIds = CamionConductor::where('camion_id', $camion->id)
+            ->whereNull('fecha_fin')
+            ->pluck('conductor_id');
+
+        $conductores = OperadorTransporte::whereIn('tipo_operador', ['chofer', 'ambos'])
+            ->whereNotNull('licencia_numero')
+            ->whereNull('deleted_at')
+            ->whereNotIn('id', $asignadosIds)
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn($c) => [
+                'id'       => $c->id,
+                'nombre'   => $c->nombre_completo,
+                'licencia' => $c->licencia_numero,
+            ]);
+
+        return response()->json($conductores);
+    }
+
+    // Endpoint: conductores con asignación activa en el camión + propietario si conduce
+    public function conductoresRelacionados($uuid)
+    {
+        $camion = Camion::with([
+            'propietario',
+            'conductores' => fn($q) => $q->whereNull('fecha_fin'),
+            'conductores.conductor',
+        ])->where('uuid', $uuid)->firstOrFail();
+
+        $conductores = collect();
+
+        // Propietario si puede conducir
+        if ($camion->propietario && $camion->propietario->puedeConducir()) {
+            $conductores->push([
+                'id'       => $camion->propietario->id,
+                'nombre'   => $camion->propietario->nombre_completo,
+                'licencia' => $camion->propietario->licencia_numero,
+                'tipo'     => 'Propietario / Conductor',
+            ]);
+        }
+
+        // Conductores con asignación activa (fecha_fin NULL) en este camión
+        $camion->conductores
+            ->pluck('conductor')
+            ->unique('id')
+            ->each(function ($c) use ($conductores) {
+                if (!$conductores->contains('id', $c->id)) {
+                    $conductores->push([
+                        'id'       => $c->id,
+                        'nombre'   => $c->nombre_completo,
+                        'licencia' => $c->licencia_numero,
+                        'tipo'     => 'Conductor Asignado',
+                    ]);
+                }
+            });
+
+        return response()->json($conductores->values());
     }
 
     // Endpoint: historial de conductores por camión

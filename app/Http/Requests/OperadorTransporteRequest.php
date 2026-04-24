@@ -17,27 +17,30 @@ class OperadorTransporteRequest extends FormRequest
         $operadorId = $this->route('operador')?->id;
 
         $rules = [
-            'nombre'             => 'required|string|max:150',
-            'apellido'           => 'required|string|max:150',
+            'nombre'             => ['required', 'string', 'max:150', 'regex:/^[\pL\s]+$/u'],
+            'apellido'           => ['required', 'string', 'max:150', 'regex:/^[\pL\s]+$/u'],
             'ci'                 => ['required', 'string', 'max:20',
                 Rule::unique('operadores_transporte')->ignore($operadorId)->whereNull('deleted_at')
             ],
-            'telefono'           => 'nullable|string|max:20',
+            'ci_pais'            => 'required|string|max:100',
+            'telefono'           => 'required|string|max:30',
             'email'              => ['nullable', 'email', 'max:150',
                 Rule::unique('operadores_transporte')->ignore($operadorId)->whereNull('deleted_at')
             ],
             'direccion'          => 'nullable|string|max:255',
             'tipo_operador'      => 'required|in:propietario,chofer,ambos',
             'licencia_numero'    => 'nullable|string|max:30',
-            'licencia_categoria' => 'nullable|in:A,B,C,D,E,F,G',
+            'licencia_pais'      => 'nullable|string|max:100',
             'licencia_vencimiento' => 'nullable|date',
             'estado'             => 'required|in:Activo,Inactivo',
+            'doc_carnet'         => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+            'doc_licencia'       => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
         ];
 
         // Si es chofer o ambos, licencia es obligatoria
         if (in_array($this->input('tipo_operador'), ['chofer', 'ambos'])) {
             $rules['licencia_numero']    = 'required|string|max:30';
-            $rules['licencia_categoria'] = 'required|in:A,B,C,D,E,F,G';
+            $rules['licencia_pais']      = 'required|string|max:100';
             $rules['licencia_vencimiento'] = 'required|date';
         }
 
@@ -48,13 +51,21 @@ class OperadorTransporteRequest extends FormRequest
     {
         return [
             'nombre.required'              => 'El nombre es obligatorio.',
+            'nombre.regex'                 => 'El nombre solo puede contener letras y espacios.',
             'apellido.required'            => 'El apellido es obligatorio.',
-            'ci.required'                  => 'La cédula es obligatoria.',
-            'ci.unique'                    => 'Esta cédula ya está registrada.',
+            'apellido.regex'               => 'El apellido solo puede contener letras y espacios.',
+            'ci.required'                  => 'El número de documento es obligatorio.',
+            'ci.unique'                    => 'Este número de documento ya está registrado.',
+            'ci_pais.required'             => 'El país de expedición del documento es obligatorio.',
+            'telefono.required'            => 'El teléfono es obligatorio.',
             'tipo_operador.required'       => 'El tipo de operador es obligatorio.',
             'licencia_numero.required'     => 'El número de licencia es obligatorio para choferes.',
-            'licencia_categoria.required'  => 'La categoría de licencia es obligatoria para choferes.',
+            'licencia_pais.required'       => 'El país de expedición de la licencia es obligatorio.',
             'licencia_vencimiento.required'=> 'La fecha de vencimiento de licencia es obligatoria para choferes.',
+            'doc_carnet.mimes'            => 'El carnet debe ser PDF, JPG o PNG.',
+            'doc_carnet.max'              => 'El carnet no puede superar los 5 MB.',
+            'doc_licencia.mimes'          => 'La licencia debe ser PDF, JPG o PNG.',
+            'doc_licencia.max'            => 'La licencia no puede superar los 5 MB.',
         ];
     }
 }

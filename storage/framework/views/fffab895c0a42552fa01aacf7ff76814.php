@@ -21,7 +21,12 @@
       <div class="col-lg-12">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Roles de accceso registrados</h5>
+            <h5 class="card-title">Roles de Acceso Registrados</h5>
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Los roles agrupan un conjunto de permisos que determinan qué puede hacer cada usuario dentro del sistema.
+                Asigna el rol adecuado a cada persona según su función en la empresa: administrador, operador, supervisor, etc.
+            </p>
            <!--CONTENIDO -->
            <div class="table-responsive">
             <table class="table table-hover table-bordered table-sm">

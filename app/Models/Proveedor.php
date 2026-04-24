@@ -11,7 +11,7 @@ class Proveedor extends Model implements Auditable
 {
     use HasFactory, Userstamps, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
-    protected $table = 'proveedors';
+    protected $table = 'proveedores';
     protected $fillable = [
         'nombre',
         'nit',

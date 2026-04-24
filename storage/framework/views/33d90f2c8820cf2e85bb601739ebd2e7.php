@@ -1,4 +1,3 @@
-
 <?php $__env->startSection('titulo','Cliente'); ?>
 <?php $__env->startSection('content'); ?>
 
@@ -26,9 +25,14 @@
 
             <div class="card">
                 <div class="card-body pt-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
                         <h5 class="card-title mb-0">Clientes Registrados</h5>
                     </div>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra.
+                        Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
+                    </p>
                     <div class="table-responsive">
                         <table id="tablaClientes" class="table table-hover table-bordered table-sm">
                             <thead>
