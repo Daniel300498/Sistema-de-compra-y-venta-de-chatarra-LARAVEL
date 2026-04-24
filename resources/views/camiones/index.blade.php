@@ -72,7 +72,7 @@
                                             <th>Tipo</th>
                                             <th>Marca / Modelo</th>
                                             <th>Año</th>
-                                            <th>Cap. (kg)</th>
+                                            <th>Cap. (t)</th>
                                             <th>Color</th>
                                             <th>Propietario</th>
                                             <th>Estado</th>
@@ -86,7 +86,7 @@
                                             <td>{{ $c->tipo_vehiculo }}</td>
                                             <td>{{ $c->marca }} {{ $c->modelo }}</td>
                                             <td>{{ $c->anio }}</td>
-                                            <td>{{ number_format($c->capacidad_kg, 2) }}</td>
+                                            <td>{{ number_format($c->capacidad_kg / 1000, 3) }} t</td>
                                             <td>{{ $c->color ?? '-' }}</td>
                                             <td>{{ $c->propietario?->nombre_completo ?? '-' }}</td>
                                             <td>
@@ -450,16 +450,16 @@
 
                         {{-- Fila 3: Capacidad / Color / Propietario --}}
                         <div class="col-md-4">
-                            <label class="form-label">Capacidad (kg) <span class="text-danger">(*)</span></label>
+                            <label class="form-label">Capacidad (toneladas) <span class="text-danger">(*)</span></label>
                             <input type="text"
-                                class="form-control @error('capacidad_kg') is-invalid @enderror"
-                                name="capacidad_kg" id="cam_capacidad"
+                                class="form-control @error('capacidad_tn') is-invalid @enderror"
+                                name="capacidad_tn" id="cam_capacidad"
                                 inputmode="decimal"
-                                placeholder="Ej: 25.500"
+                                placeholder="Ej: 25.5"
                                 autocomplete="off"
                                 required>
-                            <small id="capacidad_hint" class="text-muted">Entre 10.000 kg y 50.000 kg — 3 decimales con punto.</small>
-                            @error('capacidad_kg')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <small id="capacidad_hint" class="text-muted">Entre 3.5 t y 35 t — máximo 3 decimales.</small>
+                            @error('capacidad_tn')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Color</label>
@@ -785,7 +785,7 @@
                                 <option value="">-- Seleccione camión --</option>
                                 @foreach($camiones as $c)
                                     <option value="{{ $c->id }}" data-uuid="{{ $c->uuid }}">
-                                        {{ $c->placa }} — {{ $c->marca }} {{ $c->modelo }} ({{ number_format($c->capacidad_kg,0) }} kg)
+                                        {{ $c->placa }} — {{ $c->marca }} {{ $c->modelo }} ({{ number_format($c->capacidad_kg/1000,1) }} t)
                                     </option>
                                 @endforeach
                             </select>
@@ -1269,71 +1269,51 @@
             }
         });
 
-        // Validación en tiempo real de capacidad
+        // Validación en tiempo real de capacidad en toneladas
         const capInput = document.getElementById('cam_capacidad');
         const capHint  = document.getElementById('capacidad_hint');
-        const capMin   = 10;
-        const capMax   = 50000;
+        const capMin   = 3.5;
+        const capMax   = 35;
 
         capInput.addEventListener('keydown', function (e) {
-            // Permitir teclas de control (backspace, delete, flechas, tab)
             const teclaControl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key);
             if (teclaControl) return;
-
-            // Solo dígitos y punto
             if (!/[0-9.]/.test(e.key)) { e.preventDefault(); return; }
-
-            // Solo un punto
             if (e.key === '.' && this.value.includes('.')) { e.preventDefault(); return; }
-
-            const valorFuturo = this.value + e.key;
-            const partes = valorFuturo.split('.');
-
-            // Bloquear si la parte entera supera 50000
-            const parteEntera = parseInt(partes[0] || '0');
-            if (!this.value.includes('.') && parteEntera > capMax) {
-                e.preventDefault();
-                return;
-            }
-
-            // Bloquear si los decimales ya tienen 3 dígitos
-            if (partes[1] !== undefined && partes[1].length >= 3 && e.key !== '.') {
-                e.preventDefault();
-                return;
-            }
+            const partes = (this.value + e.key).split('.');
+            if (parseInt(partes[0] || '0') > capMax) { e.preventDefault(); return; }
+            if (partes[1] !== undefined && partes[1].length >= 3 && e.key !== '.') { e.preventDefault(); return; }
         });
 
         capInput.addEventListener('input', function () {
-            // Limpiar caracteres no válidos (por si pegan texto)
             let val = this.value.replace(/[^0-9.]/g, '');
             const partes = val.split('.');
             if (partes.length > 2) val = partes[0] + '.' + partes.slice(1).join('');
-            if (partes[1] !== undefined && partes[1].length > 3) {
+            if (partes[1] !== undefined && partes[1].length > 3)
                 val = partes[0] + '.' + partes[1].substring(0, 3);
-            }
-            // Truncar parte entera si supera el máximo
-            if (parseInt(partes[0] || '0') > capMax) {
+            if (parseFloat(partes[0] || '0') > capMax)
                 val = String(capMax) + (partes[1] !== undefined ? '.' + partes[1] : '');
-            }
             this.value = val;
 
             const num = parseFloat(val);
             if (val === '' || isNaN(num)) {
                 this.classList.remove('is-invalid', 'is-valid');
-                capHint.className = 'text-muted';
-                capHint.textContent = 'Entre 10.000 kg y 50,000 kg — máximo 3 decimales con punto.';
+                capHint.className   = 'text-muted';
+                capHint.textContent = 'Entre 3.5 t y 35 t — máximo 3 decimales.';
                 return;
             }
             if (num < capMin) {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-                capHint.className = 'text-danger';
-                capHint.textContent = '⚠ La capacidad mínima es 10 kg.';
+                this.classList.add('is-invalid'); this.classList.remove('is-valid');
+                capHint.className   = 'text-danger';
+                capHint.textContent = '⚠ La capacidad mínima es 3.5 t.';
+            } else if (num > capMax) {
+                this.classList.add('is-invalid'); this.classList.remove('is-valid');
+                capHint.className   = 'text-danger';
+                capHint.textContent = '⚠ La capacidad máxima es 35 t.';
             } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-                capHint.className = 'text-success';
-                capHint.textContent = '✓ Capacidad válida';
+                this.classList.remove('is-invalid'); this.classList.add('is-valid');
+                capHint.className   = 'text-success';
+                capHint.textContent = '✓ Capacidad válida (' + (num * 1000).toLocaleString() + ' kg)';
             }
         });
     });
@@ -1472,7 +1452,7 @@
         document.getElementById('cam_marca').value        = camion.marca;
         document.getElementById('cam_modelo').value       = camion.modelo;
         document.getElementById('cam_anio').value         = camion.anio;
-        document.getElementById('cam_capacidad').value    = camion.capacidad_kg;
+        document.getElementById('cam_capacidad').value    = (camion.capacidad_kg / 1000).toFixed(3);
         document.getElementById('cam_color').value        = camion.color ?? '';
         document.getElementById('cam_estado').value       = camion.estado;
         document.getElementById('cam_propietario').value  = camion.propietario_id ?? '';

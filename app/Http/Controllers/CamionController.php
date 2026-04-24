@@ -34,7 +34,8 @@ class CamionController extends Controller
 
     public function store(CamionRequest $request)
     {
-        $data = $request->except(['documento_ruat', 'fotos']);
+        $data = $request->except(['documento_ruat', 'fotos', 'capacidad_tn']);
+        $data['capacidad_kg'] = $request->capacidad_tn * 1000;
 
         if ($request->hasFile('documento_ruat')) {
             $data['documento_ruat'] = $request->file('documento_ruat')
@@ -63,7 +64,8 @@ class CamionController extends Controller
 
     public function update(CamionRequest $request, Camion $camion)
     {
-        $data = $request->except(['documento_ruat', 'fotos']);
+        $data = $request->except(['documento_ruat', 'fotos', 'capacidad_tn']);
+        $data['capacidad_kg'] = $request->capacidad_tn * 1000;
 
         if ($request->hasFile('documento_ruat')) {
             if ($camion->documento_ruat) {
