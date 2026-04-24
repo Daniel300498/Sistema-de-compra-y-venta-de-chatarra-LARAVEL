@@ -59,6 +59,45 @@ class CamionConductorController extends Controller
         return response()->json($camiones);
     }
 
+    // Endpoint: conductores con asignación activa en el camión + propietario si conduce
+    public function conductoresRelacionados($uuid)
+    {
+        $camion = Camion::with([
+            'propietario',
+            'conductores' => fn($q) => $q->whereNull('fecha_fin'),
+            'conductores.conductor',
+        ])->where('uuid', $uuid)->firstOrFail();
+
+        $conductores = collect();
+
+        // Propietario si puede conducir
+        if ($camion->propietario && $camion->propietario->puedeConducir()) {
+            $conductores->push([
+                'id'       => $camion->propietario->id,
+                'nombre'   => $camion->propietario->nombre_completo,
+                'licencia' => $camion->propietario->licencia_numero,
+                'tipo'     => 'Propietario / Conductor',
+            ]);
+        }
+
+        // Conductores con asignación activa (fecha_fin NULL) en este camión
+        $camion->conductores
+            ->pluck('conductor')
+            ->unique('id')
+            ->each(function ($c) use ($conductores) {
+                if (!$conductores->contains('id', $c->id)) {
+                    $conductores->push([
+                        'id'       => $c->id,
+                        'nombre'   => $c->nombre_completo,
+                        'licencia' => $c->licencia_numero,
+                        'tipo'     => 'Conductor Asignado',
+                    ]);
+                }
+            });
+
+        return response()->json($conductores->values());
+    }
+
     // Endpoint: historial de conductores por camión
     public function historialConductores($uuid)
     {

@@ -219,12 +219,14 @@
 
                                     <div class="col-md-12">
                                         <label class="form-label">Camión <span class="text-danger">(*)</span></label>
-                                        <select class="form-select @error('camion_id') is-invalid @enderror" name="camion_id" required>
+                                        <select class="form-select @error('camion_id') is-invalid @enderror"
+                                            name="camion_id" id="cc_camion_id"
+                                            onchange="cargarConductoresPorCamion(this)" required>
                                             <option value="">-- Seleccione camión disponible --</option>
                                             @foreach($camionesDisponibles as $cam)
-                                                <option value="{{ $cam->id }}">
+                                                <option value="{{ $cam->id }}" data-uuid="{{ $cam->uuid }}">
                                                     {{ $cam->placa }} — {{ $cam->marca }} {{ $cam->modelo }}
-                                                    ({{ $cam->capacidad_kg }} kg)
+                                                    ({{ number_format($cam->capacidad_kg, 0) }} kg)
                                                     @if($cam->conductorActual?->conductor)
                                                         | Conductor: {{ $cam->conductorActual->conductor->nombre_completo }}
                                                     @endif
@@ -257,14 +259,13 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label">Conductor específico (opcional)</label>
-                                        <select class="form-select" name="conductor_id">
-                                            <option value="">-- Usar conductor actual del camión --</option>
-                                            @foreach($choferes as $ch)
-                                                <option value="{{ $ch->id }}">
-                                                    {{ $ch->nombre_completo }} — Lic: {{ $ch->licencia_numero }} ({{ $ch->licencia_categoria }})
-                                                </option>
-                                            @endforeach
+                                        <select class="form-select" name="conductor_id" id="cc_conductor_id" disabled>
+                                            <option value="">— Primero seleccione un camión —</option>
                                         </select>
+                                        <div id="cc_conductor_hint" class="form-text text-muted d-none">
+                                            <i class="bi bi-info-circle"></i>
+                                            Se muestran el propietario (si conduce) y conductores con asignación activa en este camión.
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6">
@@ -310,5 +311,49 @@
             bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pane-agregar"]')).show();
         });
     @endif
+
+    function cargarConductoresPorCamion(select) {
+        const option = select.options[select.selectedIndex];
+        const uuid   = option ? option.dataset.uuid : null;
+        const selectConductor = document.getElementById('cc_conductor_id');
+        const hint            = document.getElementById('cc_conductor_hint');
+
+        selectConductor.innerHTML = '<option value="">— Cargando... —</option>';
+        selectConductor.disabled  = true;
+        hint.classList.add('d-none');
+
+        if (!uuid) {
+            selectConductor.innerHTML = '<option value="">— Primero seleccione un camión —</option>';
+            return;
+        }
+
+        fetch('{{ url("api/camion") }}/' + uuid + '/conductores-relacionados', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(r => r.json())
+        .then(conductores => {
+            selectConductor.innerHTML = '<option value="">— Usar conductor actual del camión —</option>';
+
+            if (conductores.length === 0) {
+                selectConductor.disabled = true;
+                hint.classList.add('d-none');
+                return;
+            }
+
+            conductores.forEach(function(c) {
+                const op = document.createElement('option');
+                op.value       = c.id;
+                op.textContent = c.nombre + ' — Lic: ' + (c.licencia || 'S/N') + ' [' + c.tipo + ']';
+                selectConductor.appendChild(op);
+            });
+
+            selectConductor.disabled = false;
+            hint.classList.remove('d-none');
+        })
+        .catch(() => {
+            selectConductor.innerHTML = '<option value="">— Error al cargar conductores —</option>';
+            selectConductor.disabled = true;
+        });
+    }
 </script>
 @endsection
