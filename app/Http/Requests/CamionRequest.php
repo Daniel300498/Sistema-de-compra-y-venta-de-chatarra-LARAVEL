@@ -31,7 +31,10 @@ class CamionRequest extends FormRequest
             'capacidad_kg'  => 'required|numeric|min:10|max:50000|regex:/^\d+(\.\d{1,3})?$/',
             'color'         => 'nullable|string|max:30',
             'estado'        => 'required|in:Activo,Inactivo,En mantenimiento',
-            'propietario_id'=> 'nullable|exists:operadores_transporte,id',
+            'propietario_id'  => 'nullable|exists:operadores_transporte,id',
+            'documento_ruat'  => 'nullable|file|mimes:pdf|max:5120',
+            'fotos'           => 'nullable|array|max:5',
+            'fotos.*'         => 'file|mimes:jpg,jpeg,png,webp|max:4096',
         ];
     }
 
@@ -53,7 +56,12 @@ class CamionRequest extends FormRequest
             'capacidad_kg.min'       => 'La capacidad mínima es 10 kg.',
             'capacidad_kg.max'       => 'La capacidad máxima es 50,000 kg.',
             'capacidad_kg.regex'     => 'La capacidad permite máximo 3 decimales separados por punto.',
-            'estado.required'        => 'El estado es obligatorio.',
+            'estado.required'         => 'El estado es obligatorio.',
+            'documento_ruat.mimes'    => 'El RUAT debe ser un archivo PDF.',
+            'documento_ruat.max'      => 'El RUAT no puede superar los 5 MB.',
+            'fotos.max'               => 'Se permiten máximo 5 fotos.',
+            'fotos.*.mimes'           => 'Las fotos deben ser JPG, PNG o WEBP.',
+            'fotos.*.max'             => 'Cada foto no puede superar los 4 MB.',
         ];
     }
 }

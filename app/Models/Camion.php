@@ -25,6 +25,7 @@ class Camion extends Model implements Auditable
         'capacidad_kg',
         'color',
         'estado',
+        'documento_ruat',
         'propietario_id',
         'created_by',
         'updated_by',
@@ -55,5 +56,10 @@ class Camion extends Model implements Auditable
     public function conductorActual()
     {
         return $this->hasOne(CamionConductor::class, 'camion_id')->whereNull('fecha_fin')->latest('fecha_inicio');
+    }
+
+    public function fotos()
+    {
+        return $this->hasMany(CamionFoto::class, 'camion_id');
     }
 }

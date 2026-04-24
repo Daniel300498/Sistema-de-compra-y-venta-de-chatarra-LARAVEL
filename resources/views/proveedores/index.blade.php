@@ -24,6 +24,11 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Proveedores Registrados</h5>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Gestiona el registro de proveedores que suministran materiales a la empresa.
+                            Mantén actualizados sus datos de contacto, tipo de producto que ofrecen y documentación tributaria para agilizar los procesos de compra.
+                        </p>
                             <div class="table-responsive">
                                 <table cellspacing="0" width="100%" id="datos" class="table table-hover table-bordered table-sm">
                                     <thead>

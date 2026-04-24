@@ -23,7 +23,12 @@
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-body">
-                <h5 class="card-title">Permisos registrados</h5>
+                <h5 class="card-title">Permisos Registrados</h5>
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Los permisos son las acciones específicas que se pueden habilitar o restringir dentro del sistema (ver, crear, editar, eliminar).
+                    Se agrupan por módulo y se asignan a los roles para controlar con precisión el acceso de cada usuario.
+                </p>
                 <div class="table-responsive">
                     <table class="table table-hover table-bordered table-sm">
                         <thead >

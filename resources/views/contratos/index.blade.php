@@ -27,6 +27,11 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Contratos Registrados</h5>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Registra y hace seguimiento a los contratos de compra y venta de chatarra celebrados con clientes y proveedores.
+                        Cada contrato puede tener camiones asignados para la entrega del material y un documento PDF adjunto como respaldo legal.
+                    </p>
                     <div class="table-responsive">
                         <table id="datos" class="table table-hover table-bordered table-sm">
                             <thead>
@@ -112,6 +117,13 @@
                                                         <i class="bi bi-truck"></i> Gestionar Camiones
                                                     </a>
                                                 </li>
+                                                @if($c->documento_pdf)
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="{{ route('contratos.pdf', $c->uuid) }}" target="_blank">
+                                                        <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+                                                    </a>
+                                                </li>
+                                                @endif
                                                 @can('contratos.edit')
                                                 <li>
                                                     <a class="dropdown-item" href="#" onclick="editarContrato({{ $c->id }}, '{{ $c->uuid }}')">
@@ -149,7 +161,7 @@
                 <h5 class="modal-title"><i class="bi bi-file-earmark-text"></i> <span id="tituloContrato">Nuevo Contrato</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formContrato" method="POST" action="{{ route('contratos.store') }}">
+            <form id="formContrato" method="POST" action="{{ route('contratos.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="methodContrato" value="POST">
                 <div class="modal-body">
@@ -279,6 +291,19 @@
                             @error('monto_total')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
+                        {{-- Documento PDF --}}
+                        <div class="col-md-12">
+                            <label class="form-label">Documento PDF del Contrato</label>
+                            <input type="file" class="form-control @error('documento_pdf') is-invalid @enderror"
+                                name="documento_pdf" id="documento_pdf" accept=".pdf">
+                            <small class="text-muted">Solo archivos PDF. Tamaño máximo: 30 MB.</small>
+                            <div id="pdfActualInfo" class="mt-1 d-none">
+                                <span class="text-success"><i class="bi bi-file-earmark-pdf"></i> Ya tiene PDF cargado.</span>
+                                <small class="text-muted">Si selecciona uno nuevo, reemplazará al actual.</small>
+                            </div>
+                            @error('documento_pdf')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -311,6 +336,7 @@
         document.getElementById('formContrato').reset();
         document.getElementById('moneda').value = 'BOB';
         document.getElementById('estado').value = 'Borrador';
+        document.getElementById('pdfActualInfo').classList.add('d-none');
     }
 
     function editarContrato(id, uuid) {
@@ -332,6 +358,13 @@
                 document.getElementById('toneladas_contrato').value          = c.toneladas_contrato ?? '';
                 document.getElementById('moneda').value                      = c.moneda;
                 document.getElementById('monto_total').value                 = c.monto_total;
+                document.getElementById('documento_pdf').value               = '';
+                const pdfInfo = document.getElementById('pdfActualInfo');
+                if (c.documento_pdf) {
+                    pdfInfo.classList.remove('d-none');
+                } else {
+                    pdfInfo.classList.add('d-none');
+                }
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalContrato')).show();
             });
     }

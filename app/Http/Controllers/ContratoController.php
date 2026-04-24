@@ -8,6 +8,7 @@ use App\Models\Cliente;
 use App\Models\Proveedor;
 use App\Models\OperadorTransporte;
 use App\Http\Requests\ContratoRequest;
+use Illuminate\Support\Facades\Storage;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class ContratoController extends Controller
@@ -37,7 +38,14 @@ class ContratoController extends Controller
 
     public function store(ContratoRequest $request)
     {
-        Contrato::create($request->all());
+        $data = $request->except('documento_pdf');
+
+        if ($request->hasFile('documento_pdf')) {
+            $data['documento_pdf'] = $request->file('documento_pdf')
+                ->store('contratos', 'public');
+        }
+
+        Contrato::create($data);
         Alert::success('Registro', 'Contrato registrado con éxito.');
         return redirect()->route('contratos.index');
     }
@@ -51,9 +59,33 @@ class ContratoController extends Controller
 
     public function update(ContratoRequest $request, Contrato $contrato)
     {
-        $contrato->update($request->all());
+        $data = $request->except('documento_pdf');
+
+        if ($request->hasFile('documento_pdf')) {
+            // Eliminar el PDF anterior si existe
+            if ($contrato->documento_pdf) {
+                Storage::disk('public')->delete($contrato->documento_pdf);
+            }
+            $data['documento_pdf'] = $request->file('documento_pdf')
+                ->store('contratos', 'public');
+        }
+
+        $contrato->update($data);
         Alert::success('Actualización', 'Contrato actualizado con éxito.');
         return redirect()->route('contratos.index');
+    }
+
+    public function verPdf($uuid)
+    {
+        $contrato = Contrato::where('uuid', $uuid)->firstOrFail();
+
+        abort_if(!$contrato->documento_pdf, 404, 'Este contrato no tiene documento PDF.');
+
+        $path = Storage::disk('public')->path($contrato->documento_pdf);
+
+        abort_if(!file_exists($path), 404, 'Archivo no encontrado.');
+
+        return response()->file($path, ['Content-Type' => 'application/pdf']);
     }
 
     public function destroy($uuid)

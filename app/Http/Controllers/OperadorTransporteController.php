@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OperadorTransporte;
 use App\Http\Requests\OperadorTransporteRequest;
+use Illuminate\Support\Facades\Storage;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class OperadorTransporteController extends Controller
@@ -21,7 +22,16 @@ class OperadorTransporteController extends Controller
 
     public function store(OperadorTransporteRequest $request)
     {
-        OperadorTransporte::create($request->all());
+        $data = $request->except(['doc_carnet', 'doc_licencia']);
+
+        if ($request->hasFile('doc_carnet')) {
+            $data['doc_carnet'] = $request->file('doc_carnet')->store('operadores/carnets', 'public');
+        }
+        if ($request->hasFile('doc_licencia')) {
+            $data['doc_licencia'] = $request->file('doc_licencia')->store('operadores/licencias', 'public');
+        }
+
+        OperadorTransporte::create($data);
         Alert::success('Registro', 'Operador registrado con éxito.');
         return redirect()->route('camiones.index', ['tab' => 'operadores']);
     }
@@ -34,7 +44,22 @@ class OperadorTransporteController extends Controller
 
     public function update(OperadorTransporteRequest $request, OperadorTransporte $operador)
     {
-        $operador->update($request->all());
+        $data = $request->except(['doc_carnet', 'doc_licencia']);
+
+        if ($request->hasFile('doc_carnet')) {
+            if ($operador->doc_carnet) {
+                Storage::disk('public')->delete($operador->doc_carnet);
+            }
+            $data['doc_carnet'] = $request->file('doc_carnet')->store('operadores/carnets', 'public');
+        }
+        if ($request->hasFile('doc_licencia')) {
+            if ($operador->doc_licencia) {
+                Storage::disk('public')->delete($operador->doc_licencia);
+            }
+            $data['doc_licencia'] = $request->file('doc_licencia')->store('operadores/licencias', 'public');
+        }
+
+        $operador->update($data);
         Alert::success('Actualización', 'Operador actualizado con éxito.');
         return redirect()->route('camiones.index', ['tab' => 'operadores']);
     }
@@ -45,5 +70,25 @@ class OperadorTransporteController extends Controller
         $operador->delete();
         Alert::success('Eliminación', 'Operador eliminado con éxito.');
         return redirect()->route('camiones.index', ['tab' => 'operadores']);
+    }
+
+    public function verCarnet($uuid)
+    {
+        $operador = OperadorTransporte::where('uuid', $uuid)->firstOrFail();
+        abort_if(!$operador->doc_carnet, 404, 'Este operador no tiene carnet cargado.');
+        $path = Storage::disk('public')->path($operador->doc_carnet);
+        abort_if(!file_exists($path), 404, 'Archivo no encontrado.');
+        $mime = mime_content_type($path);
+        return response()->file($path, ['Content-Type' => $mime]);
+    }
+
+    public function verLicencia($uuid)
+    {
+        $operador = OperadorTransporte::where('uuid', $uuid)->firstOrFail();
+        abort_if(!$operador->doc_licencia, 404, 'Este operador no tiene licencia cargada.');
+        $path = Storage::disk('public')->path($operador->doc_licencia);
+        abort_if(!file_exists($path), 404, 'Archivo no encontrado.');
+        $mime = mime_content_type($path);
+        return response()->file($path, ['Content-Type' => $mime]);
     }
 }

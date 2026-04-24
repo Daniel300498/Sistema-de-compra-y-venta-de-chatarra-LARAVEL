@@ -22,6 +22,12 @@
             <div class="card">
                 <div class="card-body pt-3">
 
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Módulo de gestión del parque vehicular de la empresa. Administra los camiones, sus propietarios y conductores,
+                        y controla qué conductor está asignado a cada vehículo en cada momento.
+                    </p>
+
                     {{-- ===== SLIDER / TABS ===== --}}
                     <ul class="nav nav-tabs" id="transporteTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -45,6 +51,11 @@
 
                         {{-- ========== TAB CAMIONES ========== --}}
                         <div class="tab-pane fade" id="pane-camiones" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-truck me-1"></i>
+                                Registra los vehículos de la flota con sus datos técnicos, propietario asignado, documento RUAT y fotos.
+                                Puedes ver el conductor activo de cada camión en tiempo real.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Camiones Registrados</h5>
                                 @can('camiones.create')
@@ -95,11 +106,33 @@
                                                     <ul class="dropdown-menu">
                                                         @can('camiones.edit')
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="editarCamion({{ $c }})">
+                                                            <a class="dropdown-item" href="#" onclick="editarCamion({{ $c }}, {{ $c->fotos->toJson() }})">
                                                                 <i class="bi bi-pencil"></i> Modificar
                                                             </a>
                                                         </li>
                                                         @endcan
+                                                        <li>
+                                                            @if($c->fotos->count())
+                                                            <a class="dropdown-item" href="#" onclick="verFotos({{ $c->fotos->toJson() }}, '{{ $c->placa }}')">
+                                                                <i class="bi bi-images"></i> Ver Fotos ({{ $c->fotos->count() }})
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted">
+                                                                <i class="bi bi-images"></i> Sin fotos
+                                                            </span>
+                                                            @endif
+                                                        </li>
+                                                        <li>
+                                                            @if($c->documento_ruat)
+                                                            <a class="dropdown-item" href="{{ route('camiones.ruat', $c->uuid) }}" target="_blank">
+                                                                <i class="bi bi-file-earmark-pdf"></i> Ver RUAT
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted">
+                                                                <i class="bi bi-file-earmark-pdf"></i> Sin RUAT
+                                                            </span>
+                                                            @endif
+                                                        </li>
                                                         @can('camiones.destroy')
                                                         <li>
                                                             <a class="dropdown-item text-danger" href="{{ route('camiones.destroy', $c->uuid) }}"
@@ -120,6 +153,11 @@
 
                         {{-- ========== TAB OPERADORES ========== --}}
                         <div class="tab-pane fade" id="pane-operadores" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-person-workspace me-1"></i>
+                                Administra las personas vinculadas al transporte: propietarios de vehículos y conductores.
+                                Puedes registrar sus datos personales, licencia de conducir y documentos de identidad.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Propietarios y Conductores</h5>
                                 @can('operadores.create')
@@ -137,7 +175,7 @@
                                             <th>Teléfono</th>
                                             <th>Tipo</th>
                                             <th>Licencia</th>
-                                            <th>Categoría</th>
+                                            <th>País Lic.</th>
                                             <th>Venc. Licencia</th>
                                             <th>Estado</th>
                                             <th>Acciones</th>
@@ -159,7 +197,7 @@
                                                 @endif
                                             </td>
                                             <td>{{ $o->licencia_numero ?? '-' }}</td>
-                                            <td>{{ $o->licencia_categoria ?? '-' }}</td>
+                                            <td>{{ $o->licencia_pais ?? '-' }}</td>
                                             <td>
                                                 @if($o->licencia_vencimiento)
                                                     @if($o->licencia_vencimiento->isPast())
@@ -185,6 +223,26 @@
                                                             </a>
                                                         </li>
                                                         @endcan
+                                                        <li>
+                                                            @if($o->doc_carnet)
+                                                            <a class="dropdown-item" href="{{ route('operadores.carnet', $o->uuid) }}" target="_blank">
+                                                                <i class="bi bi-person-badge"></i> Ver Carnet
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted"><i class="bi bi-person-badge"></i> Sin carnet</span>
+                                                            @endif
+                                                        </li>
+                                                        @if(in_array($o->tipo_operador, ['chofer','ambos']))
+                                                        <li>
+                                                            @if($o->doc_licencia)
+                                                            <a class="dropdown-item" href="{{ route('operadores.licencia', $o->uuid) }}" target="_blank">
+                                                                <i class="bi bi-card-text"></i> Ver Licencia
+                                                            </a>
+                                                            @else
+                                                            <span class="dropdown-item text-muted"><i class="bi bi-card-text"></i> Sin licencia</span>
+                                                            @endif
+                                                        </li>
+                                                        @endif
                                                         @can('operadores.destroy')
                                                         <li>
                                                             <a class="dropdown-item text-danger" href="{{ route('operadores.destroy', $o->uuid) }}"
@@ -205,6 +263,11 @@
 
                         {{-- ========== TAB ASIGNACIONES ========== --}}
                         <div class="tab-pane fade" id="pane-asignaciones" role="tabpanel">
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-person-check me-1"></i>
+                                Controla qué conductor opera cada camión y en qué período. Al finalizar una asignación queda registrada en el historial,
+                                permitiendo tener trazabilidad completa del uso de cada vehículo.
+                            </p>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title mb-0">Asignación de Conductores a Camiones</h5>
                                 @can('conductores.create')
@@ -278,7 +341,7 @@
                 <h5 class="modal-title"><i class="bi bi-truck"></i> <span id="tituloCamion">Nuevo Camión</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formCamion" method="POST" action="{{ route('camiones.store') }}">
+            <form id="formCamion" method="POST" action="{{ route('camiones.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="methodCamion" value="POST">
                 <div class="modal-body">
@@ -388,6 +451,48 @@
                             </select>
                         </div>
 
+                        {{-- Documento RUAT --}}
+                        <div class="col-md-6">
+                            <label class="form-label">Documento RUAT <small class="text-muted">(PDF, máx. 5 MB)</small></label>
+                            <input type="file" class="form-control @error('documento_ruat') is-invalid @enderror"
+                                name="documento_ruat" id="cam_ruat" accept=".pdf">
+                            <div id="ruatActualInfo" class="mt-1 d-none">
+                                <span class="text-success"><i class="bi bi-file-earmark-pdf"></i> Ya tiene RUAT cargado.</span>
+                                <small class="text-muted">Seleccionar uno nuevo lo reemplazará.</small>
+                            </div>
+                            @error('documento_ruat')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Fotos del camión --}}
+                        <div class="col-12">
+                            <label class="form-label">Fotos del Camión <small class="text-muted">(JPG/PNG/WEBP, máx. 5 fotos, 4 MB c/u)</small></label>
+
+                            {{-- Input oculto — se activa con el botón --}}
+                            <input type="file" id="cam_fotos_input" accept=".jpg,.jpeg,.png,.webp"
+                                class="d-none" onchange="agregarFotosNuevas(this)">
+
+                            {{-- Botón para agregar fotos --}}
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnAgregarFoto"
+                                    onclick="document.getElementById('cam_fotos_input').click()">
+                                    <i class="bi bi-plus-lg"></i> Agregar foto
+                                </button>
+                                <small class="text-muted ms-2" id="fotosContadorLabel">0 / 5 fotos</small>
+                            </div>
+
+                            {{-- Lista visual de fotos a subir (nuevas) --}}
+                            <div id="fotosNuevasLista" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                            {{-- Fotos ya guardadas en BD (modo edición) --}}
+                            <div id="galeriaFotos" class="d-none">
+                                <label class="form-label text-muted mb-1"><i class="bi bi-images"></i> Fotos guardadas</label>
+                                <div id="galeriaFotosContenido" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+
+                            @error('fotos')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            @error('fotos.*')<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -395,6 +500,21 @@
                     <button type="submit" class="btn btn-primary" id="btnCamion">Registrar</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL GALERÍA DE FOTOS ===== --}}
+<div class="modal fade" id="modalGaleria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-images"></i> Fotos — <span id="galeriaPlaca"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="galeriaViewer" class="row g-2"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -407,7 +527,7 @@
                 <h5 class="modal-title"><i class="bi bi-person-workspace"></i> <span id="tituloOperador">Nuevo Operador</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="formOperador" method="POST" action="{{ route('operadores.store') }}">
+            <form id="formOperador" method="POST" action="{{ route('operadores.store') }}" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="_method" id="methodOperador" value="POST">
                 <div class="modal-body">
@@ -460,27 +580,61 @@
                     </div>
 
                     {{-- Sección licencia (se muestra/oculta según tipo) --}}
-                    <div id="seccionLicencia" class="row g-3 mt-1 border rounded p-2 bg-light" style="display:none!important">
-                        <h6 class="text-primary"><i class="bi bi-card-text"></i> Datos de Licencia</h6>
+                    <div id="seccionLicencia" class="row g-3 mt-2 border rounded p-2 bg-light" style="display:none!important">
+                        <h6 class="text-primary mb-0"><i class="bi bi-card-text"></i> Datos de Licencia de Conducir</h6>
                         <div class="col-md-4">
                             <label class="form-label">N° Licencia <span class="text-danger">(*)</span></label>
-                            <input type="text" class="form-control @error('licencia_numero') is-invalid @enderror" name="licencia_numero" id="op_licencia_num" maxlength="30">
+                            <input type="text" class="form-control @error('licencia_numero') is-invalid @enderror"
+                                name="licencia_numero" id="op_licencia_num" maxlength="30"
+                                onkeyup="this.value=this.value.toUpperCase()">
                             @error('licencia_numero')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Categoría <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('licencia_categoria') is-invalid @enderror" name="licencia_categoria" id="op_licencia_cat">
+                            <label class="form-label">País de Expedición <span class="text-danger">(*)</span></label>
+                            <select class="form-select @error('licencia_pais') is-invalid @enderror" name="licencia_pais" id="op_licencia_pais">
                                 <option value="">-- Seleccione --</option>
-                                @foreach(['A','B','C','D','E','F','G'] as $cat)
-                                    <option value="{{ $cat }}">{{ $cat }}</option>
+                                @foreach(['Bolivia','Argentina','Brasil','Chile','Paraguay','Perú','Uruguay','Colombia','Ecuador','Venezuela','México','Estados Unidos','España','Otro'] as $pais)
+                                    <option value="{{ $pais }}">{{ $pais }}</option>
                                 @endforeach
                             </select>
-                            @error('licencia_categoria')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('licencia_pais')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Vencimiento <span class="text-danger">(*)</span></label>
-                            <input type="date" class="form-control @error('licencia_vencimiento') is-invalid @enderror" name="licencia_vencimiento" id="op_licencia_venc">
+                            <label class="form-label">Fecha de Vencimiento <span class="text-danger">(*)</span></label>
+                            <input type="date" class="form-control @error('licencia_vencimiento') is-invalid @enderror"
+                                name="licencia_vencimiento" id="op_licencia_venc">
                             @error('licencia_vencimiento')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    {{-- Documentos --}}
+                    <div class="row g-3 mt-2 border rounded p-2">
+                        <h6 class="text-secondary mb-0"><i class="bi bi-paperclip"></i> Documentos <small class="text-muted">(PDF, JPG o PNG, máx. 5 MB c/u)</small></h6>
+
+                        {{-- Carnet de identidad — siempre visible --}}
+                        <div class="col-md-6">
+                            <label class="form-label">Carnet de Identidad</label>
+                            <input type="file" class="form-control @error('doc_carnet') is-invalid @enderror"
+                                name="doc_carnet" id="op_doc_carnet"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp">
+                            <div id="op_carnet_info" class="mt-1 d-none">
+                                <span class="text-success small"><i class="bi bi-check-circle"></i> Ya tiene carnet cargado.</span>
+                                <small class="text-muted">Seleccionar uno nuevo lo reemplazará.</small>
+                            </div>
+                            @error('doc_carnet')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        {{-- Licencia — solo visible si es chofer o ambos --}}
+                        <div class="col-md-6 d-none" id="seccionDocLicencia">
+                            <label class="form-label">Documento de Licencia de Conducir</label>
+                            <input type="file" class="form-control @error('doc_licencia') is-invalid @enderror"
+                                name="doc_licencia" id="op_doc_licencia"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp">
+                            <div id="op_licencia_info" class="mt-1 d-none">
+                                <span class="text-success small"><i class="bi bi-check-circle"></i> Ya tiene licencia cargada.</span>
+                                <small class="text-muted">Seleccionar una nueva la reemplazará.</small>
+                            </div>
+                            @error('doc_licencia')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -588,11 +742,15 @@
     // Mostrar/ocultar sección licencia según tipo operador
     function toggleLicencia() {
         const tipo = document.getElementById('op_tipo').value;
-        const seccion = document.getElementById('seccionLicencia');
-        if (tipo === 'chofer' || tipo === 'ambos') {
-            seccion.style.removeProperty('display');
+        const seccionLic = document.getElementById('seccionLicencia');
+        const seccionDocLic = document.getElementById('seccionDocLicencia');
+        const esCondutor = tipo === 'chofer' || tipo === 'ambos';
+        if (esCondutor) {
+            seccionLic.style.removeProperty('display');
+            seccionDocLic.classList.remove('d-none');
         } else {
-            seccion.style.display = 'none';
+            seccionLic.style.display = 'none';
+            seccionDocLic.classList.add('d-none');
         }
     }
 
@@ -710,31 +868,216 @@
         });
     });
 
+    // ── Gestión de fotos nuevas (lista visual) ────────────────────────────────
+    let _fotosNuevas = []; // DataTransfer acumulado de archivos nuevos
+    let _fotosGuardadas = 0; // cuántas fotos ya existen en BD
+
+    function _actualizarContador() {
+        const total = _fotosNuevas.length + _fotosGuardadas;
+        document.getElementById('fotosContadorLabel').innerText = total + ' / 5 fotos';
+        const btn = document.getElementById('btnAgregarFoto');
+        btn.disabled = total >= 5;
+    }
+
+    function agregarFotosNuevas(input) {
+        const maxTotal = 5;
+        const disponibles = maxTotal - _fotosNuevas.length - _fotosGuardadas;
+        const lista = document.getElementById('fotosNuevasLista');
+
+        Array.from(input.files).slice(0, disponibles).forEach(function(file) {
+            const idx = _fotosNuevas.length;
+            _fotosNuevas.push(file);
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const card = document.createElement('div');
+                card.className = 'position-relative border rounded';
+                card.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                card.id = 'nueva-foto-' + idx;
+                card.innerHTML = `
+                    <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" title="${file.name}">
+                    <button type="button" onclick="quitarFotoNueva(${idx})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Quitar">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center"
+                        style="font-size:9px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${file.name}
+                    </div>`;
+                lista.appendChild(card);
+                _actualizarContador();
+                _sincronizarInputFotos();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        input.value = ''; // limpiar para permitir seleccionar el mismo archivo
+    }
+
+    function quitarFotoNueva(idx) {
+        _fotosNuevas.splice(idx, 1);
+        // Rebuild lista visual
+        const lista = document.getElementById('fotosNuevasLista');
+        lista.innerHTML = '';
+        const copia = [..._fotosNuevas];
+        _fotosNuevas = [];
+        _fotosGuardadas = parseInt(document.getElementById('fotosContadorLabel').innerText.split('/')[0]) - 0;
+        // recalcular guardadas
+        _fotosGuardadas = document.querySelectorAll('#galeriaFotosContenido .position-relative').length;
+        copia.forEach(function(file, i) {
+            _fotosNuevas.push(file);
+            const reader = new FileReader();
+            const capturedIdx = i;
+            reader.onload = function(e) {
+                const card = document.createElement('div');
+                card.className = 'position-relative border rounded';
+                card.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                card.id = 'nueva-foto-' + capturedIdx;
+                card.innerHTML = `
+                    <img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;" title="${file.name}">
+                    <button type="button" onclick="quitarFotoNueva(${capturedIdx})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Quitar">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-50 text-white text-center"
+                        style="font-size:9px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${file.name}
+                    </div>`;
+                lista.appendChild(card);
+                _actualizarContador();
+            };
+            reader.readAsDataURL(file);
+        });
+        _sincronizarInputFotos();
+    }
+
+    function _sincronizarInputFotos() {
+        // Asignar los archivos acumulados al input real usando DataTransfer
+        const input = document.getElementById('cam_fotos_input');
+        const dt = new DataTransfer();
+        _fotosNuevas.forEach(f => dt.items.add(f));
+        input.files = dt.files;
+        // Cambiar el name para que se envíe como fotos[]
+        input.name = 'fotos[]';
+        input.multiple = true;
+    }
+
     // Reset y abrir modal camión en modo Nuevo
     function resetModalCamion() {
         document.getElementById('tituloCamion').innerText = 'Nuevo Camión';
-        document.getElementById('btnCamion').innerText = 'Registrar';
-        document.getElementById('methodCamion').value = 'POST';
-        document.getElementById('formCamion').action = '{{ route("camiones.store") }}';
+        document.getElementById('btnCamion').innerText    = 'Registrar';
+        document.getElementById('methodCamion').value     = 'POST';
+        document.getElementById('formCamion').action      = '{{ route("camiones.store") }}';
         document.getElementById('formCamion').reset();
+        document.getElementById('ruatActualInfo').classList.add('d-none');
+        document.getElementById('galeriaFotos').classList.add('d-none');
+        document.getElementById('galeriaFotosContenido').innerHTML = '';
+        document.getElementById('fotosNuevasLista').innerHTML = '';
+        _fotosNuevas = [];
+        _fotosGuardadas = 0;
+        _actualizarContador();
+        // Limpiar el input de fotos
+        const inputFotos = document.getElementById('cam_fotos_input');
+        inputFotos.value = '';
+        const dtVacio = new DataTransfer();
+        inputFotos.files = dtVacio.files;
     }
 
     // Llenar modal camión en modo Editar
-    function editarCamion(camion) {
+    function editarCamion(camion, fotos) {
+        // Limpiar estado de fotos nuevas
+        _fotosNuevas = [];
+        document.getElementById('fotosNuevasLista').innerHTML = '';
+        const inputFotos = document.getElementById('cam_fotos_input');
+        inputFotos.value = '';
+        const dtVacio = new DataTransfer();
+        inputFotos.files = dtVacio.files;
+
         document.getElementById('tituloCamion').innerText = 'Editar Camión';
-        document.getElementById('btnCamion').innerText = 'Actualizar';
-        document.getElementById('methodCamion').value = 'PUT';
-        document.getElementById('formCamion').action = '/camion/' + camion.id;
-        document.getElementById('cam_placa').value      = camion.placa;
-        document.getElementById('cam_tipo').value       = camion.tipo_vehiculo;
-        document.getElementById('cam_marca').value      = camion.marca;
-        document.getElementById('cam_modelo').value     = camion.modelo;
-        document.getElementById('cam_anio').value       = camion.anio;
-        document.getElementById('cam_capacidad').value  = camion.capacidad_kg;
-        document.getElementById('cam_color').value      = camion.color ?? '';
-        document.getElementById('cam_estado').value     = camion.estado;
-        document.getElementById('cam_propietario').value = camion.propietario_id ?? '';
+        document.getElementById('btnCamion').innerText    = 'Actualizar';
+        document.getElementById('methodCamion').value     = 'PUT';
+        document.getElementById('formCamion').action      = '/camion/' + camion.id;
+        document.getElementById('cam_placa').value        = camion.placa;
+        document.getElementById('cam_tipo').value         = camion.tipo_vehiculo;
+        document.getElementById('cam_marca').value        = camion.marca;
+        document.getElementById('cam_modelo').value       = camion.modelo;
+        document.getElementById('cam_anio').value         = camion.anio;
+        document.getElementById('cam_capacidad').value    = camion.capacidad_kg;
+        document.getElementById('cam_color').value        = camion.color ?? '';
+        document.getElementById('cam_estado').value       = camion.estado;
+        document.getElementById('cam_propietario').value  = camion.propietario_id ?? '';
+        document.getElementById('cam_ruat').value         = '';
+
+        // Info RUAT
+        const ruatInfo = document.getElementById('ruatActualInfo');
+        camion.documento_ruat ? ruatInfo.classList.remove('d-none') : ruatInfo.classList.add('d-none');
+
+        // Fotos guardadas en BD
+        const galeria   = document.getElementById('galeriaFotos');
+        const contenido = document.getElementById('galeriaFotosContenido');
+        contenido.innerHTML = '';
+
+        if (fotos && fotos.length > 0) {
+            galeria.classList.remove('d-none');
+            _fotosGuardadas = fotos.length;
+            fotos.forEach(function(foto) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'position-relative border rounded';
+                wrapper.style.cssText = 'width:90px;height:80px;overflow:hidden;';
+                wrapper.id = 'foto-' + foto.id;
+                wrapper.innerHTML = `
+                    <img src="/storage/${foto.ruta}" style="width:100%;height:100%;object-fit:cover;" title="Foto guardada">
+                    <button type="button" onclick="eliminarFoto(${foto.id})"
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 px-1"
+                        style="font-size:10px;line-height:1.5;" title="Eliminar foto">✕</button>
+                    <div class="position-absolute bottom-0 start-0 end-0 bg-success bg-opacity-75 text-white text-center"
+                        style="font-size:9px;padding:1px;">Guardada</div>`;
+                contenido.appendChild(wrapper);
+            });
+        } else {
+            galeria.classList.add('d-none');
+            _fotosGuardadas = 0;
+        }
+
+        _actualizarContador();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCamion')).show();
+    }
+
+    function verFotos(fotos, placa) {
+        document.getElementById('galeriaPlaca').innerText = placa;
+        const viewer = document.getElementById('galeriaViewer');
+        viewer.innerHTML = '';
+        fotos.forEach(function(foto) {
+            viewer.innerHTML += `
+                <div class="col-6 col-md-4">
+                    <a href="/storage/${foto.ruta}" target="_blank">
+                        <img src="/storage/${foto.ruta}"
+                            class="img-fluid rounded border"
+                            style="width:100%;height:180px;object-fit:cover;"
+                            title="Ver foto completa">
+                    </a>
+                </div>`;
+        });
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalGaleria')).show();
+    }
+
+    function eliminarFoto(fotoId) {
+        if (!confirm('¿Eliminar esta foto?')) return;
+        fetch('{{ url("camion/foto") }}/' + fotoId, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            }
+        }).then(r => r.json()).then(data => {
+            if (data.ok) {
+                const el = document.getElementById('foto-' + fotoId);
+                if (el) el.remove();
+                _fotosGuardadas = document.querySelectorAll('#galeriaFotosContenido .position-relative').length;
+                if (_fotosGuardadas === 0) {
+                    document.getElementById('galeriaFotos').classList.add('d-none');
+                }
+                _actualizarContador();
+            }
+        });
     }
 
     // Reset modal operador
@@ -745,6 +1088,9 @@
         document.getElementById('formOperador').action = '{{ route("operadores.store") }}';
         document.getElementById('formOperador').reset();
         document.getElementById('seccionLicencia').style.display = 'none';
+        document.getElementById('seccionDocLicencia').classList.add('d-none');
+        document.getElementById('op_carnet_info').classList.add('d-none');
+        document.getElementById('op_licencia_info').classList.add('d-none');
     }
 
     // Llenar modal operador en modo Editar
@@ -762,8 +1108,17 @@
         document.getElementById('op_tipo').value     = op.tipo_operador;
         document.getElementById('op_estado').value   = op.estado;
         document.getElementById('op_licencia_num').value  = op.licencia_numero ?? '';
-        document.getElementById('op_licencia_cat').value  = op.licencia_categoria ?? '';
+        document.getElementById('op_licencia_pais').value = op.licencia_pais ?? '';
         document.getElementById('op_licencia_venc').value = op.licencia_vencimiento ?? '';
+
+        // Mostrar info documentos existentes
+        op.doc_carnet
+            ? document.getElementById('op_carnet_info').classList.remove('d-none')
+            : document.getElementById('op_carnet_info').classList.add('d-none');
+        op.doc_licencia
+            ? document.getElementById('op_licencia_info').classList.remove('d-none')
+            : document.getElementById('op_licencia_info').classList.add('d-none');
+
         toggleLicencia();
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalOperador')).show();
     }
