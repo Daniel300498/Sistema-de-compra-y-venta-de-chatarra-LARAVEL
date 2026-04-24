@@ -142,9 +142,10 @@
                                                 <th>Marca / Modelo</th>
                                                 <th>Conductor</th>
                                                 <th class="text-end">Toneladas</th>
+                                                <th class="text-center">Fecha Asignación</th>
                                                 <th class="text-center">Entrega</th>
                                                 <th>Observaciones</th>
-                                                <th>Acciones</th>
+                                                <th class="text-center">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -156,37 +157,49 @@
                                                     @if($cc->conductor)
                                                         {{ $cc->conductor->nombre_completo }}
                                                         <small class="text-muted d-block">Lic: {{ $cc->conductor->licencia_numero }}</small>
-                                                    @elseif($cc->camion->conductorActual?->conductor)
-                                                        <span class="text-muted">{{ $cc->camion->conductorActual->conductor->nombre_completo }}</span>
-                                                        <small class="badge bg-light text-dark">actual</small>
                                                     @else
                                                         <span class="text-muted">-</span>
                                                     @endif
                                                 </td>
                                                 <td class="text-end fw-bold text-primary">{{ number_format($cc->toneladas, 3) }} t</td>
+                                                <td class="text-center">{{ $cc->fecha_asignacion?->format('d/m/Y') ?? '-' }}</td>
                                                 <td class="text-center">
                                                     @can('contratos.edit')
-                                                    <a href="{{ route('contrato-camion.toggle-entrega', $cc->uuid) }}"
-                                                       class="badge text-decoration-none {{ $cc->estado_entrega === 'Entregado' ? 'bg-success' : 'bg-warning text-dark' }}"
-                                                       title="Clic para cambiar estado"
-                                                       onclick="return confirm('¿Cambiar estado a {{ $cc->estado_entrega === 'Entregado' ? 'Pendiente' : 'Entregado' }}?')">
-                                                        <i class="bi {{ $cc->estado_entrega === 'Entregado' ? 'bi-check-circle' : 'bi-clock' }}"></i>
-                                                        {{ $cc->estado_entrega }}
-                                                    </a>
+                                                        @if($cc->estado_entrega === 'Entregado')
+                                                            {{-- Entregado: solo badge, sin acción --}}
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-check-circle"></i> Entregado
+                                                            </span>
+                                                        @else
+                                                            {{-- Pendiente: botón que abre modal de confirmación --}}
+                                                            <button type="button"
+                                                                class="badge bg-warning text-dark border-0"
+                                                                style="cursor:pointer;"
+                                                                onclick="confirmarEntrega('{{ $cc->uuid }}', '{{ $cc->camion->placa }}', '{{ number_format($cc->toneladas, 3) }}')">
+                                                                <i class="bi bi-clock"></i> Pendiente
+                                                            </button>
+                                                        @endif
                                                     @else
-                                                    <span class="badge {{ $cc->estado_entrega === 'Entregado' ? 'bg-success' : 'bg-warning text-dark' }}">
-                                                        <i class="bi {{ $cc->estado_entrega === 'Entregado' ? 'bi-check-circle' : 'bi-clock' }}"></i>
-                                                        {{ $cc->estado_entrega }}
-                                                    </span>
+                                                        <span class="badge {{ $cc->estado_entrega === 'Entregado' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                                            <i class="bi {{ $cc->estado_entrega === 'Entregado' ? 'bi-check-circle' : 'bi-clock' }}"></i>
+                                                            {{ $cc->estado_entrega }}
+                                                        </span>
                                                     @endcan
                                                 </td>
                                                 <td><small>{{ $cc->observaciones ?? '-' }}</small></td>
                                                 <td class="text-center">
-                                                    <a href="{{ route('contrato-camion.destroy', $cc->uuid) }}"
-                                                        class="btn btn-danger btn-sm"
-                                                        onclick="return confirm('¿Quitar este camión del contrato?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </a>
+                                                    @if($cc->estado_entrega === 'Pendiente')
+                                                        @can('contratos.edit')
+                                                        <button type="button" class="btn btn-danger btn-sm"
+                                                            onclick="confirmarEliminar('{{ $cc->uuid }}', '{{ $cc->camion->placa }}', '{{ number_format($cc->toneladas, 3) }}')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                        @endcan
+                                                    @else
+                                                        <span class="text-muted small" title="No se puede eliminar un camión ya entregado">
+                                                            <i class="bi bi-lock"></i>
+                                                        </span>
+                                                    @endif
                                                 </td>
                                             </tr>
                                             @endforeach
@@ -195,7 +208,7 @@
                                             <tr class="table-light fw-bold">
                                                 <td colspan="3" class="text-end">Total asignado:</td>
                                                 <td class="text-end text-primary">{{ number_format($contrato->toneladas_asignadas, 3) }} t</td>
-                                                <td colspan="3"></td>
+                                                <td colspan="4"></td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -220,16 +233,13 @@
                                     <div class="col-md-12">
                                         <label class="form-label">Camión <span class="text-danger">(*)</span></label>
                                         <select class="form-select @error('camion_id') is-invalid @enderror"
-                                            name="camion_id" id="cc_camion_id"
-                                            onchange="cargarConductoresPorCamion(this)" required>
-                                            <option value="">-- Seleccione camión disponible --</option>
+                                            name="camion_id" id="cc_camion_id" required>
+                                            <option value="">-- Busque por placa o marca --</option>
                                             @foreach($camionesDisponibles as $cam)
-                                                <option value="{{ $cam->id }}" data-uuid="{{ $cam->uuid }}">
-                                                    {{ $cam->placa }} — {{ $cam->marca }} {{ $cam->modelo }}
-                                                    ({{ number_format($cam->capacidad_kg, 0) }} kg)
-                                                    @if($cam->conductorActual?->conductor)
-                                                        | Conductor: {{ $cam->conductorActual->conductor->nombre_completo }}
-                                                    @endif
+                                                <option value="{{ $cam->id }}"
+                                                    data-uuid="{{ $cam->uuid }}"
+                                                    data-capacidad="{{ $cam->capacidad_kg }}">
+                                                    {{ $cam->placa }} — {{ $cam->marca }} {{ $cam->modelo }} ({{ number_format($cam->capacidad_kg, 0) }} kg cap.)
                                                 </option>
                                             @endforeach
                                         </select>
@@ -242,33 +252,41 @@
                                             class="form-control @error('toneladas') is-invalid @enderror"
                                             name="toneladas" id="inp_toneladas"
                                             min="0.001"
-                                            @if($contrato->toneladas_contrato)
-                                                max="{{ $contrato->toneladas_contrato - $contrato->toneladas_asignadas }}"
-                                                placeholder="Máx: {{ number_format($contrato->toneladas_contrato - $contrato->toneladas_asignadas, 3) }} t"
-                                            @else
-                                                placeholder="Ej: 15.500"
-                                            @endif
+                                            placeholder="Seleccione un camión primero"
                                             required>
-                                        @if($contrato->toneladas_contrato)
-                                            <small class="text-muted">
-                                                Disponibles: <strong>{{ number_format($contrato->toneladas_contrato - $contrato->toneladas_asignadas, 3) }} t</strong>
-                                            </small>
-                                        @endif
+                                        <small id="inp_toneladas_hint" class="text-muted">
+                                            @if($contrato->toneladas_contrato)
+                                                Disponibles en contrato: <strong>{{ number_format($contrato->toneladas_contrato - $contrato->toneladas_asignadas, 3) }} t</strong>
+                                            @endif
+                                        </small>
                                         @error('toneladas')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
 
                                     <div class="col-md-6">
-                                        <label class="form-label">Conductor específico (opcional)</label>
-                                        <select class="form-select" name="conductor_id" id="cc_conductor_id" disabled>
+                                        <label class="form-label">Conductor <span class="text-danger">(*)</span></label>
+                                        <select class="form-select @error('conductor_id') is-invalid @enderror"
+                                            name="conductor_id" id="cc_conductor_id" disabled required>
                                             <option value="">— Primero seleccione un camión —</option>
                                         </select>
                                         <div id="cc_conductor_hint" class="form-text text-muted d-none">
                                             <i class="bi bi-info-circle"></i>
                                             Se muestran el propietario (si conduce) y conductores con asignación activa en este camión.
                                         </div>
+                                        <div id="cc_conductor_sin_conductores" class="alert alert-warning py-2 mt-1 d-none">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            No hay conductores registrados que conduzcan este camión. Asigna uno primero desde el módulo de Transporte.
+                                        </div>
+                                        @error('conductor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
 
-                                    <div class="col-md-6">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Fecha de Asignación <span class="text-danger">(*)</span></label>
+                                        <input type="date" class="form-control @error('fecha_asignacion') is-invalid @enderror"
+                                            name="fecha_asignacion" value="{{ date('Y-m-d') }}" required>
+                                        @error('fecha_asignacion')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+
+                                    <div class="col-md-3">
                                         <label class="form-label">Estado de Entrega <span class="text-danger">(*)</span></label>
                                         <select class="form-select @error('estado_entrega') is-invalid @enderror" name="estado_entrega" required>
                                             <option value="Pendiente" selected>Pendiente</option>
@@ -300,30 +318,140 @@
     </div>
 </section>
 
+{{-- ===== MODAL CONFIRMAR ELIMINAR ===== --}}
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-trash"></i> Quitar Camión del Contrato</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Estás seguro de que deseas quitar este camión del contrato?</p>
+                <ul class="mb-0 mt-2">
+                    <li>Camión: <strong id="modal_eliminar_placa"></strong></li>
+                    <li>Toneladas asignadas: <strong id="modal_eliminar_toneladas"></strong> t</li>
+                </ul>
+                <p class="text-muted small mt-2 mb-0">Las toneladas quedarán disponibles nuevamente para el contrato.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="modal_eliminar_url" href="#" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Sí, quitar camión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL CONFIRMAR ENTREGA ===== --}}
+<div class="modal fade" id="modalConfirmarEntrega" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Confirmar Entrega</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-1">¿Confirmas que el pedido fue <strong>entregado</strong>?</p>
+                <ul class="mb-0 mt-2">
+                    <li>Camión: <strong id="modal_entrega_placa"></strong></li>
+                    <li>Toneladas: <strong id="modal_entrega_toneladas"></strong> t</li>
+                </ul>
+                <div class="alert alert-warning mt-3 mb-0 py-2">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <small>Una vez confirmado, el estado <strong>no podrá revertirse</strong> y el registro quedará bloqueado.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="modal_entrega_url" href="#" class="btn btn-success">
+                    <i class="bi bi-check-lg"></i> Sí, confirmar entrega
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
 <script src="{{ asset('assets/js/tablas/basica.js') }}" type="text/javascript"></script>
 <script>
-    // Si hay errores abrir tab de agregar
-    @if($errors->has('camion_id') || $errors->has('toneladas'))
-        document.addEventListener('DOMContentLoaded', function () {
+    function confirmarEliminar(uuid, placa, toneladas) {
+        document.getElementById('modal_eliminar_placa').textContent     = placa;
+        document.getElementById('modal_eliminar_toneladas').textContent = toneladas;
+        document.getElementById('modal_eliminar_url').href = '{{ url("contrato-camion") }}/' + uuid + '/destroy';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmarEliminar')).show();
+    }
+
+    function confirmarEntrega(uuid, placa, toneladas) {
+        document.getElementById('modal_entrega_placa').textContent     = placa;
+        document.getElementById('modal_entrega_toneladas').textContent = toneladas;
+        document.getElementById('modal_entrega_url').href = '{{ url("contrato-camion") }}/' + uuid + '/toggle-entrega';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmarEntrega')).show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Si hay errores abrir tab de agregar
+        @if($errors->has('camion_id') || $errors->has('toneladas'))
             bootstrap.Tab.getOrCreateInstance(document.querySelector('[data-bs-target="#pane-agregar"]')).show();
+        @endif
+
+        // Select2 en el select de camión
+        $('#cc_camion_id').select2({
+            placeholder: 'Busque por placa, marca o modelo...',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: function() { return 'No se encontró ningún camión.'; },
+                searching: function() { return 'Buscando...'; }
+            }
         });
-    @endif
+
+        // Al cambiar camión vía Select2, cargar conductores
+        $('#cc_camion_id').on('change', function () {
+            cargarConductoresPorCamion(this);
+        });
+    });
 
     function cargarConductoresPorCamion(select) {
-        const option = select.options[select.selectedIndex];
-        const uuid   = option ? option.dataset.uuid : null;
-        const selectConductor = document.getElementById('cc_conductor_id');
-        const hint            = document.getElementById('cc_conductor_hint');
+        const option    = select.options[select.selectedIndex];
+        const uuid      = option ? option.dataset.uuid : null;
+        const sel       = document.getElementById('cc_conductor_id');
+        const hint      = document.getElementById('cc_conductor_hint');
+        const sinMsg    = document.getElementById('cc_conductor_sin_conductores');
 
-        selectConductor.innerHTML = '<option value="">— Cargando... —</option>';
-        selectConductor.disabled  = true;
+        // Ajustar límite de toneladas según capacidad del camión
+        const inpTon   = document.getElementById('inp_toneladas');
+        const tonHint  = document.getElementById('inp_toneladas_hint');
+        const maxContrato = {{ $contrato->toneladas_contrato ? $contrato->toneladas_contrato - $contrato->toneladas_asignadas : 'null' }};
+
+        if (option && option.dataset.capacidad) {
+            const capacidadKg  = parseFloat(option.dataset.capacidad);
+            const capacidadTon = capacidadKg / 1000;
+            const maxFinal     = maxContrato !== null ? Math.min(capacidadTon, maxContrato) : capacidadTon;
+
+            inpTon.max         = maxFinal.toFixed(3);
+            inpTon.placeholder = 'Máx: ' + maxFinal.toFixed(3) + ' t';
+            tonHint.innerHTML  = 'Cap. camión: <strong>' + capacidadTon.toFixed(3) + ' t</strong>'
+                + (maxContrato !== null ? ' · Disponibles contrato: <strong>' + maxContrato.toFixed(3) + ' t</strong>' : '');
+        } else {
+            inpTon.removeAttribute('max');
+            inpTon.placeholder = 'Seleccione un camión primero';
+            tonHint.innerHTML  = maxContrato !== null
+                ? 'Disponibles en contrato: <strong>' + maxContrato.toFixed(3) + ' t</strong>'
+                : '';
+        }
+
+        sel.innerHTML = '<option value="">— Cargando... —</option>';
+        sel.disabled  = true;
         hint.classList.add('d-none');
+        sinMsg.classList.add('d-none');
 
         if (!uuid) {
-            selectConductor.innerHTML = '<option value="">— Primero seleccione un camión —</option>';
+            sel.innerHTML = '<option value="">— Primero seleccione un camión —</option>';
             return;
         }
 
@@ -332,27 +460,27 @@
         })
         .then(r => r.json())
         .then(conductores => {
-            selectConductor.innerHTML = '<option value="">— Usar conductor actual del camión —</option>';
-
             if (conductores.length === 0) {
-                selectConductor.disabled = true;
-                hint.classList.add('d-none');
+                sel.innerHTML = '<option value="">— Sin conductores —</option>';
+                sel.disabled  = true;
+                sinMsg.classList.remove('d-none');
                 return;
             }
 
+            sel.innerHTML = '<option value="">— Seleccione conductor —</option>';
             conductores.forEach(function(c) {
                 const op = document.createElement('option');
                 op.value       = c.id;
                 op.textContent = c.nombre + ' — Lic: ' + (c.licencia || 'S/N') + ' [' + c.tipo + ']';
-                selectConductor.appendChild(op);
+                sel.appendChild(op);
             });
 
-            selectConductor.disabled = false;
+            sel.disabled = false;
             hint.classList.remove('d-none');
         })
         .catch(() => {
-            selectConductor.innerHTML = '<option value="">— Error al cargar conductores —</option>';
-            selectConductor.disabled = true;
+            sel.innerHTML = '<option value="">— Error al cargar conductores —</option>';
+            sel.disabled  = true;
         });
     }
 </script>

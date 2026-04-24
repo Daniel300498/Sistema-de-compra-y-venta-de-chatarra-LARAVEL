@@ -18,6 +18,7 @@ class Camion extends Model implements Auditable
 
     protected $fillable = [
         'placa',
+        'placa_pais',
         'tipo_vehiculo',
         'marca',
         'modelo',

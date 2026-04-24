@@ -20,6 +20,7 @@ class OperadorTransporte extends Model implements Auditable
         'nombre',
         'apellido',
         'ci',
+        'ci_pais',
         'telefono',
         'email',
         'direccion',

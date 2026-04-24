@@ -96,5 +96,6 @@ use Illuminate\Support\Facades\Route;
     Route::get('api/camiones/detalle',[App\Http\Controllers\CamionConductorController::class,'camionesConDetalle'])->name('camiones.detalle');
     Route::get('api/camion/{uuid}/historial',[App\Http\Controllers\CamionConductorController::class,'historialConductores'])->name('camiones.historial');
     Route::get('api/camion/{uuid}/conductores-relacionados',[App\Http\Controllers\CamionConductorController::class,'conductoresRelacionados'])->name('camiones.conductores-relacionados');
+    Route::get('api/camion/{uuid}/conductores-disponibles',[App\Http\Controllers\CamionConductorController::class,'conductoresDisponibles'])->name('camiones.conductores-disponibles');
 
    });

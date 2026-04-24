@@ -17,12 +17,13 @@ class OperadorTransporteRequest extends FormRequest
         $operadorId = $this->route('operador')?->id;
 
         $rules = [
-            'nombre'             => 'required|string|max:150',
-            'apellido'           => 'required|string|max:150',
+            'nombre'             => ['required', 'string', 'max:150', 'regex:/^[\pL\s]+$/u'],
+            'apellido'           => ['required', 'string', 'max:150', 'regex:/^[\pL\s]+$/u'],
             'ci'                 => ['required', 'string', 'max:20',
                 Rule::unique('operadores_transporte')->ignore($operadorId)->whereNull('deleted_at')
             ],
-            'telefono'           => 'nullable|string|max:20',
+            'ci_pais'            => 'required|string|max:100',
+            'telefono'           => 'required|string|max:30',
             'email'              => ['nullable', 'email', 'max:150',
                 Rule::unique('operadores_transporte')->ignore($operadorId)->whereNull('deleted_at')
             ],
@@ -50,9 +51,13 @@ class OperadorTransporteRequest extends FormRequest
     {
         return [
             'nombre.required'              => 'El nombre es obligatorio.',
+            'nombre.regex'                 => 'El nombre solo puede contener letras y espacios.',
             'apellido.required'            => 'El apellido es obligatorio.',
-            'ci.required'                  => 'La cédula es obligatoria.',
-            'ci.unique'                    => 'Esta cédula ya está registrada.',
+            'apellido.regex'               => 'El apellido solo puede contener letras y espacios.',
+            'ci.required'                  => 'El número de documento es obligatorio.',
+            'ci.unique'                    => 'Este número de documento ya está registrado.',
+            'ci_pais.required'             => 'El país de expedición del documento es obligatorio.',
+            'telefono.required'            => 'El teléfono es obligatorio.',
             'tipo_operador.required'       => 'El tipo de operador es obligatorio.',
             'licencia_numero.required'     => 'El número de licencia es obligatorio para choferes.',
             'licencia_pais.required'       => 'El país de expedición de la licencia es obligatorio.',

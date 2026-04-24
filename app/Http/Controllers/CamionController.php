@@ -19,7 +19,7 @@ class CamionController extends Controller
 
     public function index()
     {
-        $camiones   = Camion::with(['propietario', 'conductorActual.conductor', 'fotos'])
+        $camiones   = Camion::with(['propietario', 'fotos'])
                             ->whereNull('deleted_at')->get();
         $operadores = OperadorTransporte::whereNull('deleted_at')->orderBy('nombre')->get();
         $choferes   = OperadorTransporte::whereNull('deleted_at')
