@@ -56,8 +56,7 @@
                 </tbody>
             </table>
         </div>
-            <!-- EndCONTENIDO Example -->
-          </div>
+    </div>
         </div>
       </div>
     </div>
