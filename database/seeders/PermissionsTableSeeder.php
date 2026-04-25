@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class PermissionsTableSeeder extends Seeder
 {
@@ -56,10 +57,11 @@ class PermissionsTableSeeder extends Seeder
         Permission::create(['name' => 'parametros.index',   'descripcion' => 'Ver todos los Parámetros', 'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
         Permission::create(['name' => 'parametros.create',  'descripcion' => 'Agregar Parámetros',       'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
         Permission::create(['name' => 'parametros.edit',    'descripcion' => 'Editar Parámetros',        'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
-        Permission::create(['name' => 'parametros.destroy', 'descripcion' => 'Eliminar Parámetros',      'guard_name' => 'web', 'grupo', 'grupo'=>'PARAMETROS']);
+        Permission::create(['name' => 'parametros.destroy', 'descripcion' => 'Eliminar Parámetros',      'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
 
         // Crear rol superadmin y asignarle todos los permisos
         $role = Role::create([
+            'uuid'        => Str::uuid(),
             'name'        => 'superadmin',
             'guard_name'  => 'web',
             'descripcion' => 'Super Administrador',

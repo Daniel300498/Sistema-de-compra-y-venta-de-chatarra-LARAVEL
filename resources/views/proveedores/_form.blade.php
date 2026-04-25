@@ -27,9 +27,9 @@
 </div>
 
 <div class="col-lg-4 mt-2">
-    {{Form::label('nit','NIT / CI ' )}} <span class="text-danger">(*)</span>
+    {{Form::label('nit','NIT / CI / RUC ' )}} <span class="text-danger">(*)</span>
     <input type="text" class="form-control {{ $errors->has('nit') ? ' error' : '' }}" name="nit" id="nit" value="{{ old('nit',$proveedor->nit) }}"  onkeydown="javascript: return event.keyCode === 8 || event.keyCode === 9 ||
-    event.keyCode === 46 ? true : !isNaN(Number(event.key))">
+    event.keyCode === 46 ? true : !isNaN(Number(event.key))" >
     @if ($errors->has('nit'))
         <span class="text-danger">
             {{ $errors->first('nit') }}

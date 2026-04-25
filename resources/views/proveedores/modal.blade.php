@@ -18,7 +18,7 @@
                             <input type="text" class="form-control" name="nombre" id="prov_nombre" onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);" required >
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">NIT / CI <strong class="text-danger">(*)</strong></label>
+                            <label class="form-label">NIT / CI / RUC <strong class="text-danger">(*)</strong></label>
                             <input type="number" class="form-control" name="nit" id="prov_nit" onkeydown="javascript: return event.keyCode === 8 || event.keyCode === 9 || event.keyCode === 46 ? true : !isNaN(Number(event.key))" required>
                         </div>
                         <div class="col-md-6">

@@ -45,8 +45,17 @@
                                     <td class="text-center"><?php echo e($p->descripcion); ?></td>
                                     <td class="text-center"><?php echo e($p->grupo); ?></td>
                                     <td class="text-center">
-                                        <a href="<?php echo e(route('permisos.edit',$p->id)); ?>" class="btn btn-success btn-round">Editar</a>
-                                        <a href="<?php echo e(route('permisos.destroy',$p->id)); ?>" class="btn btn-danger btn-round">Eliminar</a>
+                                      <div class="btn-group">
+                                            <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Opciones</button>
+                                            <ul class="dropdown-menu">
+                                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('proveedores.edit')): ?>
+                                                <li><a class="dropdown-item" href="<?php echo e(route('permisos.edit',$p->id)); ?>"> <i class="bi bi-pencil"></i> Modificar</a></li>
+                                                <?php endif; ?>
+                                                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('proveedores.destroy')): ?>
+                                                <li><a class="dropdown-item text-danger" href="<?php echo e(route('proveedores.destroy', $p->id)); ?>" onclick="return confirm('¿Eliminar este cliente?')"><i class="bi bi-trash"></i> Eliminar</a></li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>

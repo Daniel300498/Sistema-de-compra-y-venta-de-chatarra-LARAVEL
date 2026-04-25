@@ -27,6 +27,7 @@ class AddColumnToPermissionsTable extends Migration
     {
         Schema::table('permissions', function (Blueprint $table) {
             $table->dropColumn('descripcion');
+            $table->string('grupo')->nullable();
         });
     }
 }

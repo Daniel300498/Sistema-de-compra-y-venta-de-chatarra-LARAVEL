@@ -50,14 +50,19 @@
                                     <strong>{{$rol->name}}</strong>
                                     @endforeach
                                 </td>
-                                <td class="d-flex justify-content-center" >
-                                    @can('users.edit')
-                                        <a href="{{route('users.edit',$user->uuid)}}" class="btn btn-warning" title="Modificar datos"><i class="bi bi-pencil-square"></i></a>
-                                    @endcan
-                                    @can('users.destroy')
-                                        <a href="{{route('users.destroy',$user->uuid)}}" class="btn btn-danger" title="Eliminar Registro" onclick="return confirm('¿Está seguro que desea eliminar al USUARIO?');" ><i class="bi bi-trash"></i></a>
-                                    @endcan
-                                </td>
+                             
+                                 <td class="text-center">
+                                      <div class="btn-group">
+                                            <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Opciones</button>
+                                            <ul class="dropdown-menu">
+                                                @can('users.edit')
+                                                <li><a class="dropdown-item" href="{{ route('users.edit',$user->uuid) }}"> <i class="bi bi-pencil"></i> Modificar</a></li>
+                                                @endcan
+                                                @can('users.destroy')
+                                                <li><a class="dropdown-item text-danger" href="{{ route('users.destroy', $user->uuid) }}" onclick="return confirm('¿Eliminar este usuario?')"><i class="bi bi-trash"></i> Eliminar</a></li>
+                                                @endcan
+                                            </ul>
+                                        </div>
                             </tr>
                         @endforeach
                     </tbody>

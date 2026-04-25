@@ -14,7 +14,8 @@ class AddColumnToRolesTable extends Migration
     public function up()
     {
         Schema::table('roles', function (Blueprint $table) {
-            $table->string('descripcion',250)->nullable()->after('guard_name');
+            $table->uuid('uuid')->nullable()->after('guard_name');
+            $table->string('descripcion',250)->nullable()->after('uuid');
         });
     }
 
@@ -26,7 +27,7 @@ class AddColumnToRolesTable extends Migration
     public function down()
     {
         Schema::table('roles', function (Blueprint $table) {
-            $table->dropColumn('descripcion');
+        $table->dropColumn(['uuid', 'descripcion']);
         });
     }
 }
