@@ -21,7 +21,7 @@ class ProveedorController extends Controller
     public function index()
     {   
         $paises=Parametro::where('tipo','paises')->get();      
-        $proveedores = Proveedor::whereNull('deleted_at')->get();     
+        $proveedores = Proveedor::with('contacts')->whereNull('deleted_at')->get();     
         return view('proveedores.index',compact('proveedores','paises'));
     }
       
@@ -113,8 +113,9 @@ class ProveedorController extends Controller
             $ids[] = $contact->id;
         }
         $proveedor->contacts()->whereNotIn('id', $ids)->delete();
-        return redirect()->route('proveedores.index')->with('success', 'Proveedor actualizado correctamente');
-    }
+        Alert::success('Actualizacion', 'Proveedor Actualizado con exito!!!');
+        return redirect()->route('proveedores.index');   
+        }
 
 
     public function destroy($uuid)

@@ -29,9 +29,7 @@
                         <h5 class="card-title mb-0">Clientes Registrados</h5>
                     </div>
                     <p class="text-muted small mb-3">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra.
-                        Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
+                        <i class="bi bi-info-circle me-1"></i>Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra. Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
                     </p>
                     <div class="table-responsive">
                         <table id="tablaClientes" class="table table-hover table-bordered table-sm">
@@ -61,10 +59,7 @@
                                     </td>
                                     <td>
                                         <?php $__empty_1 = true; $__currentLoopData = $c->contacts->where('tipo','direccion'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $contacto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                            <span class="badge bg-secondary">
-                                                Dir <?php echo e($index + 1); ?>: <?php echo e($contacto->valor); ?>
-
-                                            </span><br>
+                                            <span class="badge bg-secondary">Dir <?php echo e($index + 1); ?>: <?php echo e($contacto->valor); ?></span><br>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                             <span class="text-muted">Sin direcciones</span>
                                         <?php endif; ?>
@@ -99,32 +94,17 @@
 <script src="<?php echo e(asset('assets/js/tablas/basica.js')); ?>"></script>
 <script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>"></script>
 <script>
-    function resetModalCliente() {
-    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-person"></i> Nuevo Cliente';
+
+function resetModalCliente() {
+    document.getElementById('tituloCliente').innerHTML ='<i class="bi bi-person-plus "></i> Nuevo Cliente';
     document.getElementById('btnCliente').innerText = 'Registrar';
     document.getElementById('methodCliente').value = 'POST';
     document.getElementById('formCliente').action = '<?php echo e(route("clientes.store")); ?>';
-    document.getElementById('formCliente').reset();
-    document.getElementById('telefonos-container').innerHTML = `
-        <div class="input-group mb-2 telefono-item">
-            <input type="number" name="telefonos[]" class="form-control telefono-input" placeholder="Ej: 70123456">
-            <button type="button" class="btn btn-success btn-add-telefono">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-    `;
-    document.getElementById('direcciones-container').innerHTML = `
-        <div class="input-group mb-2 direccion-item">
-            <input type="text" name="direcciones[]" class="form-control direccion-input" placeholder="Ej. AV SIEMPRE VIVA 123" onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);">
-            <button type="button" class="btn btn-success btn-add-direccion">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-    `;
+    limpiarFormularioCliente();
 }
 function editarCliente(cliente) {
     const baseUrl = "<?php echo e(url('/')); ?>";
-    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-person"></i> Editar Cliente';
+    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-pencil-square"></i> Editar Cliente';
     document.getElementById('btnCliente').innerText = 'Actualizar';
     document.getElementById('methodCliente').value = 'PUT';
     document.getElementById('formCliente').action = baseUrl + '/clientes/' + cliente.id;
@@ -152,6 +132,8 @@ function editarCliente(cliente) {
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCliente')).show();
 }
+
 </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\laragon\www\chatarra\resources\views/clientes/index.blade.php ENDPATH**/ ?>

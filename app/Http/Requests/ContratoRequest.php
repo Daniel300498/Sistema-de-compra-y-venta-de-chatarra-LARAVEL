@@ -17,7 +17,7 @@ class ContratoRequest extends FormRequest
         return [
             'tipo_contrato'     => 'required|in:Nacional,Internacional',
             'cliente_id'        => 'required|exists:clientes,id',
-            'proveedor_id'      => 'required|exists:proveedores,id',
+            'proveedor_id'      => 'required|exists:proveedors,id',
             'fecha_inicio'      => 'nullable|date',
             'fecha_fin'         => 'nullable|date|after_or_equal:fecha_inicio',
             'cantidad_camiones'  => 'nullable|integer|min:1',
