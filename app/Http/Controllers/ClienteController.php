@@ -112,7 +112,8 @@ public function store(ClienteRequest $request)
             $ids[] = $contact->id;
         }
         $cliente->contacts()->whereNotIn('id', $ids)->delete();
-        return redirect()->route('clientes.index')->with('success', 'Cliente actualizado correctamente');
+        Alert::success('Actualizacion', 'Cliente Actualizado con exito!!!');
+        return redirect()->route('clientes.index');   
     }
     public function destroy($uuid)
     {

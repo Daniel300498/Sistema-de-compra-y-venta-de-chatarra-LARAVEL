@@ -30,9 +30,7 @@
                         <h5 class="card-title mb-0">Clientes Registrados</h5>
                     </div>
                     <p class="text-muted small mb-3">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra.
-                        Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
+                        <i class="bi bi-info-circle me-1"></i>Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra. Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
                     </p>
                     <div class="table-responsive">
                         <table id="tablaClientes" class="table table-hover table-bordered table-sm">
@@ -62,9 +60,7 @@
                                     </td>
                                     <td>
                                         @forelse($c->contacts->where('tipo','direccion') as $index => $contacto)
-                                            <span class="badge bg-secondary">
-                                                Dir {{ $index + 1 }}: {{ $contacto->valor }}
-                                            </span><br>
+                                            <span class="badge bg-secondary">Dir {{ $index + 1 }}: {{ $contacto->valor }}</span><br>
                                         @empty
                                             <span class="text-muted">Sin direcciones</span>
                                         @endforelse
@@ -99,32 +95,17 @@
 <script src="{{ asset('assets/js/tablas/basica.js') }}"></script>
 <script src="{{ asset('assets/js/forms/contactosVarios.js') }}"></script>
 <script>
-    function resetModalCliente() {
-    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-person"></i> Nuevo Cliente';
+
+function resetModalCliente() {
+    document.getElementById('tituloCliente').innerHTML ='<i class="bi bi-person-plus "></i> Nuevo Cliente';
     document.getElementById('btnCliente').innerText = 'Registrar';
     document.getElementById('methodCliente').value = 'POST';
     document.getElementById('formCliente').action = '{{ route("clientes.store")}}';
-    document.getElementById('formCliente').reset();
-    document.getElementById('telefonos-container').innerHTML = `
-        <div class="input-group mb-2 telefono-item">
-            <input type="number" name="telefonos[]" class="form-control telefono-input" placeholder="Ej: 70123456">
-            <button type="button" class="btn btn-success btn-add-telefono">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-    `;
-    document.getElementById('direcciones-container').innerHTML = `
-        <div class="input-group mb-2 direccion-item">
-            <input type="text" name="direcciones[]" class="form-control direccion-input" placeholder="Ej. AV SIEMPRE VIVA 123" onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);">
-            <button type="button" class="btn btn-success btn-add-direccion">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-    `;
+    limpiarFormularioCliente();
 }
 function editarCliente(cliente) {
     const baseUrl = "{{ url('/') }}";
-    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-person"></i> Editar Cliente';
+    document.getElementById('tituloCliente').innerHTML = '<i class="bi bi-pencil-square"></i> Editar Cliente';
     document.getElementById('btnCliente').innerText = 'Actualizar';
     document.getElementById('methodCliente').value = 'PUT';
     document.getElementById('formCliente').action = baseUrl + '/clientes/' + cliente.id;
@@ -152,5 +133,6 @@ function editarCliente(cliente) {
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCliente')).show();
 }
+
 </script>
 @endsection

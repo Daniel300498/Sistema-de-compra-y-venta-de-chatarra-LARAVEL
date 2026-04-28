@@ -77,9 +77,7 @@
                                                                 </button>
                                                                 <ul class="dropdown-menu">
                                                                     @can('proveedores.edit')
-                                                                         <li>
-                                                                            <a class="dropdown-item" href="#" onclick="editarProveedor({{ $e }})"><i class="bi bi-pencil"></i> Modificar</a>
-                                                                        </li>
+                                                                        <li><a class="dropdown-item" href="#" onclick="editarProveedor({{ $e }})"><i class="bi bi-pencil"></i> Modificar</a></li>
                                                                     @endcan
 
                                                                     @can('proveedores.destroy')
@@ -105,32 +103,17 @@
 <script src="{{ asset('assets/js/tablas/basica.js') }}" type="text/javascript"></script>
 <script src="{{ asset('assets/js/forms/contactosVarios.js') }}"></script>
 <script>
-    function resetModalProveedor() {
-    document.getElementById('tituloProveedor').innerHTML = '<i class="bi bi-box-seam"></i> <i class="bi bi-plus"></i> Nuevo Proveedor';
+    
+function resetModalProveedor() {
+    document.getElementById('tituloProveedor').innerHTML ='<i class="bi bi-building "></i> Nuevo Proveedor';
     document.getElementById('btnProveedor').innerText = 'Registrar';
     document.getElementById('methodProveedor').value = 'POST';
     document.getElementById('formProveedor').action = '{{ route("proveedores.store")}}';
-    document.getElementById('formProveedor').reset();
-    document.getElementById('telefonos-container').innerHTML = `
-        <div class="input-group mb-2 telefono-item">
-            <input type="number" name="telefonos[]" class="form-control telefono-input" placeholder="Ej: 70123456">
-            <button type="button" class="btn btn-success btn-add-telefono">
-                <i class="bi bi-plus-lg"></i>
-            </button>   
-        </div>
-    `;
-    document.getElementById('direcciones-container').innerHTML = `
-        <div class="input-group mb-2 direccion-item">
-            <input type="text" name="direcciones[]" class="form-control direccion-input" placeholder="Ej. AV SIEMPRE VIVA 123" onkeyup="javascript:this.value=this.value.toUpperCase();" onkeydown="return soloLetras(event);">
-            <button type="button" class="btn btn-success btn-add-direccion">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-        </div>
-    `;
+    limpiarFormularioProveedor();
 }
 function editarProveedor(proveedor) {
     const baseUrl = "{{ url('/') }}";
-    document.getElementById('tituloProveedor').innerHTML = '<i class="bi bi-box-seam"></i> <i class="bi bi-plus"></i> Editar Proveedor';
+    document.getElementById('tituloProveedor').innerHTML = '<i class="bi bi-pencil-square"></i> Editar Proveedor';
     document.getElementById('btnProveedor').innerText = 'Actualizar';
     document.getElementById('methodProveedor').value = 'PUT';
     document.getElementById('formProveedor').action = baseUrl + '/proveedores/' + proveedor.id;
@@ -139,6 +122,7 @@ function editarProveedor(proveedor) {
     document.getElementById('prov_pais').value = proveedor.pais ?? '';
     document.getElementById('prov_email').value = proveedor.email ?? '';
     document.getElementById('prov_tipo_producto').value = proveedor.tipo_producto ?? '';
+
     const telContainer = document.getElementById('telefonos-container');
     const dirContainer = document.getElementById('direcciones-container');
     telContainer.innerHTML = '';
@@ -159,5 +143,7 @@ function editarProveedor(proveedor) {
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProveedor')).show();
 }
+
+
 </script>
 @endsection
