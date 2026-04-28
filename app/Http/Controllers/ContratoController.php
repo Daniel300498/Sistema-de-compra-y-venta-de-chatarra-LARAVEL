@@ -101,8 +101,12 @@ class ContratoController extends Controller
         $contrato = Contrato::with([
             'cliente',
             'proveedor',
-            'contratoCamiones.camion.conductorActual.conductor',
+            'contratoCamiones.camion',
             'contratoCamiones.conductor',
+            'contratoCamiones.tramos.camion',
+            'contratoCamiones.tramos.conductor',
+            'contratoCamiones.tramos.tramosHijos.camion',
+            'contratoCamiones.tramos.tramosHijos.conductor',
         ])->where('uuid', $uuid)->firstOrFail();
 
         $camionesDisponibles = Camion::with(['conductorActual.conductor'])

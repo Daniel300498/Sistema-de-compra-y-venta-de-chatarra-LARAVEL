@@ -81,16 +81,36 @@ class Contrato extends Model implements Auditable
         return $this->hasMany(ContratoCamion::class, 'contrato_id');
     }
 
-    // Total de toneladas asignadas a camiones en este contrato
+    // Toneladas declaradas por el proveedor (suma peso_declarado de tramos raíz)
     public function getToneladasAsignadasAttribute(): float
     {
         return (float) $this->contratoCamiones()->sum('toneladas');
     }
 
-    // Total de toneladas ya entregadas al cliente
+    // Toneladas realmente entregadas al cliente (suma peso_llegada de tramos finales Entregado)
     public function getToneladasEntregadasAttribute(): float
     {
-        return (float) $this->contratoCamiones()->where('estado_entrega', 'Entregado')->sum('toneladas');
+        $total = 0;
+        foreach ($this->contratoCamiones as $cc) {
+            $total += $cc->tramos()
+                ->whereDoesntHave('tramosHijos')
+                ->where('estado', 'Entregado')
+                ->sum('peso_llegada');
+        }
+        return (float) $total;
+    }
+
+    // Toneladas en tránsito (tramos finales aún no entregados)
+    public function getToneladasEnTransitoAttribute(): float
+    {
+        $total = 0;
+        foreach ($this->contratoCamiones as $cc) {
+            $total += $cc->tramos()
+                ->whereDoesntHave('tramosHijos')
+                ->whereIn('estado', ['Pendiente', 'En tránsito', 'En frontera'])
+                ->sum('peso_salida');
+        }
+        return (float) $total;
     }
 
     // Porcentaje de toneladas entregadas respecto al total pactado

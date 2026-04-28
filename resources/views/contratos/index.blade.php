@@ -234,9 +234,9 @@
 
                         {{-- Fechas --}}
                         <div class="col-md-3">
-                            <label class="form-label">Fecha Inicio</label>
+                            <label class="form-label">Fecha Inicio <span class="text-danger">(*)</span></label>
                             <input type="date" class="form-control @error('fecha_inicio') is-invalid @enderror"
-                                name="fecha_inicio" id="fecha_inicio">
+                                name="fecha_inicio" id="fecha_inicio" required>
                             @error('fecha_inicio')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
@@ -257,11 +257,11 @@
 
                         {{-- Toneladas contrato --}}
                         <div class="col-md-3">
-                            <label class="form-label">Total Toneladas Contrato</label>
+                            <label class="form-label">Total Toneladas Contrato <span class="text-danger">(*)</span></label>
                             <input type="number" step="0.001"
                                 class="form-control @error('toneladas_contrato') is-invalid @enderror"
                                 name="toneladas_contrato" id="toneladas_contrato"
-                                min="0.001" placeholder="Ej: 500.000">
+                                min="0.001" placeholder="Ej: 500.000" required>
                             <small class="text-muted">Toneladas pactadas.</small>
                             @error('toneladas_contrato')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>

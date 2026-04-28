@@ -88,6 +88,11 @@ use Illuminate\Support\Facades\Route;
     Route::get('contrato-camion/{uuid}/toggle-entrega',[App\Http\Controllers\ContratoCamionController::class,'toggleEntrega'])->name('contrato-camion.toggle-entrega')->middleware('permission:contratos.edit');
     Route::get('contrato-camion/{uuid}/destroy',[App\Http\Controllers\ContratoCamionController::class,'destroy'])->name('contrato-camion.destroy')->middleware('permission:contratos.edit');
 
+    //Tramos de transporte
+    Route::post('tramo/store',[App\Http\Controllers\TramoController::class,'store'])->name('tramo.store')->middleware('permission:contratos.edit');
+    Route::post('tramo/{uuid}/llegada',[App\Http\Controllers\TramoController::class,'registrarLlegada'])->name('tramo.llegada')->middleware('permission:contratos.edit');
+    Route::get('tramo/{uuid}/destroy',[App\Http\Controllers\TramoController::class,'destroy'])->name('tramo.destroy')->middleware('permission:contratos.edit');
+
     //Asignación de conductores a camiones
     Route::post('conductor/store',[App\Http\Controllers\CamionConductorController::class,'store'])->name('conductores.store')->middleware('permission:conductores.create');
     Route::get('conductor/{uuid}/finalizar',[App\Http\Controllers\CamionConductorController::class,'finalizarAsignacion'])->name('conductores.finalizar')->middleware('permission:conductores.edit');

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ContratoRequest extends FormRequest
@@ -17,11 +16,11 @@ class ContratoRequest extends FormRequest
         return [
             'tipo_contrato'     => 'required|in:Nacional,Internacional',
             'cliente_id'        => 'required|exists:clientes,id',
-            'proveedor_id'      => 'required|exists:proveedores,id',
-            'fecha_inicio'      => 'nullable|date',
+            'proveedor_id'      => 'required|exists:proveedors,id',
+            'fecha_inicio'      => 'required|date',
             'fecha_fin'         => 'nullable|date|after_or_equal:fecha_inicio',
             'cantidad_camiones'  => 'nullable|integer|min:1',
-            'toneladas_contrato' => 'nullable|numeric|min:0.001',
+            'toneladas_contrato' => 'required|numeric|min:0.001',
             'monto_total'       => 'required|numeric|min:0',
             'moneda'            => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
             'estado'            => 'required|in:Borrador,Activo,Finalizado,Cancelado',
@@ -37,8 +36,12 @@ class ContratoRequest extends FormRequest
             'cliente_id.exists'       => 'El cliente seleccionado no existe.',
             'proveedor_id.required'   => 'Debe seleccionar un proveedor.',
             'proveedor_id.exists'     => 'El proveedor seleccionado no existe.',
+            'fecha_inicio.required'   => 'La fecha de inicio es obligatoria.',
+            'fecha_inicio.date'       => 'La fecha de inicio debe ser una fecha válida.',
             'fecha_fin.after_or_equal'=> 'La fecha fin debe ser igual o posterior a la fecha inicio.',
-            'monto_total.required'    => 'El monto total es obligatorio.',
+            'toneladas_contrato.required' => 'Las toneladas del contrato son obligatorias.',
+            'toneladas_contrato.min'      => 'Las toneladas deben ser mayores a 0.',
+            'monto_total.required'        => 'El monto total es obligatorio.',
             'monto_total.numeric'     => 'El monto total debe ser un número.',
             'moneda.required'         => 'La moneda es obligatoria.',
             'estado.required'             => 'El estado es obligatorio.',
