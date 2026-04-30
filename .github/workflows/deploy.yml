@@ -39,5 +39,5 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./
-          server-dir: domains/importexportmustafa.com/public_html/chatarra/
+          server-dir: public_html/chatarra/
           dangerous-clean-slate: false
