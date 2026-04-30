@@ -29,7 +29,7 @@ class ProveedorRequest extends FormRequest
             'nit'=>[
                 'required',
                 'numeric',
-                Rule::unique('proveedors')->ignore( $this->route('proveedor') )->where('deleted_at',null)
+                Rule::unique('proveedors','nit')->ignore(optional($this->route('proveedor'))->id)->whereNull('deleted_at')
             ]
         ];
     }

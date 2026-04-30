@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
+
 class ClienteRequest extends FormRequest
 {
     public function authorize(): bool
@@ -22,10 +23,10 @@ class ClienteRequest extends FormRequest
         return [
             'nombre'=>'required',
             'pais'=>'required',
-            'nit'=>[
+            'nit' => [
                 'required',
                 'numeric',
-                Rule::unique('clientes')->ignore( $this->route('cliente') )->where('deleted_at',null)
+                Rule::unique('clientes', 'nit')->ignore(optional($this->route('cliente'))->id)->whereNull('deleted_at')
             ]
         ];
     }

@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('nombre');
-            $table->string('nit',30)->comment("RUC / CI / NIT")->nullable();
+            $table->string('nit', 30)->comment("RUC / CI / NIT");
+            $table->unique(['nit', 'deleted_at']);
             $table->string('pais',100)->nullable();           
             $table->string('email')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();

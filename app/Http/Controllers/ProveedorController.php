@@ -21,7 +21,7 @@ class ProveedorController extends Controller
     public function index()
     {   
         $paises=Parametro::where('tipo','paises')->get();      
-        $proveedores = Proveedor::with('contacts')->whereNull('deleted_at')->get();     
+        $proveedores = Proveedor::with('contacts')->whereNull('deleted_at')->orderby('created_at','desc')->get();     
         return view('proveedores.index',compact('proveedores','paises'));
     }
       
@@ -64,6 +64,7 @@ class ProveedorController extends Controller
         }   
 
         $proveedor->save();
+    
         Alert::success('Registro', 'proveedor Registrado con exito!!!');
         return redirect()->route('proveedores.index');
     }

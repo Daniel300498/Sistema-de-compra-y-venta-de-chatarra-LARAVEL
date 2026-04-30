@@ -101,7 +101,7 @@
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
 <script src="<?php echo e(asset('assets/js/tablas/basica.js')); ?>" type="text/javascript"></script>
-<script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>"type ="text/javascript"></script>
 <script>
     
 function resetModalProveedor() {

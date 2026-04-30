@@ -101,7 +101,7 @@
 @endsection
 @section('scripts')
 <script src="{{ asset('assets/js/tablas/basica.js') }}" type="text/javascript"></script>
-<script src="{{ asset('assets/js/forms/contactosVarios.js') }}"></script>
+<script src="{{ asset('assets/js/forms/contactosVarios.js') }}"type ="text/javascript"></script>
 <script>
     
 function resetModalProveedor() {

@@ -32,7 +32,7 @@
                         <i class="bi bi-info-circle me-1"></i>Administra el directorio de clientes con quienes la empresa realiza operaciones de compra o venta de chatarra. Aquí puedes registrar sus datos de contacto, documentos de identificación y direcciones para facilitar la gestión comercial.
                     </p>
                     <div class="table-responsive">
-                        <table id="tablaClientes" class="table table-hover table-bordered table-sm">
+                        <table cellspacing="0" width="100%" id="datos" class="table table-hover table-bordered table-sm">
                             <thead>
                                 <tr>
                                     <th class="text-center">NOMBRE</th>
@@ -91,8 +91,9 @@
 <?php echo $__env->make('clientes.modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
-<script src="<?php echo e(asset('assets/js/tablas/basica.js')); ?>"></script>
-<script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/js/tablas/basica.js')); ?>" type ="text/javascript"></script>
+<script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>" type ="text/javascript"></script>
+
 <script>
 
 function resetModalCliente() {

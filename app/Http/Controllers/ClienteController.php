@@ -19,7 +19,7 @@ class ClienteController extends Controller
 
     public function index()
     {        
-        $clientes = Cliente::with('contacts')->whereNull('deleted_at')->get();
+        $clientes = Cliente::with('contacts')->whereNull('deleted_at')->orderby('created_at','desc')->get();
         $paises = Parametro::where('tipo','paises')->get();
         return view('clientes.index',compact('clientes','paises'));
     }

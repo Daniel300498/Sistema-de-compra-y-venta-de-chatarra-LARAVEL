@@ -180,17 +180,14 @@ function validarEmail(input) {
 
 function validarNIT(input) {
     let v = input.value.trim();
-
     if (!v) return limpiarError(input);
-
     if (!/^\d+$/.test(v))
         return mostrarError(input, "Solo números");
-
     if (v.length < 5)
         return mostrarError(input, "Nro de Documento no válido");
-
     mostrarOk(input, "✔ Válido");
 }
+
 document.addEventListener("input", function(e) {
 
     if (e.target.classList.contains("telefono-input")) {
