@@ -32,12 +32,21 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-      - name: Deploy por FTP
+      - name: Deploy a Hostinger (chatarra limpia)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
+
           local-dir: ./
           server-dir: public_html/chatarra/
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/tests/**
+            **/storage/logs/**
+            **/.env
+
           dangerous-clean-slate: false
