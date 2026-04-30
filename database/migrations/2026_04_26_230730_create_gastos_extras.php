@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('contrato_id');
             $table->string('categoria', 30);
             $table->string('concepto', 40);
-            $table->date('fecha');
+          //  $table->date('fecha');
             $table->decimal('monto',10,2);
             $table->string('moneda',15);
             $table->decimal('tipo_cambio',10,2)->comment("De Moneda X a Bs");
