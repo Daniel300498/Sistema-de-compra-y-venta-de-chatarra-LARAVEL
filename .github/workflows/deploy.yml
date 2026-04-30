@@ -32,7 +32,7 @@ jobs:
           php artisan route:cache
           php artisan view:cache
 
-      - name: Deploy a Hostinger (chatarra limpia)
+      - name: Deploy limpio a Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -41,12 +41,13 @@ jobs:
 
           local-dir: ./
           server-dir: public_html/chatarra/
+          
           exclude: |
             **/.git*
             **/.github/**
             **/node_modules/**
             **/tests/**
-            **/storage/logs/**
-            **/.env
+            **/.env**
+            public_html/**
 
           dangerous-clean-slate: false

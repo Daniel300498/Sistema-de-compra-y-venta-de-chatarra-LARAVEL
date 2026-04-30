@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('monto',10,2);
             $table->string('moneda',15);
             $table->decimal('tipo_cambio',10,2)->comment("De Moneda X a Bs");
-             $table->string('comprobante_pago');
+            $table->string('comprobante_pago');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('deleted_by')->nullable();
