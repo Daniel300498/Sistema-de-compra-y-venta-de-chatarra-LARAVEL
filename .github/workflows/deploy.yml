@@ -4,34 +4,40 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clonar repo
-        uses: actions/checkout@v3
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
 
       - name: Instalar PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
+          extensions: mbstring, bcmath, mysql
+          coverage: none
 
-      - name: Instalar dependencias
+      - name: Instalar dependencias (Composer)
         run: composer install --no-dev --optimize-autoloader
 
       - name: Preparar Laravel
         run: |
+          cp .env.example .env || true
+          php artisan key:generate || true
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
 
-      - name: Subir por FTP
+      - name: Deploy por FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./
-          server-dir: public_html/
+          server-dir: domains/importexportmustafa.com/public_html/chatarra/
+          dangerous-clean-slate: false
