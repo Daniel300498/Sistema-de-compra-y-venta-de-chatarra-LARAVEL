@@ -31,7 +31,6 @@
                     <table class="table table-sm table-borderless">
                         <tr><th>N° Contrato</th><td><span class="fw-bold text-primary">{{ $contrato->numero_contrato }}</span></td></tr>
                         <tr><th>Tipo</th><td>{{ $contrato->tipo_contrato }}</td></tr>
-                        <tr><th>Cliente</th><td>{{ $contrato->cliente->nombre }}</td></tr>
                         <tr><th>Proveedor</th><td>{{ $contrato->proveedor->nombre }}</td></tr>
                         <tr><th>Fecha Inicio</th><td>{{ $contrato->fecha_inicio?->format('d/m/Y') ?? '-' }}</td></tr>
                         <tr><th>Fecha Fin</th><td>{{ $contrato->fecha_fin?->format('d/m/Y') ?? '-' }}</td></tr>
@@ -134,12 +133,11 @@
                                                     {{ $cc->estado_entrega }}
                                                 </span>
                                                 @can('contratos.edit')
-                                                @if($cc->estado_entrega === 'Pendiente')
-                                                    <button class="btn btn-sm btn-outline-danger"
-                                                        onclick="confirmarEliminarCC('{{ $cc->uuid }}', '{{ $cc->camion->placa }}')">
-                                                        <i class="bi bi-trash"></i>
+                                                    <button class="btn btn-sm {{ $cc->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
+                                                        onclick="confirmarToggleCC('{{ $cc->uuid }}', '{{ $cc->camion->placa }}', {{ $cc->activo ? 'true' : 'false' }})"
+                                                        title="{{ $cc->activo ? 'Desactivar asignación' : 'Reactivar asignación' }}">
+                                                        <i class="bi {{ $cc->activo ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' }}"></i>
                                                     </button>
-                                                @endif
                                                 @endcan
                                             </div>
                                         </div>
@@ -218,6 +216,7 @@
                                     </div>
 
                                     {{-- Tipo de tramo --}}
+                                    @if($contrato->tipo_contrato === 'Internacional')
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Tipo de Tramo <span class="text-danger">(*)</span></label>
                                         <select class="form-select @error('tipo_tramo') is-invalid @enderror" name="tipo_tramo" required>
@@ -226,6 +225,9 @@
                                         </select>
                                         @error('tipo_tramo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
+                                    @else
+                                        <input type="hidden" name="tipo_tramo" value="Nacional">
+                                    @endif
 
                                     {{-- Origen y Destino --}}
                                     <div class="col-md-6">
@@ -260,6 +262,30 @@
                                         <input type="date" class="form-control @error('fecha_asignacion') is-invalid @enderror"
                                             name="fecha_asignacion" value="{{ old('fecha_asignacion', date('Y-m-d')) }}" required>
                                         @error('fecha_asignacion')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Monto Acordado (flete)</label>
+                                        <div class="input-group">
+                                            <select class="form-select flex-grow-0" style="width:90px;"
+                                                name="moneda_flete" id="moneda_flete">
+                                                <option value="BOB" selected>BOB</option>
+                                                <option value="USD">USD</option>
+                                                <option value="EUR">EUR</option>
+                                                <option value="BRL">BRL</option>
+                                                <option value="ARS">ARS</option>
+                                                <option value="PEN">PEN</option>
+                                                <option value="CLP">CLP</option>
+                                                <option value="PYG">PYG</option>
+                                                <option value="COP">COP</option>
+                                            </select>
+                                            <input type="number" step="0.01" min="0"
+                                                class="form-control @error('monto_acordado') is-invalid @enderror"
+                                                name="monto_acordado" value="{{ old('monto_acordado') }}"
+                                                placeholder="Ej: 1500.00">
+                                        </div>
+                                        <small class="text-muted">Flete pactado con el transportista.</small>
+                                        @error('monto_acordado')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                     </div>
 
                                     {{-- Observaciones --}}
@@ -318,7 +344,8 @@
                             <label class="form-label fw-semibold">¿Qué ocurrió al llegar? <span class="text-danger">(*)</span></label>
                             <div class="d-flex flex-column gap-2 mt-1">
                                 <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="accion_entregado" required>
+                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="accion_entregado" required
+                                        onchange="document.getElementById('sec_cliente').classList.remove('d-none')">
                                     <label class="form-check-label" for="accion_entregado">
                                         <i class="bi bi-check-circle text-success"></i>
                                         <strong>Entregado al cliente</strong>
@@ -326,7 +353,8 @@
                                     </label>
                                 </div>
                                 <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="frontera" id="accion_frontera" required>
+                                    <input class="form-check-input" type="radio" name="accion" value="frontera" id="accion_frontera" required
+                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value='';">
                                     <label class="form-check-label" for="accion_frontera">
                                         <i class="bi bi-sign-stop text-warning"></i>
                                         <strong>Llegó a frontera</strong>
@@ -334,7 +362,8 @@
                                     </label>
                                 </div>
                                 <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="accion_transbordo" required>
+                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="accion_transbordo" required
+                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value='';">
                                     <label class="form-check-label" for="accion_transbordo">
                                         <i class="bi bi-arrow-down-right text-info"></i>
                                         <strong>Transbordo a otro camión</strong>
@@ -343,6 +372,43 @@
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Cliente receptor (solo si es entregado) --}}
+                        <div class="col-12 d-none" id="sec_cliente">
+                            <label class="form-label fw-semibold">Cliente que recibe la carga <span class="text-danger">(*)</span></label>
+                            <select class="form-select" name="cliente_id" id="sel_cliente">
+                                <option value="">-- Seleccione un cliente --</option>
+                                @foreach($clientes as $cli)
+                                    <option value="{{ $cli->id }}">{{ $cli->nombre }} @if($cli->nit) — NIT: {{ $cli->nit }} @endif</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Descuento --}}
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="chk_descuento"
+                                    onchange="document.getElementById('sec_descuento').classList.toggle('d-none', !this.checked); if(!this.checked) document.getElementById('inp_descuento').value='';">
+                                <label class="form-check-label fw-semibold" for="chk_descuento">
+                                    <i class="bi bi-percent text-danger"></i> Aplicar descuento al pago del camionero
+                                </label>
+                            </div>
+                            <div id="sec_descuento" class="d-none">
+                                <label class="form-label">Porcentaje de descuento (%)</label>
+                                <input type="number" step="0.01" min="0" max="60" class="form-control"
+                                    name="descuento_porcentaje" id="inp_descuento" placeholder="Ej: 10.00"
+                                    oninput="if(parseFloat(this.value)>60) this.value=60;">
+                                <small class="text-muted">Máximo 60%. Por chatarra en mal estado, faltante u otro motivo.</small>
+                            </div>
+                        </div>
+
+                        {{-- Observaciones de llegada --}}
+                        <div class="col-12">
+                            <label class="form-label">Observaciones de llegada</label>
+                            <textarea class="form-control" name="observaciones_llegada" rows="2" maxlength="500"
+                                placeholder="Notas sobre el estado de la carga, incidentes, etc."></textarea>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -389,6 +455,7 @@
                                 <option value="">— Seleccione un camión primero —</option>
                             </select>
                         </div>
+                        @if($contrato->tipo_contrato === 'Internacional')
                         <div class="col-md-6">
                             <label class="form-label">Tipo de Tramo <span class="text-danger">(*)</span></label>
                             <select class="form-select" name="tipo_tramo" required>
@@ -396,6 +463,9 @@
                                 <option value="Internacional">Internacional</option>
                             </select>
                         </div>
+                        @else
+                            <input type="hidden" name="tipo_tramo" value="Nacional">
+                        @endif
                         <div class="col-md-6">
                             <label class="form-label">Destino <span class="text-danger">(*)</span></label>
                             <input type="text" class="form-control" name="destino" required maxlength="150" placeholder="Ej: LA PAZ"
@@ -427,20 +497,41 @@
     </div>
 </div>
 
-{{-- ===== MODAL ELIMINAR CAMIÓN ===== --}}
-<div class="modal fade" id="modalEliminarCC" tabindex="-1" aria-hidden="true">
+{{-- ===== MODAL TOGGLE ACTIVO CAMIÓN ===== --}}
+<div class="modal fade" id="modalToggleCC" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="bi bi-trash"></i> Quitar Camión</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header" id="modalToggleCC_header">
+                <h5 class="modal-title" id="modalToggleCC_titulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalToggleCC_body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a id="modalToggleCC_btn" href="#" class="btn">Confirmar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL TOGGLE TRAMO ===== --}}
+<div class="modal fade" id="modalToggleTramo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="modalToggleTramo_header">
+                <h5 class="modal-title" id="modalToggleTramo_titulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>¿Quitar el camión <strong id="modal_cc_placa"></strong> del contrato? Se eliminarán también todos sus tramos.</p>
+                <p id="modalToggleTramo_body"></p>
+                <div class="border rounded p-2 bg-light">
+                    <small class="text-muted">Camión:</small> <strong id="modalToggleTramo_placa"></strong><br>
+                    <small class="text-muted">Ruta:</small> <span id="modalToggleTramo_ruta"></span>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <a id="modal_cc_url" href="#" class="btn btn-danger"><i class="bi bi-trash"></i> Sí, quitar</a>
+                <a id="modalToggleTramo_btn" href="#" class="btn">Confirmar</a>
             </div>
         </div>
     </div>
@@ -541,6 +632,15 @@ function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
     document.getElementById('inp_fecha_llegada').min   = fechaSalida;
     document.getElementById('inp_fecha_llegada').value = fechaSalida;
 
+    // Resetear cliente, descuento y observaciones
+    document.getElementById('sec_cliente').classList.add('d-none');
+    document.getElementById('sel_cliente').value = '';
+    const chk = document.getElementById('chk_descuento');
+    chk.checked = false;
+    document.getElementById('sec_descuento').classList.add('d-none');
+    document.getElementById('inp_descuento').value = '';
+    document.querySelector('#formLlegada textarea[name="observaciones_llegada"]').value = '';
+
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLlegada')).show();
 }
 
@@ -567,10 +667,54 @@ function abrirModalTransbordo(ccId, tramoPadreId, destino, infoPadre, disponible
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTransbordo')).show();
 }
 
-function confirmarEliminarCC(uuid, placa) {
-    document.getElementById('modal_cc_placa').textContent = placa;
-    document.getElementById('modal_cc_url').href = '{{ url("contrato-camion") }}/' + uuid + '/destroy';
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEliminarCC')).show();
+function confirmarToggleCC(uuid, placa, activo) {
+    const header = document.getElementById('modalToggleCC_header');
+    const titulo = document.getElementById('modalToggleCC_titulo');
+    const body   = document.getElementById('modalToggleCC_body');
+    const btn    = document.getElementById('modalToggleCC_btn');
+
+    if (activo) {
+        header.className = 'modal-header bg-warning';
+        titulo.innerHTML = '<i class="bi bi-slash-circle"></i> Desactivar Asignación';
+        body.innerHTML   = 'El camión <strong>' + placa + '</strong> quedará desactivado en este contrato. El registro se conserva en el historial.';
+        btn.className    = 'btn btn-warning';
+        btn.textContent  = 'Sí, desactivar';
+    } else {
+        header.className = 'modal-header bg-success text-white';
+        titulo.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Reactivar Asignación';
+        body.innerHTML   = '¿Reactivar la asignación del camión <strong>' + placa + '</strong>?';
+        btn.className    = 'btn btn-success';
+        btn.textContent  = 'Sí, reactivar';
+    }
+
+    btn.href = '{{ url("contrato-camion") }}/' + uuid + '/toggle-activo';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalToggleCC')).show();
+}
+
+function confirmarToggleTramo(url, placa, ruta, activo) {
+    const header = document.getElementById('modalToggleTramo_header');
+    const titulo = document.getElementById('modalToggleTramo_titulo');
+    const body   = document.getElementById('modalToggleTramo_body');
+    const btn    = document.getElementById('modalToggleTramo_btn');
+
+    if (activo) {
+        header.className = 'modal-header bg-warning';
+        titulo.innerHTML = '<i class="bi bi-slash-circle"></i> Desactivar Tramo';
+        body.textContent = 'El tramo quedará desactivado. Las toneladas que llevaba quedarán disponibles para reasignar. El registro se conserva en el historial.';
+        btn.className    = 'btn btn-warning';
+        btn.textContent  = 'Sí, desactivar';
+    } else {
+        header.className = 'modal-header bg-success text-white';
+        titulo.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Reactivar Tramo';
+        body.textContent = '¿Reactivar este tramo? Las toneladas volverán a contabilizarse en el cálculo del padre.';
+        btn.className    = 'btn btn-success';
+        btn.textContent  = 'Sí, reactivar';
+    }
+
+    document.getElementById('modalToggleTramo_placa').textContent = placa;
+    document.getElementById('modalToggleTramo_ruta').textContent  = ruta;
+    btn.href = url;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalToggleTramo')).show();
 }
 </script>
 @endsection

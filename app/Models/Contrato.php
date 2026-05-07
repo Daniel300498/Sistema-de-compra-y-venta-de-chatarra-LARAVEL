@@ -119,4 +119,19 @@ class Contrato extends Model implements Auditable
         if (!$this->toneladas_contrato || $this->toneladas_contrato == 0) return 0;
         return min(100, round(($this->toneladas_entregadas / $this->toneladas_contrato) * 100, 1));
     }
+
+    // Clientes únicos a los que se entregó carga en este contrato
+    public function getClientesEntregadosAttribute()
+    {
+        $clienteIds = collect();
+        foreach ($this->contratoCamiones as $cc) {
+            $ids = $cc->tramos()
+                ->whereDoesntHave('tramosHijos')
+                ->where('estado', 'Entregado')
+                ->whereNotNull('cliente_id')
+                ->pluck('cliente_id');
+            $clienteIds = $clienteIds->merge($ids);
+        }
+        return Cliente::whereIn('id', $clienteIds->unique())->orderBy('nombre')->get();
+    }
 }

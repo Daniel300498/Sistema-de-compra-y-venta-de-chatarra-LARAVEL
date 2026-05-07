@@ -38,14 +38,12 @@
                                 <tr>
                                     <th>N° Contrato</th>
                                     <th>Tipo</th>
-                                    <th>Cliente</th>
                                     <th>Proveedor</th>
+                                    <th>Clientes</th>
                                     <th>Fecha Inicio</th>
                                     <th>Fecha Fin</th>
-                                    <th>Camiones</th>
                                     <th>Toneladas</th>
-                                    <th>Monto Total</th>
-                                    <th>Estado</th>
+                                    <th>Monto al Proveedor</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -60,11 +58,16 @@
                                             <span class="badge bg-primary">Internacional</span>
                                         @endif
                                     </td>
-                                    <td>{{ $c->cliente->nombre }} <small class="text-muted">({{ $c->cliente->nit }})</small></td>
                                     <td>{{ $c->proveedor->nombre }} <small class="text-muted">({{ $c->proveedor->pais }})</small></td>
+                                    <td>
+                                        @forelse($c->clientes_entregados as $cli)
+                                            <span class="badge bg-light text-dark border">{{ $cli->nombre }}</span>
+                                        @empty
+                                            <small class="text-muted">—</small>
+                                        @endforelse
+                                    </td>
                                     <td>{{ $c->fecha_inicio?->format('d/m/Y') ?? '-' }}</td>
                                     <td>{{ $c->fecha_fin?->format('d/m/Y') ?? '-' }}</td>
-                                    <td class="text-center">{{ $c->cantidad_camiones ?? '-' }}</td>
                                     <td class="text-center">
                                         @if($c->toneladas_contrato)
                                             @php
@@ -97,17 +100,6 @@
                                         @endif
                                     </td>
                                     <td>{{ $c->moneda }} {{ number_format($c->monto_total, 2) }}</td>
-                                    <td>
-                                        @php
-                                            $badgeMap = [
-                                                'Borrador'   => 'bg-secondary',
-                                                'Activo'     => 'bg-success',
-                                                'Finalizado' => 'bg-dark',
-                                                'Cancelado'  => 'bg-danger',
-                                            ];
-                                        @endphp
-                                        <span class="badge {{ $badgeMap[$c->estado] ?? 'bg-secondary' }}">{{ $c->estado }}</span>
-                                    </td>
                                     <td class="text-center">
                                         <div class="btn-group">
                                             <button class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Opciones</button>
@@ -155,7 +147,7 @@
 
 {{-- ===== MODAL CONTRATO ===== --}}
 <div class="modal fade" id="modalContrato" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-file-earmark-text"></i> <span id="tituloContrato">Nuevo Contrato</span></h5>
@@ -168,15 +160,14 @@
                     <p>Los campos con <strong class="text-danger">(*)</strong> son obligatorios.</p>
                     <div class="row g-3">
 
-                        {{-- Número de contrato (solo lectura) --}}
-                        <div class="col-md-4">
+                        {{-- Fila 1: N° Contrato | Tipo | Proveedor --}}
+                        <div class="col-md-3">
                             <label class="form-label">N° Contrato</label>
                             <input type="text" class="form-control bg-light fw-bold text-primary"
                                 id="numero_contrato_display" value="{{ $numeroSiguiente }}" readonly>
                         </div>
 
-                        {{-- Tipo de contrato --}}
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Tipo de Contrato <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('tipo_contrato') is-invalid @enderror"
                                 name="tipo_contrato" id="tipo_contrato" required>
@@ -187,36 +178,6 @@
                             @error('tipo_contrato')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- Estado --}}
-                        <div class="col-md-4">
-                            <label class="form-label">Estado <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('estado') is-invalid @enderror"
-                                name="estado" id="estado" required>
-                                <option value="Borrador">Borrador</option>
-                                <option value="Activo">Activo</option>
-                                <option value="Finalizado">Finalizado</option>
-                                <option value="Cancelado">Cancelado</option>
-                            </select>
-                            @error('estado')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        {{-- Cliente --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Cliente <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('cliente_id') is-invalid @enderror"
-                                name="cliente_id" id="cliente_id" required>
-                                <option value="">-- Seleccione cliente --</option>
-                                @foreach($clientes as $cl)
-                                    <option value="{{ $cl->id }}">
-                                        {{ $cl->nombre }}
-                                        @if($cl->nit) — NIT/CI: {{ $cl->nit }} @endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('cliente_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        {{-- Proveedor --}}
                         <div class="col-md-6">
                             <label class="form-label">Proveedor <span class="text-danger">(*)</span></label>
                             <select class="form-select @error('proveedor_id') is-invalid @enderror"
@@ -232,32 +193,24 @@
                             @error('proveedor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- Fechas --}}
-                        <div class="col-md-3">
+                        {{-- Fila 2: Fecha Inicio | Fecha Fin --}}
+                        <div class="col-md-6">
                             <label class="form-label">Fecha Inicio <span class="text-danger">(*)</span></label>
                             <input type="date" class="form-control @error('fecha_inicio') is-invalid @enderror"
                                 name="fecha_inicio" id="fecha_inicio" required>
                             @error('fecha_inicio')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <label class="form-label">Fecha Fin</label>
                             <input type="date" class="form-control @error('fecha_fin') is-invalid @enderror"
                                 name="fecha_fin" id="fecha_fin">
                             @error('fecha_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- Cantidad camiones --}}
-                        <div class="col-md-3">
-                            <label class="form-label">Cant. Camiones Estimados</label>
-                            <input type="number" class="form-control @error('cantidad_camiones') is-invalid @enderror"
-                                name="cantidad_camiones" id="cantidad_camiones" min="1">
-                            @error('cantidad_camiones')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        {{-- Toneladas contrato --}}
-                        <div class="col-md-3">
-                            <label class="form-label">Total Toneladas Contrato <span class="text-danger">(*)</span></label>
+                        {{-- Fila 3: Total Toneladas | Moneda+Monto --}}
+                        <div class="col-md-4">
+                            <label class="form-label">Total Toneladas <span class="text-danger">(*)</span></label>
                             <input type="number" step="0.001"
                                 class="form-control @error('toneladas_contrato') is-invalid @enderror"
                                 name="toneladas_contrato" id="toneladas_contrato"
@@ -266,29 +219,26 @@
                             @error('toneladas_contrato')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        {{-- Monto y moneda --}}
-                        <div class="col-md-2">
-                            <label class="form-label">Moneda <span class="text-danger">(*)</span></label>
-                            <select class="form-select @error('moneda') is-invalid @enderror"
-                                name="moneda" id="moneda" required>
-                                <option value="BOB" selected>BOB</option>
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                                <option value="BRL">BRL</option>
-                                <option value="ARS">ARS</option>
-                                <option value="PEN">PEN</option>
-                                <option value="CLP">CLP</option>
-                                <option value="PYG">PYG</option>
-                                <option value="COP">COP</option>
-                            </select>
-                            @error('moneda')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Monto Total <span class="text-danger">(*)</span></label>
-                            <input type="number" step="0.01" class="form-control @error('monto_total') is-invalid @enderror"
-                                name="monto_total" id="monto_total" min="0" required>
-                            @error('monto_total')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="col-md-8">
+                            <label class="form-label">Monto Total a Pagar al Proveedor <span class="text-danger">(*)</span></label>
+                            <div class="input-group">
+                                <select class="form-select flex-grow-0" style="width:90px;"
+                                    name="moneda" id="moneda" required>
+                                    <option value="BOB" selected>BOB</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="BRL">BRL</option>
+                                    <option value="ARS">ARS</option>
+                                    <option value="PEN">PEN</option>
+                                    <option value="CLP">CLP</option>
+                                    <option value="PYG">PYG</option>
+                                    <option value="COP">COP</option>
+                                </select>
+                                <input type="number" step="0.01" class="form-control @error('monto_total') is-invalid @enderror"
+                                    name="monto_total" id="monto_total" min="0" required placeholder="0.00">
+                            </div>
+                            @error('moneda')<div class="text-danger small">{{ $message }}</div>@enderror
+                            @error('monto_total')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
 
                         {{-- Documento PDF --}}
@@ -335,7 +285,6 @@
         document.getElementById('numero_contrato_display').value = '{{ $numeroSiguiente }}';
         document.getElementById('formContrato').reset();
         document.getElementById('moneda').value = 'BOB';
-        document.getElementById('estado').value = 'Borrador';
         document.getElementById('pdfActualInfo').classList.add('d-none');
     }
 
@@ -349,12 +298,9 @@
                 document.getElementById('formContrato').action               = '/contrato/' + id;
                 document.getElementById('numero_contrato_display').value     = c.numero_contrato;
                 document.getElementById('tipo_contrato').value               = c.tipo_contrato;
-                document.getElementById('estado').value                      = c.estado;
-                document.getElementById('cliente_id').value                  = c.cliente_id;
                 document.getElementById('proveedor_id').value                = c.proveedor_id;
                 document.getElementById('fecha_inicio').value                = c.fecha_inicio ?? '';
                 document.getElementById('fecha_fin').value                   = c.fecha_fin ?? '';
-                document.getElementById('cantidad_camiones').value           = c.cantidad_camiones ?? '';
                 document.getElementById('toneladas_contrato').value          = c.toneladas_contrato ?? '';
                 document.getElementById('moneda').value                      = c.moneda;
                 document.getElementById('monto_total').value                 = c.monto_total;

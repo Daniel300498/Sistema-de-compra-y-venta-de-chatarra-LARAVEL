@@ -1,15 +1,17 @@
 @php
     $estadoColor = [
-        'En tránsito'  => 'primary',
-        'En frontera'  => 'warning text-dark',
-        'Transbordado' => 'info text-dark',
-        'Entregado'    => 'success',
+        'En tránsito'   => 'primary',
+        'En frontera'   => 'warning text-dark',
+        'Transbordando' => 'warning text-dark',
+        'Transbordado'  => 'info text-dark',
+        'Entregado'     => 'success',
     ];
     $estadoIcono = [
-        'En tránsito'  => 'bi-truck',
-        'En frontera'  => 'bi-sign-stop',
-        'Transbordado' => 'bi-arrow-left-right',
-        'Entregado'    => 'bi-check-circle',
+        'En tránsito'   => 'bi-truck',
+        'En frontera'   => 'bi-sign-stop',
+        'Transbordando' => 'bi-arrow-left-right',
+        'Transbordado'  => 'bi-check2-all',
+        'Entregado'     => 'bi-check-circle',
     ];
     $color  = $estadoColor[$tramo->estado]  ?? 'secondary';
     $icono  = $estadoIcono[$tramo->estado]  ?? 'bi-circle';
@@ -67,10 +69,10 @@
                     </button>
                 @endif
 
-                {{-- Botón agregar transbordo: solo si está en frontera --}}
-                @if($tramo->estado === 'En frontera')
+                {{-- Botón agregar transbordo: si está en frontera o transbordando (aún quedan toneladas) --}}
+                @if(in_array($tramo->estado, ['En frontera', 'Transbordando']))
                     @php
-                        $yaAsignadoHijos = (float) $tramo->tramosHijos()->sum('peso_salida');
+                        $yaAsignadoHijos = (float) $tramo->tramosHijos()->where('activo', true)->sum('peso_salida');
                         $disponibleTransbordo = round((float) $tramo->peso_llegada - $yaAsignadoHijos, 3);
                     @endphp
                     <button class="btn btn-sm btn-outline-info"
@@ -92,13 +94,26 @@
                     </button>
                 @endif
 
-                {{-- Eliminar: solo si no está entregado/transbordado y no tiene hijos --}}
-                @if(!in_array($tramo->estado, ['Entregado', 'Transbordado']) && $hijos->isEmpty())
-                    <a href="{{ route('tramo.destroy', $tramo->uuid) }}"
-                        class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('¿Eliminar este tramo?')">
-                        <i class="bi bi-trash"></i>
+                {{-- Nota de entrega PDF: si está entregado o transbordado --}}
+                @if(in_array($tramo->estado, ['Entregado', 'Transbordado']))
+                    <a href="{{ route('tramo.nota-entrega', $tramo->uuid) }}"
+                        class="btn btn-sm btn-outline-success" target="_blank">
+                        <i class="bi bi-file-earmark-pdf"></i> Nota de entrega
                     </a>
+                @endif
+
+                {{-- Desactivar/reactivar: nunca se elimina --}}
+                @if(!in_array($tramo->estado, ['Entregado']))
+                    <button class="btn btn-sm {{ $tramo->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
+                        title="{{ $tramo->activo ? 'Desactivar tramo' : 'Reactivar tramo' }}"
+                        onclick="confirmarToggleTramo(
+                            '{{ route('tramo.toggle-activo', $tramo->uuid) }}',
+                            '{{ $tramo->camion->placa }}',
+                            '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }}',
+                            {{ $tramo->activo ? 'true' : 'false' }}
+                        )">
+                        <i class="bi {{ $tramo->activo ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' }}"></i>
+                    </button>
                 @endif
             @endcan
         </div>
