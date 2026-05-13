@@ -59,6 +59,15 @@ class PermissionsTableSeeder extends Seeder
         Permission::create(['name' => 'parametros.edit',    'descripcion' => 'Editar Parámetros',        'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
         Permission::create(['name' => 'parametros.destroy', 'descripcion' => 'Eliminar Parámetros',      'guard_name' => 'web', 'grupo'=>'PARAMETROS']);
 
+        // Gastos Extras
+        Permission::create(['name' => 'gastos_extras.index',   'descripcion' => 'Ver todos los Gastos Extras', 'guard_name' => 'web', 'grupo'=>'GASTOS_EXTRAS']);
+        Permission::create(['name' => 'gastos_extras.create',  'descripcion' => 'Agregar Gastos Extras',       'guard_name' => 'web', 'grupo'=>'GASTOS_EXTRAS']);
+        Permission::create(['name' => 'gastos_extras.edit',    'descripcion' => 'Editar Gastos Extras',        'guard_name' => 'web', 'grupo'=>'GASTOS_EXTRAS']);
+        Permission::create(['name' => 'gastos_extras.destroy', 'descripcion' => 'Eliminar Gastos Extras',      'guard_name' => 'web', 'grupo'=>'GASTOS_EXTRAS']);
+
+        // Reportes
+        Permission::create(['name' => 'reportes.index',   'descripcion' => 'Ver Reportes', 'guard_name' => 'web', 'grupo'=>'REPORTES']);
+        Permission::create(['name' => 'reportes.export', 'descripcion' => 'Exportar Reportes', 'guard_name' => 'web', 'grupo'=>'REPORTES']);
         // Crear rol superadmin y asignarle todos los permisos
         $role = Role::create([
             'uuid'        => Str::uuid(),

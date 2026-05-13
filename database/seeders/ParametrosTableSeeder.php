@@ -32,23 +32,5 @@ class ParametrosTableSeeder extends Seeder
         Parametro::create(['tipo' => 'lugar_ci', 'descripcion' => 'PD']);
         Parametro::create(['tipo' => 'lugar_ci', 'descripcion' => 'CH']);
     
-        // Bancos de Bolivia
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO CENTRAL DE BOLIVIA']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO UNIÓN S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO NACIONAL DE BOLIVIA S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO MERCANTIL SANTA CRUZ S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO BISA S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO DE CRÉDITO DE BOLIVIA S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO ECONÓMICO S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO GANADERO S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO FIE S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO FORTALEZA S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO PYME ECOFUTURO S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO PYME DE LA COMUNIDAD S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCO PRODEM S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'BANCOSOL S.A.']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'DIACONÍA IFD']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'CIDRE IFD']);
-        Parametro::create(['tipo' => 'bancos', 'descripcion' => 'CRECER IFD']);
     }
 }

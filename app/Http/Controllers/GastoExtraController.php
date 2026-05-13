@@ -4,87 +4,94 @@ namespace App\Http\Controllers;
 
 use App\Models\GastoExtra;
 use App\Models\Contrato;
+use App\Models\Proveedor;
 use App\Http\Requests\GastoExtraRequest;
 use App\Models\CuentaBancaria;
+use App\Models\Parametro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\App;
 use RealRashid\SweetAlert\Facades\Alert;
 use Carbon\Carbon;
 
-
 class GastoExtraController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $contratos=Contrato::whereNull('deleted_at')->get();
-        $gastos=GastoExtra::all();
-        $cuentas_banco=CuentaBancaria::all();
-        $total=GastoExtra::where('estado','pagado')->sum('monto_bolivianos');
-        $aduaneros=GastoExtra::where('estado','pagado')->where('categoria','ADUANERO')->sum('monto_bolivianos');
-        $carga=GastoExtra::where('estado','pagado')->where('categoria','CARGUIO')->sum('monto_bolivianos');;
-        $otros=0;
-        return view('gastos_extras.index',compact('gastos','total','cuentas_banco','aduaneros','carga','contratos','otros'));
+        $contratos = Contrato::whereNull('deleted_at')->get();
+        $categorias = Parametro::where('tipo','categoria_gasto_extra')->get();
+        $cuentas_banco = CuentaBancaria::where('tipo_titular','empleado')->get();
+        $proveedores = Proveedor::whereNull('deleted_at')->orderBy('nombre')->get();
+        $contratosFiltrados = Contrato::with('proveedor');
+
+        if ($request->filled('proveedor_id')) {
+            $contratosFiltrados->where('proveedor_id',$request->proveedor_id);
+        }
+        $contratosFiltrados = $contratosFiltrados->orderBy('created_at', 'desc')->get();
+        foreach ($contratosFiltrados as $contrato) {
+            $gastos = GastoExtra::where('contrato_id',$contrato->id)->whereNull('deleted_at')->orderBy('fecha', 'desc')->get();
+            $contrato->gastos_detalle = $gastos;
+            $contrato->total_gastos = $gastos->sum('monto_bolivianos');
+        }
+        $total = GastoExtra::where('estado','pagado')->sum('monto_bolivianos');
+        $pendientes = GastoExtra::where('estado','pendiente')->sum('monto_bolivianos');
+        $pagados = GastoExtra::where('estado','pagado')->sum('monto_bolivianos');
+        $aduaneros = GastoExtra::where('estado','pagado')->where('categoria','ADUANERO')->sum('monto_bolivianos');
+        $carga = GastoExtra::where('estado','pagado')->where('categoria','CARGUIO')->sum('monto_bolivianos');
+        $otros = 0;
+        return view('gastos_extras.index',compact('contratos','categorias','cuentas_banco','proveedores','contratosFiltrados','total','pendientes','pagados','aduaneros','carga','otros'));
     }
-   public function store(GastoExtraRequest $request)
-{
-    $cuenta = CuentaBancaria::findOrFail($request->cuenta_bancaria_id);
+    public function store(GastoExtraRequest $request)
+    {
+        $cuenta = CuentaBancaria::findOrFail($request->cuenta_bancaria_id);
+        $monedaEsBob = $request->moneda === 'BOB';
+        $tipoCambioVacio = empty($request->tipo_cambio);
+        if (
+            ($monedaEsBob && !$tipoCambioVacio) ||
+            (!$monedaEsBob && $tipoCambioVacio)
+        ) {
+            Alert::error('Error','No puedes realizar el registro, datos inconsistentes');
+            return redirect()->route('gastos_extras.index');
+        }
+        $categoria = strtoupper(trim($request->categoria));
+        if ($categoria === 'OTRO') {
+            $categoria = strtoupper(trim($request->nueva_categoria));
+        }
+        $categoriaExiste = Parametro::where('tipo','categoria_gasto_extra')->where('descripcion', $categoria)->first();
+        $categoriaParametro = Parametro::where('tipo','categoria_gasto_extra')->whereRaw('UPPER(TRIM(descripcion)) = ?',[$categoria])->first();
 
-    /* if (!$cuenta->activa) {
-        return response()->json([
-            'message' => 'La cuenta bancaria está inactiva'
-        ], 422);
-    } */
-
-    if (
-        ($request->moneda === 'BOB' && empty($request->tipo_cambio)) ||
-        ($request->moneda !== 'BOB' && !empty($request->tipo_cambio))
-    ) {
-
+    if (!$categoriaParametro) {
+        $categoriaParametro = new Parametro();
+        $categoriaParametro->tipo = 'categoria_gasto_extra';
+        $categoriaParametro->descripcion = $categoria;
+        $categoriaParametro->save();
+    }
+    $categoria = $categoriaParametro->descripcion;
         $nombreComprobante = '';
-
         if ($request->hasFile('comprobante_pago')) {
-            $path = public_path() . '/comprobantes_pago';
+            $path = public_path('comprobantes_pago');
             $doc = $request->file('comprobante_pago');
-
-            $name = 'comprobante_' .
-                $request->input('categoria') . '_' .
-                $request->input('concepto') . '-' .
-                Carbon::now()->format('YmdHis');
-
-            $nombreComprobante = $name . '.' . $doc->extension();
+            $name = 'comprobante_' .$categoria . '_' .strtoupper($request->concepto) . '_' .Carbon::now()->format('YmdHis');
+            $nombreComprobante =$name . '.' . $doc->extension();
             $doc->move($path, $nombreComprobante);
         }
-
-        $mon = 0;
-
-        if ($request->moneda === 'BOB') {
-            $mon = $request->monto;
-        } else {
-            $mon = $request->monto * $request->tipo_cambio;
-        }
-
-        $gasto = GastoExtra::create([
-            'contrato_id' => $request->contrato_id,
-            'cuenta_bancaria_id' => $request->cuenta_bancaria_id,
-            'categoria' => $request->categoria,
-            'concepto' => $request->concepto,
-            'fecha' => $request->fecha,
-            'monto' => $request->monto,
-            'moneda' => $request->moneda,
-            'monto_bolivianos' => $mon,
-            'tipo_cambio' => $request->moneda === 'BOB' ? null : $request->tipo_cambio,
-            'comprobante_pago' => $nombreComprobante,
-            'estado' => 'pagado',
-        ]);
-
-        Alert::success('Registrado', 'Gasto Extra registrado con éxito');
+        $montoBolivianos = $monedaEsBob ? $request->monto : $request->monto * $request->tipo_cambio;
+        $gasto = new GastoExtra();
+        $gasto->contrato_id = $request->contrato_id;
+        $gasto->cuenta_bancaria_id = $request->cuenta_bancaria_id;
+        $gasto->categoria = $categoria;
+        $gasto->concepto = strtoupper(trim($request->concepto));
+        $gasto->fecha = $request->fecha;
+        $gasto->monto = $request->monto;
+        $gasto->moneda = $request->moneda;
+        $gasto->monto_bolivianos = $montoBolivianos;
+        $gasto->tipo_cambio = $monedaEsBob ? null : $request->tipo_cambio;
+        $gasto->comprobante_pago = $nombreComprobante;
+        $gasto->estado = 'pagado';
+        $gasto->save();
+        Alert::success('Registrado','Gasto Extra registrado con éxito');
         return redirect()->route('gastos_extras.index');
     }
-
-    Alert::error('Error', 'No puedes realizar el registro, datos inconsistentes');
-    return redirect()->route('gastos_extras.index');
-}
     public function show($id)
     {
         return GastoExtra::with(['contrato', 'cuentaBancaria'])->findOrFail($id);
@@ -93,42 +100,57 @@ class GastoExtraController extends Controller
     public function update(GastoExtraRequest $request, $id)
     {
         $gasto = GastoExtra::findOrFail($id);
-
-        if ($gasto->estado === 'pagado') {
-           Alert::error('Error', 'No puede editar un registro pagado!!!');
-        return redirect()->route('gastos_extras.index');       
+        $cuenta = CuentaBancaria::findOrFail($request->cuenta_bancaria_id);
+        $monedaEsBob = $request->moneda === 'BOB';
+        $tipoCambioVacio = empty($request->tipo_cambio);
+        if (
+            ($monedaEsBob && !$tipoCambioVacio) ||
+            (!$monedaEsBob && $tipoCambioVacio)
+        ) {
+            Alert::error('Error','No puedes realizar la actualización, datos inconsistentes');
+            return redirect()->route('gastos_extras.index');
         }
-
-        $gasto->fill($request->only([
-            'categoria',
-            'concepto',
-            'fecha',
-            'monto',
-            'moneda',
-            'tipo_cambio',
-            'comprobante_pago',
-        ]));
-
-        $gasto->updated_by = auth()->id();
-        $gasto->save();
-        Alert::success('Actualizacion', 'Gasto Extra Actualizado con exito!!!');
-        return redirect()->route('gastos_extras.index');       
-
-    }
-    public function pagar($id)
-    {
-        $gasto = GastoExtra::findOrFail($id);
-
-        if ($gasto->estado === 'pagado') {
-            return response()->json([
-                'message' => 'El gasto ya está pagado'
-            ], 422);
+        $categoria = strtoupper(trim($request->categoria));
+        if ($categoria === 'OTRO') {
+            $categoria = strtoupper(trim($request->nueva_categoria));
         }
-        $gasto->estado = 'pagado';
+        $categoriaParametro = Parametro::where('tipo','categoria_gasto_extra')->whereRaw('UPPER(TRIM(descripcion)) = ?',[$categoria])->first();
+        if (!$categoriaParametro) {
+            $categoriaParametro = new Parametro();
+            $categoriaParametro->tipo ='categoria_gasto_extra';
+            $categoriaParametro->descripcion =$categoria;
+            $categoriaParametro->save();
+        }
+        $categoria = $categoriaParametro->descripcion;
+        $nombreComprobante = $gasto->comprobante_pago;
+        if ($request->hasFile('comprobante_pago')) {
+            if (!empty($gasto->comprobante_pago) && file_exists(public_path('comprobantes_pago/' .$gasto->comprobante_pago))) {
+                unlink(
+                    public_path('comprobantes_pago/' .$gasto->comprobante_pago));
+            }
+
+            $path = public_path('comprobantes_pago');
+            $doc = $request->file('comprobante_pago');
+            $name = 'comprobante_' .$categoria . '_' .strtoupper($request->concepto) . '_' .Carbon::now()->format('YmdHis');
+            $nombreComprobante =$name . '.' . $doc->extension();
+            $doc->move($path, $nombreComprobante);
+        }
+        $montoBolivianos = $monedaEsBob ? $request->monto : $request->monto * $request->tipo_cambio;
+        $gasto->contrato_id =$request->contrato_id;
+        $gasto->cuenta_bancaria_id =$request->cuenta_bancaria_id;
+        $gasto->categoria = $categoria;
+        $gasto->concepto = strtoupper(trim($request->concepto));
+        $gasto->fecha = $request->fecha;
+        $gasto->monto = $request->monto;
+        $gasto->moneda = $request->moneda;
+        $gasto->monto_bolivianos =$montoBolivianos;
+        $gasto->tipo_cambio = $monedaEsBob ? null : $request->tipo_cambio;
+        $gasto->estado = $request->estado;
+        $gasto->metodo_pago = $request->metodo_pago;
+        $gasto->comprobante_pago = $nombreComprobante;
         $gasto->save();
-        return response()->json([
-            'message' => 'Gasto marcado como pagado'
-        ]);
+        Alert::success('Actualizado','Gasto Extra actualizado con éxito');
+        return redirect()->route('gastos_extras.index');
     }
 
     public function destroy($uuid)

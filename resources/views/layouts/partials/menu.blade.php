@@ -134,7 +134,14 @@
         </a>
       </li>
       @endcan
-
+     @can('reportes.index')
+      <li class="nav-item">
+        <a class="nav-link {{ isActiveRoute('reportes.index') }}" href="{{ route('reportes.index') }}">
+          <i class="bi bi-graph-up"></i>
+          <span>Reportes</span>
+        </a>
+      </li>
+      @endcan
       {{-- ADMINISTRACIÓN --}}
       @if(auth()->user()->can('permisos.index') || auth()->user()->can('roles.index') || auth()->user()->can('usuarios.index'))
       @php $enAdmin = request()->routeIs(['permisos.*','roles.*','users.*']); @endphp

@@ -20,6 +20,8 @@ class GastoExtra extends Model
         'moneda',
         'monto_bolivianos',
         'tipo_cambio',
+        'estado',
+        'tipo_cambio',
         'comprobante_pago',
         'estado',
         'created_by',

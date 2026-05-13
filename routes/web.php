@@ -164,4 +164,7 @@ use Illuminate\Support\Facades\Route;
     Route::put('cuentas_bancarias/{cuenta_bancaria}', [App\Http\Controllers\CuentaBancariaController::class, 'update'])->name('cuentas_bancarias.update')->middleware('permission:cuentas_bancarias.edit');
     Route::get('cuentas_bancarias/{uuid}/destroy', [App\Http\Controllers\CuentaBancariaController::class, 'destroy'])->name('cuentas_bancarias.destroy')->middleware('permission:gastos_extras.destroy');
 
+    //Reportes
+    Route::get('/reportes', [App\Http\Controllers\ReporteController::class, 'index'])->name('reportes.index')->middleware('permission:reportes.index');
+    Route::get('/reportes/exportar-excel', [App\Http\Controllers\ReporteController::class,'exportarExcel'])->name('reportes.exportar.excel')->middleware('permission:reportes.export');
    });
