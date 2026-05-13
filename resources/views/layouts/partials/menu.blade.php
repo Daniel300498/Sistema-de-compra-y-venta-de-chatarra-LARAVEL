@@ -108,7 +108,6 @@
         </ul>
       </li>
       @endcan
-
       {{-- Bancos y Cuentas --}}
       <li class="nav-item">
         <a class="nav-link {{ isActiveRoute(['bancos.index']) }}" href="{{ route('bancos.index') }}">
