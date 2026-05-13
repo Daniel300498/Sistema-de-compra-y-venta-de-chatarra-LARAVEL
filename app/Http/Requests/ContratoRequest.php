@@ -15,15 +15,13 @@ class ContratoRequest extends FormRequest
     {
         return [
             'tipo_contrato'     => 'required|in:Nacional,Internacional',
-            'cliente_id'        => 'required|exists:clientes,id',
+            'cliente_id'        => 'nullable|exists:clientes,id',
             'proveedor_id'      => 'required|exists:proveedors,id',
             'fecha_inicio'      => 'required|date',
             'fecha_fin'         => 'nullable|date|after_or_equal:fecha_inicio',
-            'cantidad_camiones'  => 'nullable|integer|min:1',
             'toneladas_contrato' => 'required|numeric|min:0.001',
             'monto_total'       => 'required|numeric|min:0',
             'moneda'            => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
-            'estado'            => 'required|in:Borrador,Activo,Finalizado,Cancelado',
             'documento_pdf'     => 'nullable|file|mimes:pdf|max:30720',
         ];
     }
@@ -41,10 +39,9 @@ class ContratoRequest extends FormRequest
             'fecha_fin.after_or_equal'=> 'La fecha fin debe ser igual o posterior a la fecha inicio.',
             'toneladas_contrato.required' => 'Las toneladas del contrato son obligatorias.',
             'toneladas_contrato.min'      => 'Las toneladas deben ser mayores a 0.',
-            'monto_total.required'        => 'El monto total es obligatorio.',
+            'monto_total.required'    => 'El monto total a pagar al proveedor es obligatorio.',
             'monto_total.numeric'     => 'El monto total debe ser un número.',
             'moneda.required'         => 'La moneda es obligatoria.',
-            'estado.required'             => 'El estado es obligatorio.',
             'documento_pdf.file'          => 'El documento debe ser un archivo.',
             'documento_pdf.mimes'         => 'Solo se permiten archivos PDF.',
             'documento_pdf.max'           => 'El PDF no puede superar los 30 MB.',

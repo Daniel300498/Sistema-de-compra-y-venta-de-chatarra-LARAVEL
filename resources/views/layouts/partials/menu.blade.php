@@ -36,6 +36,7 @@
             <span>Contratos</span>
           </a>
         </li>
+<<<<<<< HEAD
         @endcan          
        
         @can('cuentas_bancarias.index')
@@ -54,6 +55,29 @@
           </a>
         </li>
         @endcan
+=======
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['seguimiento.index']) }}" href="{{ route('seguimiento.index') }}">
+            <i class="bi bi-geo-alt"></i>
+            <span>Seguimiento de Cargas</span>
+          </a>
+        </li>
+        @endcan        
+>>>>>>> ad5e84fe54142e47ab2a5b29fb9c1ac4968296a4
+
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['bancos.index']) }}" href="{{ route('bancos.index') }}">
+            <i class="bi bi-bank"></i>
+            <span>Bancos y Cuentas</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['pagos.camiones.index']) }}" href="{{ route('pagos.camiones.index') }}">
+            <i class="bi bi-cash-coin"></i>
+            <span>Pagos a Camiones</span>
+          </a>
+        </li>
 
         @can('permisos.index')
         <li class="nav-item">

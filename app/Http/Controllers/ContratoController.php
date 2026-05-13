@@ -20,7 +20,10 @@ class ContratoController extends Controller
 
     public function index()
     {
-        $contratos  = Contrato::with(['cliente', 'proveedor'])
+        $contratos  = Contrato::with([
+                            'proveedor',
+                            'contratoCamiones.tramos',
+                        ])
                         ->whereNull('deleted_at')
                         ->orderByDesc('created_at')
                         ->get();
@@ -99,7 +102,6 @@ class ContratoController extends Controller
     public function camiones($uuid)
     {
         $contrato = Contrato::with([
-            'cliente',
             'proveedor',
             'contratoCamiones.camion',
             'contratoCamiones.conductor',
@@ -121,6 +123,8 @@ class ContratoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('contratos.camiones', compact('contrato', 'camionesDisponibles', 'choferes'));
+        $clientes = Cliente::whereNull('deleted_at')->orderBy('nombre')->get();
+
+        return view('contratos.camiones', compact('contrato', 'camionesDisponibles', 'choferes', 'clientes'));
     }
 }

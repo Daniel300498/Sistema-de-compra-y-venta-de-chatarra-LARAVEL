@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Wildside\Userstamps\Userstamps;
+use App\Models\Cliente;
 
 class Tramo extends Model
 {
@@ -18,15 +19,19 @@ class Tramo extends Model
         'tramo_padre_id',
         'camion_id',
         'conductor_id',
+        'cliente_id',
         'origen',
         'destino',
         'tipo_tramo',
         'peso_declarado',
         'peso_salida',
         'peso_llegada',
+        'descuento_porcentaje',
+        'observaciones_llegada',
         'fecha_salida',
         'fecha_llegada',
         'estado',
+        'activo',
         'observaciones',
         'created_by',
         'updated_by',
@@ -38,6 +43,7 @@ class Tramo extends Model
         'peso_llegada'   => 'decimal:3',
         'fecha_salida'   => 'date',
         'fecha_llegada'  => 'date',
+        'activo'         => 'boolean',
     ];
 
     protected static function boot()
@@ -72,6 +78,11 @@ class Tramo extends Model
     public function conductor()
     {
         return $this->belongsTo(OperadorTransporte::class, 'conductor_id');
+    }
+
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
     // Un tramo es "final" si no tiene hijos (llega al cliente)

@@ -26,6 +26,8 @@ class ContratoCamionController extends Controller
             'origen'           => 'required|string|max:150',
             'destino'          => 'required|string|max:150',
             'peso_declarado'   => 'required|numeric|min:0.001',
+            'monto_acordado'   => 'nullable|numeric|min:0',
+            'moneda_flete'     => 'nullable|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
             'observaciones'    => 'nullable|string|max:500',
         ], [
             'camion_id.required'        => 'Debe seleccionar un camión.',
@@ -44,6 +46,8 @@ class ContratoCamionController extends Controller
             'camion_id'        => $request->camion_id,
             'conductor_id'     => $request->conductor_id,
             'toneladas'        => $request->peso_declarado,
+            'monto_acordado'   => $request->monto_acordado ?: null,
+            'moneda_flete'     => $request->moneda_flete ?? 'BOB',
             'fecha_asignacion' => $request->fecha_asignacion,
             'estado_entrega'   => 'Pendiente',
             'observaciones'    => $request->observaciones,
@@ -73,18 +77,18 @@ class ContratoCamionController extends Controller
         return redirect()->route('contratos.camiones', $contrato->uuid);
     }
 
-    public function destroy($uuid)
+    public function toggleActivo($uuid)
     {
         $item = ContratoCamion::where('uuid', $uuid)->firstOrFail();
         $contratoUuid = $item->contrato->uuid;
 
-        if ($item->estado_entrega === 'Entregado') {
-            Alert::error('No permitido', 'No se puede eliminar un camión cuya entrega ya fue confirmada.');
-            return redirect()->route('contratos.camiones', $contratoUuid);
-        }
+        $item->update([
+            'activo'     => !$item->activo,
+            'updated_by' => auth()->id(),
+        ]);
 
-        $item->delete();
-        Alert::success('Éxito', 'Camión removido del contrato.');
+        $msg = $item->activo ? 'Asignación reactivada.' : 'Asignación desactivada. El registro se conserva en el historial.';
+        Alert::success('Listo', $msg);
         return redirect()->route('contratos.camiones', $contratoUuid);
     }
 }
