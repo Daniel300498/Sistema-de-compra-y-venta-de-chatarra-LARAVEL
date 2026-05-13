@@ -19,7 +19,7 @@ class GastoExtraController extends Controller
     {
         $contratos=Contrato::whereNull('deleted_at')->get();
         $gastos=GastoExtra::all();
-        $cuentas_banco=CuentaBancaria::where('activa',true)->get();
+        $cuentas_banco=CuentaBancaria::all();
         $total=GastoExtra::where('estado','pagado')->sum('monto_bolivianos');
         $aduaneros=GastoExtra::where('estado','pagado')->where('categoria','ADUANERO')->sum('monto_bolivianos');
         $carga=GastoExtra::where('estado','pagado')->where('categoria','CARGUIO')->sum('monto_bolivianos');;

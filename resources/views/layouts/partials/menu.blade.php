@@ -117,12 +117,23 @@
       </li>
 
       {{-- Empleados --}}
+      @can('empleados.index')
       <li class="nav-item">
         <a class="nav-link {{ isActiveRoute(['empleados.index']) }}" href="{{ route('empleados.index') }}">
           <i class="bi bi-person-badge"></i>
           <span>Empleados</span>
         </a>
       </li>
+      @endcan
+
+      @can('gastos_extras.index')
+      <li class="nav-item">
+        <a class="nav-link {{ isActiveRoute(['gastos_extras.index']) }}" href="{{ route('gastos_extras.index') }}">
+          <i class="bi bi-cash-stack"></i>
+          <span>Gastos Extra</span>
+        </a>
+      </li>
+      @endcan
 
       {{-- ADMINISTRACIÓN --}}
       @if(auth()->user()->can('permisos.index') || auth()->user()->can('roles.index') || auth()->user()->can('usuarios.index'))
