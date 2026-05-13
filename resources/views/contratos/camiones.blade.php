@@ -38,7 +38,7 @@
                         <tr>
                             <th>Estado</th>
                             <td>
-                                @php $badgeMap = ['Borrador'=>'bg-secondary','Activo'=>'bg-success','Finalizado'=>'bg-dark','Cancelado'=>'bg-danger']; @endphp
+                                @php $badgeMap = ['Activo'=>'bg-success','Concluido'=>'bg-dark']; @endphp
                                 <span class="badge {{ $badgeMap[$contrato->estado] ?? 'bg-secondary' }}">{{ $contrato->estado }}</span>
                             </td>
                         </tr>
@@ -118,26 +118,34 @@
                                 </div>
                             @else
                                 @foreach($contrato->contratoCamiones as $cc)
-                                @php $tramosRaiz = $cc->tramos->whereNull('tramo_padre_id'); @endphp
-                                <div class="card border mb-3 {{ $cc->estado_entrega === 'Entregado' ? 'border-success' : '' }}">
-                                    <div class="card-header py-2 {{ $cc->estado_entrega === 'Entregado' ? 'bg-success bg-opacity-10' : 'bg-light' }}">
+                                @php
+                                    $tramosRaiz = $cc->tramos->whereNull('tramo_padre_id');
+                                    $ccBorde  = match($cc->estado_entrega) { 'Entregado' => 'border-success', 'Desactivado' => 'border-secondary', default => 'border-warning' };
+                                    $ccFondo  = match($cc->estado_entrega) { 'Entregado' => 'bg-success bg-opacity-10', 'Desactivado' => 'bg-secondary bg-opacity-10', default => 'bg-warning bg-opacity-10' };
+                                    $ccIcono  = match($cc->estado_entrega) { 'Entregado' => 'text-success', 'Desactivado' => 'text-secondary', default => 'text-warning' };
+                                    $ccBadge  = match($cc->estado_entrega) { 'Entregado' => 'bg-success', 'Desactivado' => 'bg-secondary', default => 'bg-warning text-dark' };
+                                @endphp
+                                <div class="card border mb-3 {{ $ccBorde }}">
+                                    <div class="card-header py-2 {{ $ccFondo }}">
                                         {{-- Línea 1: identificación + estado + acciones --}}
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <i class="bi bi-truck {{ $cc->estado_entrega === 'Entregado' ? 'text-success' : 'text-primary' }}"></i>
+                                                <i class="bi bi-truck {{ $ccIcono }}"></i>
                                                 <strong>{{ $cc->camion->placa }}</strong>
                                                 <span class="text-muted ms-1">{{ $cc->camion->marca }} {{ $cc->camion->modelo }}</span>
                                             </div>
                                             <div class="d-flex gap-2 align-items-center">
-                                                <span class="badge {{ $cc->estado_entrega === 'Entregado' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                                <span class="badge {{ $ccBadge }}">
                                                     {{ $cc->estado_entrega }}
                                                 </span>
                                                 @can('contratos.edit')
-                                                    <button class="btn btn-sm {{ $cc->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
-                                                        onclick="confirmarToggleCC('{{ $cc->uuid }}', '{{ $cc->camion->placa }}', {{ $cc->activo ? 'true' : 'false' }})"
-                                                        title="{{ $cc->activo ? 'Desactivar asignación' : 'Reactivar asignación' }}">
-                                                        <i class="bi {{ $cc->activo ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' }}"></i>
-                                                    </button>
+                                                    @if($cc->estado_entrega !== 'Entregado')
+                                                        <button class="btn btn-sm {{ $cc->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
+                                                            onclick="confirmarToggleCC('{{ $cc->uuid }}', '{{ $cc->camion->placa }}', {{ $cc->activo ? 'true' : 'false' }})"
+                                                            title="{{ $cc->activo ? 'Desactivar asignación' : 'Reactivar asignación' }}">
+                                                            <i class="bi {{ $cc->activo ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' }}"></i>
+                                                        </button>
+                                                    @endif
                                                 @endcan
                                             </div>
                                         </div>
@@ -296,7 +304,7 @@
                                     </div>
 
                                     <div class="col-12 text-end">
-                                        <button type="submit" class="btn btn-primary">
+                                        <button type="submit" id="btn_asignar_camion" class="btn btn-primary" disabled>
                                             <i class="bi bi-plus-lg"></i> Asignar Camión
                                         </button>
                                     </div>
@@ -345,7 +353,7 @@
                             <div class="d-flex flex-column gap-2 mt-1">
                                 <div class="form-check border rounded p-3">
                                     <input class="form-check-input" type="radio" name="accion" value="entregado" id="accion_entregado" required
-                                        onchange="document.getElementById('sec_cliente').classList.remove('d-none')">
+                                        onchange="document.getElementById('sec_cliente').classList.remove('d-none'); document.getElementById('sec_precio_venta').classList.remove('d-none'); calcTotalVenta();">
                                     <label class="form-check-label" for="accion_entregado">
                                         <i class="bi bi-check-circle text-success"></i>
                                         <strong>Entregado al cliente</strong>
@@ -353,21 +361,12 @@
                                     </label>
                                 </div>
                                 <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="frontera" id="accion_frontera" required
-                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value='';">
-                                    <label class="form-check-label" for="accion_frontera">
-                                        <i class="bi bi-sign-stop text-warning"></i>
-                                        <strong>Llegó a frontera</strong>
-                                        <small class="d-block text-muted">La carga espera transbordo a otro(s) camión(es).</small>
-                                    </label>
-                                </div>
-                                <div class="form-check border rounded p-3">
                                     <input class="form-check-input" type="radio" name="accion" value="transbordo" id="accion_transbordo" required
-                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value='';">
+                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value=''; document.getElementById('sec_precio_venta').classList.add('d-none'); document.getElementById('inp_precio_ton').value=''; document.getElementById('lbl_total_venta').textContent='—';">
                                     <label class="form-check-label" for="accion_transbordo">
-                                        <i class="bi bi-arrow-down-right text-info"></i>
-                                        <strong>Transbordo a otro camión</strong>
-                                        <small class="d-block text-muted">La carga se divide y continúa en otros camiones.</small>
+                                        <i class="bi bi-arrow-left-right text-warning"></i>
+                                        <strong>Transbordando a otro(s) camión(es)</strong>
+                                        <small class="d-block text-muted">La carga continúa en otros camiones (frontera o cambio de unidad).</small>
                                     </label>
                                 </div>
                             </div>
@@ -382,6 +381,43 @@
                                     <option value="{{ $cli->id }}">{{ $cli->nombre }} @if($cli->nit) — NIT: {{ $cli->nit }} @endif</option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        {{-- Precio de venta al cliente --}}
+                        <div class="col-12 d-none" id="sec_precio_venta">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="fw-semibold mb-2"><i class="bi bi-tag text-success"></i> Precio de venta al cliente</div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-1">Moneda</label>
+                                        <select class="form-select form-select-sm" name="moneda_venta" id="sel_moneda_venta">
+                                            <option value="BOB">🇧🇴 BOB</option>
+                                            <option value="USD">🇺🇸 USD</option>
+                                            <option value="BRL">🇧🇷 BRL</option>
+                                            <option value="ARS">🇦🇷 ARS</option>
+                                            <option value="EUR">🇪🇺 EUR</option>
+                                            <option value="PEN">🇵🇪 PEN</option>
+                                            <option value="CLP">🇨🇱 CLP</option>
+                                            <option value="PYG">🇵🇾 PYG</option>
+                                            <option value="COP">🇨🇴 COP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-1">Precio por tonelada</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="0.0001" min="0" class="form-control"
+                                                name="precio_por_tonelada" id="inp_precio_ton"
+                                                placeholder="0.00" oninput="calcTotalVenta()">
+                                            <span class="input-group-text">/t</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-1">Total estimado</label>
+                                        <div id="lbl_total_venta" class="form-control form-control-sm bg-white text-success fw-semibold">—</div>
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block">Basado en el peso de llegada ingresado arriba.</small>
+                            </div>
                         </div>
 
                         {{-- Descuento --}}
@@ -627,14 +663,18 @@ function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
     inp.value = '';
     inp.oninput = function () {
         if (parseFloat(this.value) > parseFloat(pesoSalida)) this.value = pesoSalida;
+        calcTotalVenta();
     };
 
     document.getElementById('inp_fecha_llegada').min   = fechaSalida;
     document.getElementById('inp_fecha_llegada').value = fechaSalida;
 
-    // Resetear cliente, descuento y observaciones
+    // Resetear cliente, precio venta, descuento y observaciones
     document.getElementById('sec_cliente').classList.add('d-none');
     document.getElementById('sel_cliente').value = '';
+    document.getElementById('sec_precio_venta').classList.add('d-none');
+    document.getElementById('inp_precio_ton').value = '';
+    document.getElementById('lbl_total_venta').textContent = '—';
     const chk = document.getElementById('chk_descuento');
     chk.checked = false;
     document.getElementById('sec_descuento').classList.add('d-none');
@@ -716,5 +756,38 @@ function confirmarToggleTramo(url, placa, ruta, activo) {
     btn.href = url;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalToggleTramo')).show();
 }
+
+function calcTotalVenta() {
+    const peso   = parseFloat(document.getElementById('inp_peso_llegada').value) || 0;
+    const precio = parseFloat(document.getElementById('inp_precio_ton').value) || 0;
+    const lbl    = document.getElementById('lbl_total_venta');
+    lbl.textContent = (peso > 0 && precio > 0) ? (peso * precio).toFixed(2) : '—';
+}
+
+// Validación del botón Asignar Camión
+(function () {
+    const camposReq = ['cc_camion_id', 'cc_conductor_id', 'origen', 'destino', 'peso_declarado', 'fecha_asignacion'];
+
+    function verificarFormCC() {
+        const btn = document.getElementById('btn_asignar_camion');
+        if (!btn) return;
+        const completo = camposReq.every(function (id) {
+            const el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+            return el && el.value && el.value.trim() !== '';
+        });
+        btn.disabled = !completo;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        camposReq.forEach(function (id) {
+            const el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+            if (el) el.addEventListener('change', verificarFormCC);
+            if (el) el.addEventListener('input', verificarFormCC);
+        });
+        // También escuchar cambios en Select2 del camión
+        $('#cc_camion_id').on('change', verificarFormCC);
+        verificarFormCC();
+    });
+})();
 </script>
 @endsection

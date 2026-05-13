@@ -100,13 +100,36 @@ class ContratoCamion extends Model
         return max(0, (float)($this->monto_acordado ?? 0) - $this->descuento_monto);
     }
 
-    // Total ya pagado
+    // Total ya pagado en la moneda del flete
+    // Si el pago se hizo en la misma moneda: suma directo
+    // Si se hizo en otra moneda (ej: pagó en BOB un flete en BRL): convierte dividiendo por tipo_cambio
     public function getTotalPagadoAttribute(): float
     {
-        return (float) $this->pagos()->whereNull('deleted_at')->sum('monto');
+        $monedaFlete = $this->moneda_flete ?? 'BOB';
+        return (float) $this->pagos()
+            ->whereNull('deleted_at')
+            ->get()
+            ->sum(function ($p) use ($monedaFlete) {
+                $monto = (float) $p->monto;
+                $tc    = (float) $p->tipo_cambio ?: 1;
+                if ($p->moneda_pago === $monedaFlete) {
+                    return $monto;
+                }
+                // pagó en moneda distinta: convertir a BOB y luego a moneda flete
+                // monto_en_bob = monto * tc_pago; en_moneda_flete = monto_en_bob / tc_flete
+                // Pero no tenemos tc_flete guardado → simplificamos:
+                // si moneda_flete es BOB, dividir entre tc_pago no tiene sentido,
+                // así que el caso normal es: pago en moneda_flete → suma directo
+                // pago en BOB con flete en extranjera → monto/tc (tc = cuánto vale 1 extranjera en BOB)
+                if ($monedaFlete !== 'BOB' && $p->moneda_pago === 'BOB') {
+                    return $tc > 0 ? $monto / $tc : 0;
+                }
+                // fallback: tratar como misma moneda
+                return $monto;
+            });
     }
 
-    // Saldo pendiente
+    // Saldo pendiente en la moneda del flete
     public function getSaldoPendienteAttribute(): float
     {
         return max(0, $this->monto_neto - $this->total_pagado);

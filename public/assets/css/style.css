@@ -796,31 +796,48 @@ h6 {
     list-style: none;
 }
 
+/* Submenús propios sin Bootstrap collapse */
+.sidebar-submenu {
+    display: none !important;
+}
+.sidebar-submenu.submenu-open {
+    display: block !important;
+}
+
 .sidebar-nav .nav-content a {
     display: flex;
     align-items: center;
     font-size: 14px;
-    font-weight: 600;
-    color: #012970;
-    transition: 0.3;
-    padding: 5px 0 5px 30px;
+    font-weight: 500;
+    color: #c8d8e8;
+    padding: 6px 0 6px 30px;
     transition: 0.3s;
+    border-radius: 4px;
 }
 
 .sidebar-nav .nav-content a i {
-    font-size: 6px;
-    margin-right: 8px;
-    line-height: 0;
-    border-radius: 50%;
+    font-size: 15px;
+    margin-right: 10px;
+    line-height: 1;
+    border-radius: 0;
+    color: #c8d8e8;
 }
 
-.sidebar-nav .nav-content a:hover,
+.sidebar-nav .nav-content a:hover {
+    color: #fff;
+}
+
+.sidebar-nav .nav-content a:hover i {
+    color: #38bdf8;
+}
+
 .sidebar-nav .nav-content a.active {
-    color: var(--first);
+    color: #38bdf8;
 }
 
 .sidebar-nav .nav-content a.active i {
-    background-color: var(--first);
+    color: #38bdf8;
+    background-color: transparent;
 }
 
 /*--------------------------------------------------------------

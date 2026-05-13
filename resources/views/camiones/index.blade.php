@@ -847,17 +847,17 @@
     let _dtCamiones, _dtOperadores, _dtAsignaciones;
 
     document.addEventListener('DOMContentLoaded', function () {
-        _dtCamiones    = $('#tablaCamiones').DataTable(_dtOpciones);
-        _dtOperadores  = $('#tablaOperadores').DataTable(_dtOpciones);
-        _dtAsignaciones = $('#tablaAsignaciones').DataTable(_dtOpciones);
-
-        // Ajustar anchos al mostrar cada tab (DataTables no puede calcularlos en tabs ocultos)
+        // Inicializar cada tabla la primera vez que se muestra su pestaña (incluye la activación inicial por ?tab=)
         document.querySelectorAll('#transporteTabs button[data-bs-toggle="tab"]').forEach(function(btn) {
             btn.addEventListener('shown.bs.tab', function () {
                 const target = btn.getAttribute('data-bs-target');
-                if (target === '#pane-camiones')     _dtCamiones.columns.adjust();
-                if (target === '#pane-operadores')   _dtOperadores.columns.adjust();
-                if (target === '#pane-asignaciones') _dtAsignaciones.columns.adjust();
+                if (target === '#pane-camiones' && !_dtCamiones) {
+                    _dtCamiones = $('#tablaCamiones').DataTable(_dtOpciones);
+                } else if (target === '#pane-operadores' && !_dtOperadores) {
+                    _dtOperadores = $('#tablaOperadores').DataTable(_dtOpciones);
+                } else if (target === '#pane-asignaciones' && !_dtAsignaciones) {
+                    _dtAsignaciones = $('#tablaAsignaciones').DataTable(_dtOpciones);
+                }
             });
         });
     });

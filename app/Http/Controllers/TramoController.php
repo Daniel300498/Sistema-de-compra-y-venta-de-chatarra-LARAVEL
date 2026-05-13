@@ -24,6 +24,8 @@ class TramoController extends Controller
             'fecha_llegada'        => 'required|date|after_or_equal:' . $tramo->fecha_salida->format('Y-m-d'),
             'accion'               => 'required|in:entregado,frontera,transbordo',
             'cliente_id'           => 'required_if:accion,entregado|nullable|exists:clientes,id',
+            'precio_por_tonelada'  => 'nullable|numeric|min:0',
+            'moneda_venta'         => 'nullable|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
             'descuento_porcentaje' => 'nullable|numeric|min:0|max:60',
             'observaciones_llegada'=> 'nullable|string|max:500',
         ], [
@@ -40,7 +42,7 @@ class TramoController extends Controller
 
         $nuevoEstado = match($request->accion) {
             'entregado'  => 'Entregado',
-            'frontera'   => 'En frontera',
+            'frontera'   => 'Transbordando',
             'transbordo' => 'Transbordando',
         };
 
@@ -49,6 +51,8 @@ class TramoController extends Controller
             'fecha_llegada'        => $request->fecha_llegada,
             'estado'               => $nuevoEstado,
             'cliente_id'           => $nuevoEstado === 'Entregado' ? $request->cliente_id : null,
+            'precio_por_tonelada'  => $nuevoEstado === 'Entregado' ? ($request->precio_por_tonelada ?: null) : null,
+            'moneda_venta'         => $nuevoEstado === 'Entregado' ? ($request->moneda_venta ?: 'BOB') : null,
             'descuento_porcentaje' => $request->descuento_porcentaje ?: null,
             'observaciones_llegada'=> $request->observaciones_llegada,
         ]);
@@ -66,8 +70,6 @@ class TramoController extends Controller
             }
 
             Alert::success('Entregado', 'Carga entregada al cliente. Peso final: ' . $request->peso_llegada . ' t');
-        } elseif ($nuevoEstado === 'En frontera') {
-            Alert::success('En frontera', 'Llegada registrada. Ahora puedes agregar los camiones de transbordo.');
         } elseif ($nuevoEstado === 'Transbordando') {
             Alert::success('Transbordando', 'Llegada registrada. Agrega los camiones de transbordo.');
         }
@@ -100,8 +102,8 @@ class TramoController extends Controller
             'fecha_salida.after_or_equal'  => 'La fecha de salida del transbordo no puede ser anterior a la fecha en que llegó el camión anterior (' . $tramoPadre->fecha_llegada->format('d/m/Y') . ').',
         ]);
 
-        if (!in_array($tramoPadre->estado, ['En frontera', 'Transbordando'])) {
-            Alert::error('No permitido', 'Solo se puede agregar transbordo a un tramo que está en frontera o transbordando.');
+        if ($tramoPadre->estado !== 'Transbordando') {
+            Alert::error('No permitido', 'Solo se puede agregar transbordo a un tramo que está transbordando.');
             return redirect()->route('contratos.camiones', $tramoPadre->contratoCamion->contrato->uuid);
         }
 
@@ -128,7 +130,7 @@ class TramoController extends Controller
             'tipo_tramo'         => $request->tipo_tramo,
             'peso_salida'        => $request->peso_salida,
             'fecha_salida'       => $request->fecha_salida,
-            'estado'             => 'En tránsito',
+            'estado'             => 'En ruta',
             'observaciones'      => $request->observaciones,
             'created_by'         => auth()->id(),
             'updated_by'         => auth()->id(),
@@ -160,12 +162,31 @@ class TramoController extends Controller
         $tramo        = Tramo::where('uuid', $uuid)->firstOrFail();
         $contratoUuid = $tramo->contratoCamion->contrato->uuid;
 
-        $tramo->update(['activo' => !$tramo->activo, 'updated_by' => auth()->id()]);
+        // Solo se puede desactivar si está en ruta y no tiene hijos activos; reactivar siempre está permitido
+        if ($tramo->activo) {
+            if ($tramo->estado !== 'En ruta') {
+                Alert::error('No permitido', 'Solo se puede desactivar un tramo que está en ruta.');
+                return redirect()->route('contratos.camiones', $contratoUuid);
+            }
+            if ($tramo->tramosHijos()->where('activo', true)->exists()) {
+                Alert::error('No permitido', 'No se puede desactivar un tramo que tiene camiones de transbordo activos.');
+                return redirect()->route('contratos.camiones', $contratoUuid);
+            }
+        }
+
+        $desactivando = $tramo->activo;
+        $estadoAnterior = $tramo->estado;
+
+        $tramo->update([
+            'activo'     => !$tramo->activo,
+            'estado'     => $desactivando ? 'Desactivado' : 'En ruta',
+            'updated_by' => auth()->id(),
+        ]);
 
         // Recalcular estado hacia arriba en toda la cadena
         $this->recalcularEstadoPadre($tramo->tramo_padre_id);
 
-        $msg = $tramo->activo ? 'Tramo desactivado. El registro se conserva en el historial.' : 'Tramo reactivado.';
+        $msg = $desactivando ? 'Tramo desactivado. El registro se conserva en el historial.' : 'Tramo reactivado.';
         Alert::success('Listo', $msg);
         return redirect()->route('contratos.camiones', $contratoUuid);
     }
@@ -181,7 +202,7 @@ class TramoController extends Controller
         $hijosActivos = $padre->tramosHijos()->where('activo', true)->count();
 
         if ($hijosActivos === 0) {
-            $padre->update(['estado' => 'En frontera']);
+            $padre->update(['estado' => 'Transbordando']);
         } else {
             $disponible = round((float) $padre->peso_llegada - (float) $padre->tramosHijos()->where('activo', true)->sum('peso_salida'), 3);
             $padre->update(['estado' => $disponible <= 0 ? 'Transbordado' : 'Transbordando']);

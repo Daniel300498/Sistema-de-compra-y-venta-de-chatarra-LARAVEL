@@ -32,6 +32,11 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Bancos Registrados</h5>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Administra los bancos y sus cuentas bancarias asociadas a la empresa, proveedores u operadores de transporte.
+                        Las cuentas registradas aquí se usan para registrar los pagos realizados y recibidos en el sistema.
+                    </p>
                     @if($bancos->isEmpty())
                         <div class="alert alert-info py-2">
                             <small><i class="bi bi-info-circle"></i> No hay bancos registrados.</small>
@@ -105,8 +110,9 @@
                             <tbody>
                                 @foreach($cuentas as $cuenta)
                                 @php
-                                    $tipoColor = ['empresa' => 'success', 'proveedor' => 'primary', 'propietario' => 'info text-dark', 'conductor' => 'warning text-dark'];
-                                    $tipoIcon  = ['empresa' => 'bi-building', 'proveedor' => 'bi-box-seam', 'propietario' => 'bi-person-vcard', 'conductor' => 'bi-person-badge'];
+                                    $tipoColor = ['empleado' => 'secondary', 'cliente' => 'success', 'proveedor' => 'primary', 'operador' => 'info text-dark'];
+                                    $tipoIcon  = ['empleado' => 'bi-person-badge', 'cliente' => 'bi-people', 'proveedor' => 'bi-box-seam', 'operador' => 'bi-person-vcard'];
+                                    $tipoLabel = ['empleado' => 'Empleado', 'cliente' => 'Cliente', 'proveedor' => 'Proveedor', 'operador' => 'Propietario/Conductor'];
                                 @endphp
                                 <tr>
                                     <td>
@@ -117,13 +123,28 @@
                                     <td>
                                         <span class="badge bg-{{ $tipoColor[$cuenta->tipo_titular] ?? 'secondary' }}">
                                             <i class="bi {{ $tipoIcon[$cuenta->tipo_titular] ?? 'bi-person' }}"></i>
-                                            {{ ucfirst($cuenta->tipo_titular) }}
+                                            {{ $tipoLabel[$cuenta->tipo_titular] ?? ucfirst($cuenta->tipo_titular) }}
                                         </span>
                                     </td>
                                     <td><code>{{ $cuenta->numero_cuenta }}</code></td>
                                     <td><span class="badge bg-light text-dark border">{{ $cuenta->moneda }}</span></td>
                                     <td>{{ $cuenta->alias ?? '—' }}</td>
-                                    <td class="text-center">
+                                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="editarCuenta(
+                                                '{{ $cuenta->uuid }}',
+                                                {{ $cuenta->banco_id }},
+                                                '{{ $cuenta->tipo_titular }}',
+                                                {{ $cuenta->titular_id ?? 'null' }},
+                                                '{{ addslashes($cuenta->titular?->nombre_completo ?? $cuenta->titular?->nombre ?? '') }}',
+                                                '{{ $cuenta->numero_cuenta }}',
+                                                '{{ $cuenta->moneda }}',
+                                                '{{ addslashes($cuenta->alias ?? '') }}',
+                                                '{{ addslashes($cuenta->nombre_titular_cuenta ?? '') }}',
+                                                '{{ addslashes($cuenta->tipo_relacion ?? '') }}'
+                                            )" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
                                         <a href="{{ route('bancos.cuenta.destroy', $cuenta->uuid) }}"
                                             class="btn btn-sm btn-outline-danger"
                                             onclick="return confirm('¿Eliminar esta cuenta bancaria?')">
@@ -194,11 +215,12 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="bi bi-credit-card"></i> Nueva Cuenta Bancaria</h5>
+                <h5 class="modal-title"><i class="bi bi-credit-card"></i> <span id="tituloCuenta">Nueva Cuenta Bancaria</span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ route('bancos.cuenta.store') }}">
+            <form id="formCuenta" method="POST" action="{{ route('bancos.cuenta.store') }}">
                 @csrf
+                <input type="hidden" name="_method" id="methodCuenta" value="POST">
                 <div class="modal-body">
                     <div class="row g-3">
 
@@ -229,7 +251,8 @@
                             <select class="form-select" name="tipo_titular" id="tipo_titular" required
                                 onchange="cambiarTitular(this.value)">
                                 <option value="">-- Seleccione --</option>
-                                <option value="empresa">Empresa (cuenta propia)</option>
+                                <option value="empleado">Empleado de la empresa</option>
+                                <option value="cliente">Cliente</option>
                                 <option value="proveedor">Proveedor</option>
                                 <option value="operador">Propietario / Conductor</option>
                             </select>
@@ -257,11 +280,36 @@
                                 placeholder="Ej: Cuenta principal USD">
                         </div>
 
+                        {{-- Toggle titular diferente --}}
+                        <div class="col-12" id="sec_toggle_titular" style="display:none;">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    id="toggle_titular_diferente" onchange="toggleTitularDiferente(this.checked)">
+                                <label class="form-check-label" for="toggle_titular_diferente">
+                                    La cuenta pertenece a otra persona (familiar, representante, etc.)
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Nombre + relación: solo si el toggle está activo --}}
+                        <div class="col-md-6" id="sec_nombre_titular_cuenta" style="display:none;">
+                            <label class="form-label fw-semibold">Nombre del titular de la cuenta <span class="text-danger">(*)</span></label>
+                            <input type="text" class="form-control" name="nombre_titular_cuenta" id="inp_nombre_titular_cuenta" maxlength="150"
+                                placeholder="Ej: María Pérez">
+                        </div>
+
+                        <div class="col-md-6" id="sec_tipo_relacion" style="display:none;">
+                            <label class="form-label fw-semibold">Relación con el titular principal <span class="text-danger">(*)</span></label>
+                            <select class="form-select" name="tipo_relacion" id="sel_tipo_relacion">
+                                <option value="">-- Seleccione --</option>
+                            </select>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Registrar Cuenta</button>
+                    <button type="submit" class="btn btn-success" id="btnCuenta"><i class="bi bi-save"></i> Registrar Cuenta</button>
                 </div>
             </form>
         </div>
@@ -275,19 +323,31 @@
 <script>
 const proveedores = @json($proveedores->map(fn($p) => ['id' => $p->id, 'nombre' => $p->nombre]));
 const operadores  = @json($operadores->map(fn($o) => ['id' => $o->id, 'nombre' => $o->nombre_completo]));
+const empleados   = @json($empleados->map(fn($e) => ['id' => $e->id, 'nombre' => $e->apellido . ', ' . $e->nombre . ($e->cargo ? ' (' . $e->cargo . ')' : '')]));
+const clientes    = @json($clientes->map(fn($c) => ['id' => $c->id, 'nombre' => $c->nombre]));
 
 let listaTitularActual = [];
+
+const relacionesPorTipo = {
+    'proveedor': ['Gerente', 'Empleado', 'Representante legal', 'Socio'],
+    'operador':  ['Esposa', 'Esposo', 'Hermana', 'Hermano', 'Madre', 'Padre', 'Familiar'],
+    'empleado':  ['Esposa', 'Esposo', 'Hermana', 'Hermano', 'Madre', 'Padre', 'Familiar'],
+    'cliente':   ['Gerente', 'Empleado', 'Representante legal', 'Socio', 'Familiar'],
+};
 
 function cambiarTitular(tipo) {
     const sec = document.getElementById('sec_titular');
 
-    if (tipo === 'empresa') {
+    if (tipo === '') {
         sec.style.display = 'none';
         limpiarTitular();
+        actualizarRelaciones('');
         return;
     }
 
     const listas = {
+        'empleado':  { lista: empleados,   label: 'Empleado de la empresa' },
+        'cliente':   { lista: clientes,    label: 'Cliente' },
         'proveedor': { lista: proveedores, label: 'Proveedor' },
         'operador':  { lista: operadores,  label: 'Propietario / Conductor' },
     };
@@ -297,6 +357,47 @@ function cambiarTitular(tipo) {
     listaTitularActual = lista;
     sec.style.display = 'block';
     limpiarTitular();
+    actualizarRelaciones(tipo);
+}
+
+let _relacionesActuales = [];
+
+function actualizarRelaciones(tipo) {
+    const sel = document.getElementById('sel_tipo_relacion');
+    sel.innerHTML = '<option value="">-- Seleccione --</option>';
+
+    _relacionesActuales = relacionesPorTipo[tipo] || [];
+    _relacionesActuales.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = r;
+        sel.appendChild(opt);
+    });
+
+    // Ocultar toggle y campos si cambia el tipo de titular
+    document.getElementById('toggle_titular_diferente').checked = false;
+    toggleTitularDiferente(false);
+
+    // Mostrar el toggle solo si hay opciones de relación (es decir, hay titular real)
+    const secToggle = document.getElementById('sec_toggle_titular');
+    secToggle.style.display = _relacionesActuales.length ? 'block' : 'none';
+}
+
+function toggleTitularDiferente(activo) {
+    const secNombre = document.getElementById('sec_nombre_titular_cuenta');
+    const secRel    = document.getElementById('sec_tipo_relacion');
+    const inp       = document.getElementById('inp_nombre_titular_cuenta');
+    const sel       = document.getElementById('sel_tipo_relacion');
+
+    if (activo) {
+        secNombre.style.display = 'block';
+        secRel.style.display    = 'block';
+    } else {
+        secNombre.style.display = 'none';
+        secRel.style.display    = 'none';
+        inp.value  = '';
+        sel.value  = '';
+    }
 }
 
 function limpiarTitular() {
@@ -357,9 +458,54 @@ function resetModalBanco() {
 }
 
 function resetModalCuenta() {
-    document.getElementById('tipo_titular').value = '';
+    document.getElementById('tituloCuenta').textContent  = 'Nueva Cuenta Bancaria';
+    document.getElementById('btnCuenta').innerHTML       = '<i class="bi bi-save"></i> Registrar Cuenta';
+    document.getElementById('methodCuenta').value        = 'POST';
+    document.getElementById('formCuenta').action         = '{{ route("bancos.cuenta.store") }}';
+    document.getElementById('tipo_titular').value        = '';
     document.getElementById('sec_titular').style.display = 'none';
+    document.getElementById('sec_toggle_titular').style.display = 'none';
+    document.getElementById('toggle_titular_diferente').checked  = false;
+    toggleTitularDiferente(false);
     limpiarTitular();
+    // Limpiar otros campos
+    document.querySelectorAll('#formCuenta select:not(#tipo_titular):not(#sel_tipo_relacion)').forEach(s => s.selectedIndex = 0);
+    document.querySelectorAll('#formCuenta input[type="text"]').forEach(i => { if (i.id !== 'buscar_titular') i.value = ''; });
+}
+
+function editarCuenta(uuid, bancoId, tipoTitular, titularId, titularNombre, numeroCuenta, moneda, alias, nombreTitularCuenta, tipoRelacion) {
+    document.getElementById('tituloCuenta').textContent = 'Editar Cuenta Bancaria';
+    document.getElementById('btnCuenta').innerHTML      = '<i class="bi bi-save"></i> Actualizar Cuenta';
+    document.getElementById('methodCuenta').value       = 'PUT';
+    document.getElementById('formCuenta').action        = '/bancos/cuentas/' + uuid;
+
+    // Banco y moneda
+    document.querySelector('#formCuenta select[name="banco_id"]').value = bancoId;
+    document.querySelector('#formCuenta select[name="moneda"]').value   = moneda;
+    document.querySelector('#formCuenta input[name="numero_cuenta"]').value = numeroCuenta;
+    document.querySelector('#formCuenta input[name="alias"]').value     = alias;
+
+    // Tipo titular → dispara cambiarTitular para poblar lista y relaciones
+    const selTipo = document.getElementById('tipo_titular');
+    selTipo.value = tipoTitular;
+    cambiarTitular(tipoTitular);
+
+    // Pre-seleccionar titular
+    if (titularId && titularNombre) {
+        document.getElementById('titular_id_hidden').value      = titularId;
+        document.getElementById('buscar_titular').value         = titularNombre;
+        document.getElementById('titular_seleccionado').textContent = '✓ Seleccionado';
+    }
+
+    // Titular diferente (nombre_titular_cuenta)
+    if (nombreTitularCuenta) {
+        document.getElementById('toggle_titular_diferente').checked = true;
+        toggleTitularDiferente(true);
+        document.getElementById('inp_nombre_titular_cuenta').value  = nombreTitularCuenta;
+        document.getElementById('sel_tipo_relacion').value          = tipoRelacion;
+    }
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCuenta')).show();
 }
 
 function editarBanco(uuid, nombre, pais, swift) {

@@ -1,25 +1,33 @@
 @php
     $estadoColor = [
-        'En tránsito'   => 'primary',
-        'En frontera'   => 'warning text-dark',
+        'En ruta'       => 'primary',
         'Transbordando' => 'warning text-dark',
         'Transbordado'  => 'info text-dark',
         'Entregado'     => 'success',
+        'Desactivado'   => 'secondary',
     ];
     $estadoIcono = [
-        'En tránsito'   => 'bi-truck',
-        'En frontera'   => 'bi-sign-stop',
+        'En ruta'       => 'bi-truck',
         'Transbordando' => 'bi-arrow-left-right',
         'Transbordado'  => 'bi-check2-all',
         'Entregado'     => 'bi-check-circle',
+        'Desactivado'   => 'bi-slash-circle',
+    ];
+    $estadoBorde = [
+        'En ruta'       => 'border-primary',
+        'Transbordando' => 'border-warning',
+        'Transbordado'  => 'border-info',
+        'Entregado'     => 'border-success',
+        'Desactivado'   => 'border-secondary',
     ];
     $color  = $estadoColor[$tramo->estado]  ?? 'secondary';
     $icono  = $estadoIcono[$tramo->estado]  ?? 'bi-circle';
+    $borde  = $estadoBorde[$tramo->estado]  ?? 'border-secondary';
     $hijos  = $tramo->tramosHijos;
     $indent = $nivel * 20;
 @endphp
 
-<div class="border rounded p-2 mb-2 {{ $nivel > 0 ? 'border-start border-3 border-info' : '' }}"
+<div class="border rounded p-2 mb-2 {{ $nivel > 0 ? 'border-start border-3 ' . $borde : '' }}"
      style="margin-left: {{ $indent }}px; position: relative;">
 
     {{-- Badge de estado: siempre arriba a la derecha --}}
@@ -56,64 +64,81 @@
         <div class="d-flex align-items-center gap-2 flex-wrap">
 
             @can('contratos.edit')
-                {{-- Botón llegada: visible si está en tránsito --}}
-                @if($tramo->estado === 'En tránsito')
-                    <button class="btn btn-sm btn-outline-success"
-                        onclick="abrirModalLlegada(
-                            '{{ $tramo->uuid }}',
-                            '{{ $tramo->origen }} → {{ $tramo->destino }} ({{ $tramo->camion->placa }})',
-                            '{{ $tramo->peso_salida }}',
-                            '{{ $tramo->fecha_salida->format('Y-m-d') }}'
-                        )">
-                        <i class="bi bi-geo-alt"></i> Registrar llegada
-                    </button>
-                @endif
+                @if($tramo->estado !== 'Desactivado')
+                    {{-- Botón llegada: visible si está en ruta --}}
+                    @if($tramo->estado === 'En ruta')
+                        <button class="btn btn-sm btn-outline-success"
+                            onclick="abrirModalLlegada(
+                                '{{ $tramo->uuid }}',
+                                '{{ $tramo->origen }} → {{ $tramo->destino }} ({{ $tramo->camion->placa }})',
+                                '{{ $tramo->peso_salida }}',
+                                '{{ $tramo->fecha_salida->format('Y-m-d') }}'
+                            )">
+                            <i class="bi bi-geo-alt"></i> Registrar llegada
+                        </button>
+                    @endif
 
-                {{-- Botón agregar transbordo: si está en frontera o transbordando (aún quedan toneladas) --}}
-                @if(in_array($tramo->estado, ['En frontera', 'Transbordando']))
-                    @php
-                        $yaAsignadoHijos = (float) $tramo->tramosHijos()->where('activo', true)->sum('peso_salida');
-                        $disponibleTransbordo = round((float) $tramo->peso_llegada - $yaAsignadoHijos, 3);
-                    @endphp
-                    <button class="btn btn-sm btn-outline-info"
-                        onclick="abrirModalTransbordo(
-                            {{ $tramo->contrato_camion_id }},
-                            {{ $tramo->id }},
-                            '{{ addslashes($tramo->destino) }}',
-                            '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }} ({{ $tramo->camion->placa }})',
-                            {{ $disponibleTransbordo }},
-                            '{{ $tramo->fecha_llegada?->format('Y-m-d') }}'
-                        )"
-                        {{ $disponibleTransbordo <= 0 ? 'disabled' : '' }}>
-                        <i class="bi bi-arrow-down-right"></i> Agregar transbordo
-                        @if($disponibleTransbordo > 0)
-                            <span class="badge bg-light text-dark ms-1">{{ number_format($disponibleTransbordo, 3) }} t disp.</span>
-                        @else
-                            <span class="badge bg-danger ms-1">Sin toneladas</span>
-                        @endif
-                    </button>
-                @endif
+                    {{-- Botón agregar transbordo: si está transbordando (aún quedan toneladas) --}}
+                    @if($tramo->estado === 'Transbordando')
+                        @php
+                            $yaAsignadoHijos = (float) $tramo->tramosHijos()->where('activo', true)->sum('peso_salida');
+                            $disponibleTransbordo = round((float) $tramo->peso_llegada - $yaAsignadoHijos, 3);
+                        @endphp
+                        <button class="btn btn-sm btn-outline-info"
+                            onclick="abrirModalTransbordo(
+                                {{ $tramo->contrato_camion_id }},
+                                {{ $tramo->id }},
+                                '{{ addslashes($tramo->destino) }}',
+                                '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }} ({{ $tramo->camion->placa }})',
+                                {{ $disponibleTransbordo }},
+                                '{{ $tramo->fecha_llegada?->format('Y-m-d') }}'
+                            )"
+                            {{ $disponibleTransbordo <= 0 ? 'disabled' : '' }}>
+                            <i class="bi bi-arrow-down-right"></i> Agregar transbordo
+                            @if($disponibleTransbordo > 0)
+                                <span class="badge bg-light text-dark ms-1">{{ number_format($disponibleTransbordo, 3) }} t disp.</span>
+                            @else
+                                <span class="badge bg-danger ms-1">Sin toneladas</span>
+                            @endif
+                        </button>
+                    @endif
 
-                {{-- Nota de entrega PDF: si está entregado o transbordado --}}
-                @if(in_array($tramo->estado, ['Entregado', 'Transbordado']))
-                    <a href="{{ route('tramo.nota-entrega', $tramo->uuid) }}"
-                        class="btn btn-sm btn-outline-success" target="_blank">
-                        <i class="bi bi-file-earmark-pdf"></i> Nota de entrega
-                    </a>
-                @endif
+                    {{-- Nota de entrega PDF: si está entregado o transbordado --}}
+                    @if(in_array($tramo->estado, ['Entregado', 'Transbordado']))
+                        <a href="{{ route('tramo.nota-entrega', $tramo->uuid) }}"
+                            class="btn btn-sm btn-outline-success" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> Nota de entrega
+                        </a>
+                    @endif
 
-                {{-- Desactivar/reactivar: nunca se elimina --}}
-                @if(!in_array($tramo->estado, ['Entregado']))
-                    <button class="btn btn-sm {{ $tramo->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"
-                        title="{{ $tramo->activo ? 'Desactivar tramo' : 'Reactivar tramo' }}"
-                        onclick="confirmarToggleTramo(
-                            '{{ route('tramo.toggle-activo', $tramo->uuid) }}',
-                            '{{ $tramo->camion->placa }}',
-                            '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }}',
-                            {{ $tramo->activo ? 'true' : 'false' }}
-                        )">
-                        <i class="bi {{ $tramo->activo ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' }}"></i>
-                    </button>
+                    {{-- Desactivar: solo en tramos hijos, sin hijos activos propios, y solo en ruta --}}
+                    @php $tieneHijosActivos = $tramo->tramosHijos()->where('activo', true)->exists(); @endphp
+                    @if($nivel > 0 && !$tieneHijosActivos && $tramo->estado === 'En ruta')
+                        <button class="btn btn-sm btn-outline-warning"
+                            title="Desactivar tramo"
+                            onclick="confirmarToggleTramo(
+                                '{{ route('tramo.toggle-activo', $tramo->uuid) }}',
+                                '{{ $tramo->camion->placa }}',
+                                '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }}',
+                                true
+                            )">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                    @endif
+                @else
+                    {{-- Solo mostrar botón reactivar si está desactivado --}}
+                    @if($nivel > 0)
+                        <button class="btn btn-sm btn-outline-success"
+                            title="Reactivar tramo"
+                            onclick="confirmarToggleTramo(
+                                '{{ route('tramo.toggle-activo', $tramo->uuid) }}',
+                                '{{ $tramo->camion->placa }}',
+                                '{{ addslashes($tramo->origen) }} → {{ addslashes($tramo->destino) }}',
+                                false
+                            )">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    @endif
                 @endif
             @endcan
         </div>

@@ -87,6 +87,7 @@ use Illuminate\Support\Facades\Route;
     Route::post('contrato-camion/store',[App\Http\Controllers\ContratoCamionController::class,'store'])->name('contrato-camion.store')->middleware('permission:contratos.edit');
     Route::get('contrato-camion/{uuid}/toggle-entrega',[App\Http\Controllers\ContratoCamionController::class,'toggleEntrega'])->name('contrato-camion.toggle-entrega')->middleware('permission:contratos.edit');
     Route::get('contrato-camion/{uuid}/toggle-activo',[App\Http\Controllers\ContratoCamionController::class,'toggleActivo'])->name('contrato-camion.toggle-activo')->middleware('permission:contratos.edit');
+    Route::post('contrato-camion/{uuid}/flete',[App\Http\Controllers\ContratoCamionController::class,'actualizarFlete'])->name('contrato-camion.flete')->middleware('permission:contratos.edit');
 
     //Tramos de transporte
     Route::post('tramo/store',[App\Http\Controllers\TramoController::class,'store'])->name('tramo.store')->middleware('permission:contratos.edit');
@@ -97,13 +98,36 @@ use Illuminate\Support\Facades\Route;
     // Seguimiento de cargas
     Route::get('seguimiento-cargas',[App\Http\Controllers\SeguimientoCargasController::class,'index'])->name('seguimiento.index')->middleware('permission:contratos.index');
 
+    // Empleados
+    Route::get('empleados',[App\Http\Controllers\EmpleadoController::class,'index'])->name('empleados.index');
+    Route::post('empleados',[App\Http\Controllers\EmpleadoController::class,'store'])->name('empleados.store');
+    Route::put('empleados/{uuid}',[App\Http\Controllers\EmpleadoController::class,'update'])->name('empleados.update');
+    Route::get('empleados/{uuid}/toggle',[App\Http\Controllers\EmpleadoController::class,'toggleActivo'])->name('empleados.toggle');
+    Route::get('empleados/{uuid}/destroy',[App\Http\Controllers\EmpleadoController::class,'destroy'])->name('empleados.destroy');
+
     // Bancos y cuentas bancarias
     Route::get('bancos',[App\Http\Controllers\BancoController::class,'index'])->name('bancos.index');
     Route::post('bancos',[App\Http\Controllers\BancoController::class,'store'])->name('bancos.store');
     Route::put('bancos/{uuid}',[App\Http\Controllers\BancoController::class,'update'])->name('bancos.update');
     Route::get('bancos/{uuid}/destroy',[App\Http\Controllers\BancoController::class,'destroy'])->name('bancos.destroy');
     Route::post('bancos/cuentas',[App\Http\Controllers\BancoController::class,'storeCuenta'])->name('bancos.cuenta.store');
+    Route::put('bancos/cuentas/{uuid}',[App\Http\Controllers\BancoController::class,'updateCuenta'])->name('bancos.cuenta.update');
     Route::get('bancos/cuentas/{uuid}/destroy',[App\Http\Controllers\BancoController::class,'destroyCuenta'])->name('bancos.cuenta.destroy');
+
+    // Pagos de clientes
+    Route::get('pagos/clientes',[App\Http\Controllers\PagoClienteController::class,'index'])->name('pagos.clientes.index');
+    Route::post('pagos/clientes',[App\Http\Controllers\PagoClienteController::class,'store'])->name('pagos.clientes.store');
+    Route::post('pagos/clientes/{id}/precio',[App\Http\Controllers\PagoClienteController::class,'setPrecio'])->name('pagos.clientes.precio');
+    Route::get('pagos/clientes/{uuid}/destroy',[App\Http\Controllers\PagoClienteController::class,'destroy'])->name('pagos.clientes.destroy');
+    Route::get('api/pagos/clientes/{id}/detalle',[App\Http\Controllers\PagoClienteController::class,'detalle'])->name('pagos.clientes.detalle');
+    Route::get('api/pagos/cuentas-cliente',[App\Http\Controllers\PagoClienteController::class,'cuentasCliente'])->name('pagos.cuentas-cliente');
+
+    // Pagos a proveedores
+    Route::get('pagos/proveedores',[App\Http\Controllers\PagoProveedorController::class,'index'])->name('pagos.proveedores.index');
+    Route::post('pagos/proveedores',[App\Http\Controllers\PagoProveedorController::class,'store'])->name('pagos.proveedores.store');
+    Route::get('pagos/proveedores/{uuid}/destroy',[App\Http\Controllers\PagoProveedorController::class,'destroy'])->name('pagos.proveedores.destroy');
+    Route::get('api/pagos/proveedores/{id}/detalle',[App\Http\Controllers\PagoProveedorController::class,'detalle'])->name('pagos.proveedores.detalle');
+    Route::get('api/pagos/cuentas-proveedor',[App\Http\Controllers\PagoProveedorController::class,'cuentasProveedor'])->name('pagos.cuentas-proveedor');
 
     // Pagos a camiones
     Route::get('pagos/camiones',[App\Http\Controllers\PagoCamionController::class,'index'])->name('pagos.camiones.index');

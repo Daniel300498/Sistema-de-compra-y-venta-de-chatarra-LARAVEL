@@ -81,6 +81,31 @@ class Contrato extends Model implements Auditable
         return $this->hasMany(ContratoCamion::class, 'contrato_id');
     }
 
+    public function pagosProveedor()
+    {
+        return $this->hasMany(PagoProveedor::class, 'contrato_id');
+    }
+
+    public function getTotalPagadoProveedorAttribute(): float
+    {
+        $moneda = $this->moneda ?? 'BOB';
+        return (float) $this->pagosProveedor()
+            ->whereNull('deleted_at')
+            ->get()
+            ->sum(function ($p) use ($moneda) {
+                $monto = (float) $p->monto;
+                $tc    = (float) $p->tipo_cambio ?: 1;
+                if ($p->moneda_pago === $moneda) return $monto;
+                if ($moneda !== 'BOB' && $p->moneda_pago === 'BOB') return $tc > 0 ? $monto / $tc : 0;
+                return round($monto * $tc, 2);
+            });
+    }
+
+    public function getSaldoPendienteProveedorAttribute(): float
+    {
+        return max(0, (float) $this->monto_total - $this->total_pagado_proveedor);
+    }
+
     // Toneladas declaradas por el proveedor (suma peso_declarado de tramos raíz)
     public function getToneladasAsignadasAttribute(): float
     {
@@ -107,7 +132,7 @@ class Contrato extends Model implements Auditable
         foreach ($this->contratoCamiones as $cc) {
             $total += $cc->tramos()
                 ->whereDoesntHave('tramosHijos')
-                ->whereIn('estado', ['Pendiente', 'En tránsito', 'En frontera'])
+                ->whereIn('estado', ['En ruta', 'Transbordando'])
                 ->sum('peso_salida');
         }
         return (float) $total;

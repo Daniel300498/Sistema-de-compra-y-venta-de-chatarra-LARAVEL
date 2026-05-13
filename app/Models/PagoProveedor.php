@@ -7,25 +7,23 @@ use Wildside\Userstamps\Userstamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PagoCamion extends Model
+class PagoProveedor extends Model
 {
     use SoftDeletes, Userstamps;
 
-    protected $table = 'pagos_camion';
+    protected $table = 'pagos_proveedor';
 
     protected $fillable = [
-        'contrato_camion_id',
+        'contrato_id',
         'tipo_pago',
         'monto',
         'moneda_pago',
         'tipo_cambio',
         'fecha_pago',
-        'receptor_type',
-        'receptor_id',
-        'cuenta_origen_id',
-        'cuenta_destino_id',
         'metodo_pago',
         'codigo_seguimiento',
+        'cuenta_origen_id',
+        'cuenta_destino_id',
         'observaciones',
         'created_by',
         'updated_by',
@@ -37,26 +35,15 @@ class PagoCamion extends Model
         'fecha_pago'  => 'date',
     ];
 
-    // Monto equivalente en BOB (para cálculos de saldo)
-    public function getMontoEnBobAttribute(): float
-    {
-        return round((float)$this->monto * (float)$this->tipo_cambio, 2);
-    }
-
     protected static function boot()
     {
         parent::boot();
         static::creating(fn($m) => $m->uuid = Str::uuid()->toString());
     }
 
-    public function contratoCamion()
+    public function contrato()
     {
-        return $this->belongsTo(ContratoCamion::class, 'contrato_camion_id');
-    }
-
-    public function receptor()
-    {
-        return $this->morphTo();
+        return $this->belongsTo(Contrato::class, 'contrato_id');
     }
 
     public function cuentaOrigen()
@@ -69,19 +56,31 @@ class PagoCamion extends Model
         return $this->belongsTo(CuentaBancaria::class, 'cuenta_destino_id');
     }
 
-    public function getNombreReceptorAttribute(): string
+    // Monto convertido a la moneda del contrato para calcular saldo
+    public function getMontoEnMonedaContratoAttribute(): float
     {
-        if (!$this->receptor) return '—';
-        return $this->receptor->nombre_completo ?? $this->receptor->nombre ?? '—';
+        $monedaContrato = $this->contrato->moneda ?? 'BOB';
+        $monto = (float) $this->monto;
+        $tc    = (float) $this->tipo_cambio ?: 1;
+
+        if ($this->moneda_pago === $monedaContrato) {
+            return $monto;
+        }
+        // Si pagué en BOB y el contrato es en otra moneda, divido por TC
+        if ($monedaContrato !== 'BOB' && $this->moneda_pago === 'BOB') {
+            return $tc > 0 ? round($monto / $tc, 2) : 0;
+        }
+        // Cualquier otro caso: convierto a BOB
+        return round($monto * $tc, 2);
     }
 
     public function getTipoPagoLabelAttribute(): string
     {
         return match($this->tipo_pago) {
-            'adelanto'    => 'Adelanto',
-            'flete'       => 'Flete',
-            'pago_final'  => 'Pago Final',
-            default       => $this->tipo_pago,
+            'adelanto'   => 'Adelanto',
+            'parcial'    => 'Parcial',
+            'pago_final' => 'Pago Final',
+            default      => $this->tipo_pago,
         };
     }
 }

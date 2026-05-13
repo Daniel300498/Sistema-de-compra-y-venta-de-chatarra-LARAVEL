@@ -67,7 +67,7 @@ class ContratoCamionController extends Controller
             'peso_declarado'     => $request->peso_declarado,
             'peso_salida'        => $request->peso_declarado,
             'fecha_salida'       => $request->fecha_asignacion,
-            'estado'             => 'En tránsito',
+            'estado'             => 'En ruta',
             'observaciones'      => $request->observaciones,
             'created_by'         => auth()->id(),
             'updated_by'         => auth()->id(),
@@ -77,17 +77,55 @@ class ContratoCamionController extends Controller
         return redirect()->route('contratos.camiones', $contrato->uuid);
     }
 
+    public function actualizarFlete(Request $request, $uuid)
+    {
+        $cc = ContratoCamion::where('uuid', $uuid)->firstOrFail();
+
+        $request->validate([
+            'moneda_flete'   => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
+            'monto_acordado' => 'required|numeric|min:0.01',
+        ], [
+            'moneda_flete.required'   => 'La moneda es obligatoria.',
+            'monto_acordado.required' => 'El monto del flete es obligatorio.',
+            'monto_acordado.min'      => 'El monto debe ser mayor a cero.',
+        ]);
+
+        $cc->update([
+            'moneda_flete'   => $request->moneda_flete,
+            'monto_acordado' => $request->monto_acordado,
+            'updated_by'     => auth()->id(),
+        ]);
+
+        Alert::success('Éxito', 'Flete registrado correctamente.');
+        return back();
+    }
+
     public function toggleActivo($uuid)
     {
         $item = ContratoCamion::where('uuid', $uuid)->firstOrFail();
         $contratoUuid = $item->contrato->uuid;
 
+        $nuevoActivo = !$item->activo;
+
+        // Al desactivar: marcar todos los tramos no finales como Desactivado
+        // Al reactivar: devolver tramos a En ruta
+        if (!$nuevoActivo) {
+            $item->tramos()
+                ->whereNotIn('estado', ['Entregado', 'Transbordado'])
+                ->update(['activo' => false, 'estado' => 'Desactivado', 'updated_by' => auth()->id()]);
+        } else {
+            $item->tramos()
+                ->where('estado', 'Desactivado')
+                ->update(['activo' => true, 'estado' => 'En ruta', 'updated_by' => auth()->id()]);
+        }
+
         $item->update([
-            'activo'     => !$item->activo,
-            'updated_by' => auth()->id(),
+            'activo'         => $nuevoActivo,
+            'estado_entrega' => $nuevoActivo ? 'Pendiente' : 'Desactivado',
+            'updated_by'     => auth()->id(),
         ]);
 
-        $msg = $item->activo ? 'Asignación reactivada.' : 'Asignación desactivada. El registro se conserva en el historial.';
+        $msg = $nuevoActivo ? 'Asignación reactivada.' : 'Asignación desactivada. El registro se conserva en el historial.';
         Alert::success('Listo', $msg);
         return redirect()->route('contratos.camiones', $contratoUuid);
     }

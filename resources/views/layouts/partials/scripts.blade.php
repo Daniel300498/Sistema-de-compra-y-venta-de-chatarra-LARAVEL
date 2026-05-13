@@ -54,3 +54,37 @@
  </script>
  @include('sweetalert::alert')
  @yield('scripts')
+
+<script>
+(function () {
+    var submenus = ['menu-proveedores', 'menu-transporte', 'menu-clientes', 'menu-admin'];
+
+    submenus.forEach(function (id) {
+        var toggle = document.querySelector('[data-sidebar-target="' + id + '"]');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            var target = document.getElementById(id);
+            if (!target) return;
+
+            var isOpen = target.classList.contains('submenu-open');
+
+            // Cerrar todos
+            submenus.forEach(function (otherId) {
+                var other = document.getElementById(otherId);
+                var otherToggle = document.querySelector('[data-sidebar-target="' + otherId + '"]');
+                if (other) other.classList.remove('submenu-open');
+                if (otherToggle) otherToggle.classList.add('collapsed');
+            });
+
+            // Si estaba cerrado, abrir
+            if (!isOpen) {
+                target.classList.add('submenu-open');
+                toggle.classList.remove('collapsed');
+            }
+        });
+    });
+}());
+</script>

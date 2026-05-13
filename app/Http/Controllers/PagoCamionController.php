@@ -17,26 +17,20 @@ class PagoCamionController extends Controller
 
     public function index()
     {
-        // Todos los contrato_camiones que tienen monto_acordado registrado
-        $asignaciones = ContratoCamion::with([
-                'contrato',
-                'camion',
-                'conductor',
-                'camion.propietario',
-                'pagos',
+        $pagos = PagoCamion::with([
+                'contratoCamion.contrato',
+                'contratoCamion.camion',
+                'contratoCamion.conductor',
+                'contratoCamion.camion.propietario',
+                'cuentaOrigen.titular',
+                'cuentaDestino.banco',
+                'receptor',
             ])
-            ->whereNotNull('monto_acordado')
+            ->orderByDesc('fecha_pago')
             ->orderByDesc('created_at')
             ->get();
 
-        // Cuentas de la empresa para cuenta origen
-        $cuentasEmpresa = CuentaBancaria::with('banco')
-            ->whereNull('deleted_at')
-            ->where('tipo_titular', 'empresa')
-            ->orderBy('alias')
-            ->get();
-
-        return view('pagos.camiones.index', compact('asignaciones', 'cuentasEmpresa'));
+        return view('pagos.camiones.index', compact('pagos'));
     }
 
     public function store(Request $request)
@@ -45,6 +39,8 @@ class PagoCamionController extends Controller
             'contrato_camion_id' => 'required|exists:contrato_camiones,id',
             'tipo_pago'          => 'required|in:adelanto,flete,pago_final',
             'monto'              => 'required|numeric|min:0.01',
+            'moneda_pago'        => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
+            'tipo_cambio'        => 'required|numeric|min:0.0001',
             'fecha_pago'         => 'required|date',
             'receptor_type'      => 'nullable|in:conductor,propietario',
             'receptor_id'        => 'nullable|integer',
@@ -58,6 +54,9 @@ class PagoCamionController extends Controller
             'tipo_pago.required'          => 'Debe indicar el tipo de pago.',
             'monto.required'              => 'El monto es obligatorio.',
             'monto.min'                   => 'El monto debe ser mayor a cero.',
+            'moneda_pago.required'        => 'Debe indicar la moneda del pago.',
+            'tipo_cambio.required'        => 'Debe indicar el tipo de cambio.',
+            'tipo_cambio.min'             => 'El tipo de cambio debe ser mayor a cero.',
             'fecha_pago.required'         => 'La fecha de pago es obligatoria.',
             'metodo_pago.required'        => 'Debe indicar el método de pago.',
         ]);
@@ -73,6 +72,8 @@ class PagoCamionController extends Controller
             'contrato_camion_id' => $request->contrato_camion_id,
             'tipo_pago'          => $request->tipo_pago,
             'monto'              => $request->monto,
+            'moneda_pago'        => $request->moneda_pago,
+            'tipo_cambio'        => $request->tipo_cambio,
             'fecha_pago'         => $request->fecha_pago,
             'receptor_type'      => $receptorType,
             'receptor_id'        => $request->receptor_id ?: null,
@@ -86,7 +87,7 @@ class PagoCamionController extends Controller
         ]);
 
         Alert::success('Éxito', 'Pago registrado correctamente.');
-        return redirect()->route('pagos.camiones.index');
+        return redirect()->route('seguimiento.index');
     }
 
     public function destroy($uuid)
@@ -108,10 +109,17 @@ class PagoCamionController extends Controller
             ->where('titular_id', $id)
             ->where('titular_type', 'App\Models\OperadorTransporte')
             ->get()
-            ->map(fn($c) => [
-                'id'    => $c->id,
-                'label' => $c->banco->nombre . ' — ' . $c->numero_cuenta . ($c->alias ? ' (' . $c->alias . ')' : '') . ' [' . $c->moneda . ']',
-            ]);
+            ->map(function ($c) {
+                $titular = $c->nombre_titular_cuenta
+                    ? $c->nombre_titular_cuenta
+                    : null;
+                $label = '';
+                if ($titular) $label .= '👤 ' . $titular . ' — ';
+                $label .= $c->banco->nombre . ' ' . $c->numero_cuenta;
+                if ($c->alias) $label .= ' (' . $c->alias . ')';
+                $label .= ' [' . $c->moneda . ']';
+                return ['id' => $c->id, 'label' => $label];
+            });
 
         return response()->json($cuentas);
     }
@@ -124,7 +132,8 @@ class PagoCamionController extends Controller
             'camion',
             'conductor',
             'camion.propietario',
-            'pagos',
+            'pagos.cuentaDestino.banco',
+            'pagos.cuentaOrigen.titular',
             'tramos',
         ])->findOrFail($id);
 
@@ -139,14 +148,30 @@ class PagoCamionController extends Controller
             'monto_neto'       => $cc->monto_neto,
             'total_pagado'     => $cc->total_pagado,
             'saldo_pendiente'  => $cc->saldo_pendiente,
+            'moneda_flete'     => $cc->moneda_flete,
             'pagos'            => $cc->pagos->map(fn($p) => [
-                'uuid'       => $p->uuid,
-                'tipo'       => $p->tipo_pago_label,
-                'monto'      => $p->monto,
-                'fecha'      => $p->fecha_pago->format('d/m/Y'),
-                'metodo'     => $p->metodo_pago,
-                'receptor'   => $p->nombre_receptor,
-                'codigo'     => $p->codigo_seguimiento,
+                'uuid'        => $p->uuid,
+                'tipo'        => $p->tipo_pago_label,
+                'monto'       => $p->monto,
+                'moneda_pago' => $p->moneda_pago,
+                'tipo_cambio' => $p->tipo_cambio,
+                'monto_bob'   => $p->monto_en_bob,
+                'fecha'       => $p->fecha_pago->format('d/m/Y'),
+                'metodo'      => $p->metodo_pago,
+                'receptor'        => $p->nombre_receptor,
+                'codigo'          => $p->codigo_seguimiento,
+                'cuenta_destino'  => $p->cuentaDestino ? [
+                    'banco'          => $p->cuentaDestino->banco->nombre ?? '—',
+                    'numero'         => $p->cuentaDestino->numero_cuenta,
+                    'moneda'         => $p->cuentaDestino->moneda,
+                    'alias'          => $p->cuentaDestino->alias,
+                    'titular_cuenta' => $p->cuentaDestino->nombre_titular_cuenta,
+                    'tipo_relacion'  => $p->cuentaDestino->tipo_relacion,
+                ] : null,
+                'cuenta_origen'   => $p->cuentaOrigen ? [
+                    'titular'        => $p->cuentaOrigen->titular?->nombre_completo ?? '—',
+                    'alias'          => $p->cuentaOrigen->alias,
+                ] : null,
             ]),
         ]);
     }

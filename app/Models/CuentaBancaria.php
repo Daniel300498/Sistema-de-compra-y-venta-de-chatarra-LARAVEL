@@ -14,16 +14,9 @@ class CuentaBancaria extends Model
     protected $table = 'cuentas_bancarias';
 
     protected $fillable = [
-        'banco_id',
-        'tipo_titular',
-        'titular_id',
-        'titular_type',
-        'numero_cuenta',
-        'moneda',
-        'alias',
-        'activo',
-        'created_by',
-        'updated_by',
+        'banco_id', 'tipo_titular', 'titular_id', 'titular_type',
+        'numero_cuenta', 'moneda', 'alias', 'nombre_titular_cuenta', 'tipo_relacion', 'activo',
+        'created_by', 'updated_by',
     ];
 
     protected $casts = [
@@ -50,9 +43,10 @@ class CuentaBancaria extends Model
     public function getNombreTitularAttribute(): string
     {
         return match($this->tipo_titular) {
-            'empresa'   => 'Empresa (cuenta propia)',
             'proveedor' => $this->titular?->nombre ?? '—',
             'operador'  => $this->titular?->nombre_completo ?? '—',
+            'empleado'  => $this->titular?->nombre_completo ?? '—',
+            'cliente'   => $this->titular?->nombre ?? '—',
             default     => '—',
         };
     }

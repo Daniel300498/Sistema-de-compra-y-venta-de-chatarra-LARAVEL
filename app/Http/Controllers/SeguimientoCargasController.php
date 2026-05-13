@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tramo;
+use App\Models\Cliente;
+use App\Models\CuentaBancaria;
 
 class SeguimientoCargasController extends Controller
 {
@@ -13,38 +15,34 @@ class SeguimientoCargasController extends Controller
 
     public function index()
     {
-        $activos = Tramo::with([
-                'camion',
-                'conductor',
-                'contratoCamion.contrato',
-                'tramoPadre',
-            ])
-            ->whereIn('estado', ['En tránsito', 'En frontera', 'Transbordando', 'Transbordado'])
-            ->whereNull('deleted_at')
-            ->orderBy('estado')
-            ->orderBy('fecha_salida')
-            ->get();
+        $base = Tramo::with([
+            'camion',
+            'conductor',
+            'contratoCamion.contrato',
+            'contratoCamion.pagos',
+            'contratoCamion.camion.propietario',
+        ])->whereNull('deleted_at');
 
-        $entregados = Tramo::with([
-                'camion',
-                'conductor',
-                'contratoCamion.contrato',
-                'cliente',
-            ])
-            ->where('estado', 'Entregado')
-            ->whereNull('deleted_at')
-            ->orderByDesc('fecha_llegada')
-            ->limit(50)
-            ->get();
+        $enRuta        = (clone $base)->where('estado', 'En ruta')->orderBy('fecha_salida')->get();
+        $transbordando = (clone $base)->where('estado', 'Transbordando')->orderBy('fecha_salida')->get();
+        $transbordado  = (clone $base)->where('estado', 'Transbordado')->orderByDesc('fecha_llegada')->get();
+        $entregados    = (clone $base)->with('cliente')->where('estado', 'Entregado')->orderByDesc('fecha_llegada')->limit(50)->get();
 
         $resumen = [
-            'en_transito'   => Tramo::whereNull('deleted_at')->where('estado', 'En tránsito')->count(),
-            'en_frontera'   => Tramo::whereNull('deleted_at')->where('estado', 'En frontera')->count(),
-            'transbordando' => Tramo::whereNull('deleted_at')->where('estado', 'Transbordando')->count(),
-            'transbordado'  => Tramo::whereNull('deleted_at')->where('estado', 'Transbordado')->count(),
+            'en_ruta'       => $enRuta->count(),
+            'transbordando' => $transbordando->count(),
+            'transbordado'  => $transbordado->count(),
             'entregado'     => Tramo::whereNull('deleted_at')->where('estado', 'Entregado')->count(),
         ];
 
-        return view('seguimiento.index', compact('activos', 'entregados', 'resumen'));
+        $clientes = Cliente::whereNull('deleted_at')->orderBy('nombre')->get();
+
+        $cuentasEmpresa = CuentaBancaria::with(['banco', 'titular'])
+            ->whereNull('deleted_at')
+            ->where('tipo_titular', 'empleado')
+            ->orderBy('alias')
+            ->get();
+
+        return view('seguimiento.index', compact('enRuta', 'transbordando', 'transbordado', 'entregados', 'resumen', 'clientes', 'cuentasEmpresa'));
     }
 }
