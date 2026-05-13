@@ -103,7 +103,14 @@
 <script src="{{ asset('assets/js/tablas/basica.js') }}" type="text/javascript"></script>
 <script src="{{ asset('assets/js/forms/contactosVarios.js') }}"type ="text/javascript"></script>
 <script>
-    
+ window.limpiarFormularioProveedor = function () {
+    document.getElementById('formProveedor').reset();
+    document.getElementById('telefonos-container').innerHTML = '';
+    document.getElementById('direcciones-container').innerHTML = '';
+    agregarTelefonoInput();
+    agregarDireccionInput();
+};
+   
 function resetModalProveedor() {
     document.getElementById('tituloProveedor').innerHTML ='<i class="bi bi-building "></i> Nuevo Proveedor';
     document.getElementById('btnProveedor').innerText = 'Registrar';

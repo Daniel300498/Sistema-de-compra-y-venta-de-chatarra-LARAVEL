@@ -36,7 +36,24 @@
             <span>Contratos</span>
           </a>
         </li>
-        <?php endif; ?>        
+        <?php endif; ?>          
+       
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('cuentas_bancarias.index')): ?>
+        <li class="nav-item">
+          <a class="nav-link <?php echo e(isActiveRoute(['cuentas_bancarias.index'])); ?>" href="<?php echo e(route('cuentas_bancarias.index')); ?>">
+            <i class="bi bi-bank"></i>
+            <span>Cuentas Bancarias</span>
+          </a>
+        </li>
+        <?php endif; ?>      
+        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('gastos_extras.index')): ?>
+        <li class="nav-item">
+          <a class="nav-link <?php echo e(isActiveRoute(['gastos_extras.index'])); ?>" href="<?php echo e(route('gastos_extras.index')); ?>">
+            <i class="bi bi-cash-stack"></i>
+            <span>Gastos Extras</span>
+          </a>
+        </li>
+        <?php endif; ?>
 
         <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('permisos.index')): ?>
         <li class="nav-item">
@@ -61,7 +78,7 @@
             <span>Usuarios</span>
           </a>
         </li>
-<?php endif; ?>
+    <?php endif; ?>
           </ul>
 
   </aside><!-- End Sidebar--><?php /**PATH C:\laragon\www\chatarra\resources\views/layouts/partials/menu.blade.php ENDPATH**/ ?>

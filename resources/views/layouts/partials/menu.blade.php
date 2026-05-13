@@ -36,7 +36,24 @@
             <span>Contratos</span>
           </a>
         </li>
-        @endcan        
+        @endcan          
+       
+        @can('cuentas_bancarias.index')
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['cuentas_bancarias.index']) }}" href="{{ route('cuentas_bancarias.index') }}">
+            <i class="bi bi-bank"></i>
+            <span>Cuentas Bancarias</span>
+          </a>
+        </li>
+        @endcan      
+        @can('gastos_extras.index')
+        <li class="nav-item">
+          <a class="nav-link {{ isActiveRoute(['gastos_extras.index']) }}" href="{{ route('gastos_extras.index') }}">
+            <i class="bi bi-cash-stack"></i>
+            <span>Gastos Extras</span>
+          </a>
+        </li>
+        @endcan
 
         @can('permisos.index')
         <li class="nav-item">
@@ -61,7 +78,7 @@
             <span>Usuarios</span>
           </a>
         </li>
-@endcan
+    @endcan
           </ul>
 
   </aside><!-- End Sidebar-->

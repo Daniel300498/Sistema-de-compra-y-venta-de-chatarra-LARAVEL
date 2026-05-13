@@ -95,6 +95,13 @@
 <script src="<?php echo e(asset('assets/js/forms/contactosVarios.js')); ?>" type ="text/javascript"></script>
 
 <script>
+window.limpiarFormularioCliente = function () {
+    document.getElementById('formCliente').reset();
+    document.getElementById('telefonos-container').innerHTML = '';
+    document.getElementById('direcciones-container').innerHTML = '';
+    agregarTelefonoInput();
+    agregarDireccionInput();
+};
 
 function resetModalCliente() {
     document.getElementById('tituloCliente').innerHTML ='<i class="bi bi-person-plus "></i> Nuevo Cliente';

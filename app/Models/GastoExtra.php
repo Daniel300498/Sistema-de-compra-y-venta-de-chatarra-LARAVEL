@@ -2,34 +2,40 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
-use Wildside\Userstamps\Userstamps;
 use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
-class GastoExtra extends Model implements Auditable
+class GastoExtra extends Model
 {
-    use HasFactory, Userstamps, SoftDeletes;
-    use \OwenIt\Auditing\Auditable;
-
+    use SoftDeletes;
     protected $table = 'gastos_extras';
     protected $fillable = [
         'contrato_id',
+        'cuenta_bancaria_id',
         'categoria',
         'concepto',
-        'proveedor_id',
         'fecha',
         'monto',
         'moneda',
+        'monto_bolivianos',
         'tipo_cambio',
         'comprobante_pago',
+        'estado',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
+    protected $casts = ['fecha' => 'date','monto' => 'decimal:2','tipo_cambio' => 'decimal:2',];
+    public function contrato()
+    {
+        return $this->belongsTo(Contrato::class, 'contrato_id');
+    }
+    public function cuentaBancaria()
+    {
+        return $this->belongsTo(CuentaBancaria::class, 'id');
+    }
     protected static function boot()
     {
         parent::boot();
@@ -37,10 +43,4 @@ class GastoExtra extends Model implements Auditable
             $model->uuid = Str::uuid()->toString();
         });
     }
-
-    public function contrato()
-    {
-        return $this->belongsTo(Contrato::class, 'contrato_id');
-    }
-
 }

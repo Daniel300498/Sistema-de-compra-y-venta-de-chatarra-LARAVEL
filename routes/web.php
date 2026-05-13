@@ -103,4 +103,22 @@ use Illuminate\Support\Facades\Route;
     Route::get('api/camion/{uuid}/conductores-relacionados',[App\Http\Controllers\CamionConductorController::class,'conductoresRelacionados'])->name('camiones.conductores-relacionados');
     Route::get('api/camion/{uuid}/conductores-disponibles',[App\Http\Controllers\CamionConductorController::class,'conductoresDisponibles'])->name('camiones.conductores-disponibles');
 
+     //Gastos Extras
+    Route::get('gastos_extras', [App\Http\Controllers\GastoExtraController::class, 'index'])->name('gastos_extras.index')->middleware('permission:gastos_extras.index');
+    Route::get('gastos_extras/create', [App\Http\Controllers\GastoExtraController::class, 'create'])->name('gastos_extras.create')->middleware('permission:gastos_extras.create');
+    Route::post('gastos_extras/store', [App\Http\Controllers\GastoExtraController::class, 'store'])->name('gastos_extras.store')->middleware('permission:gastos_extras.create');
+    Route::get('gastos_extras/{uuid}', [App\Http\Controllers\GastoExtraController::class, 'show'])->name('gastos_extras.show')->middleware('permission:gastos_extras.show');
+    Route::get('gastos_extras/{uuid}/edit', [App\Http\Controllers\GastoExtraController::class, 'edit'])->name('gastos_extras.edit')->middleware('permission:gastos_extras.edit');
+    Route::put('gastos_extras/{gastos_extras}', [App\Http\Controllers\GastoExtraController::class, 'update'])->name('gastos_extras.update')->middleware('permission:gastos_extras.edit');
+    Route::get('gastos_extras/{uuid}/destroy', [App\Http\Controllers\GastoExtraController::class, 'destroy'])->name('gastos_extras.destroy')->middleware('permission:gastos_extras.destroy');
+    
+    //Cuentas Bancarias
+    Route::get('cuentas_bancarias', [App\Http\Controllers\CuentaBancariaController::class, 'index'])->name('cuentas_bancarias.index')->middleware('permission:cuentas_bancarias.index');
+    Route::get('cuentas_bancarias/create', [App\Http\Controllers\CuentaBancariaController::class, 'create'])->name('cuentas_bancarias.create')->middleware('permission:cuentas_bancarias.create');
+    Route::post('cuentas_bancarias/store', [App\Http\Controllers\CuentaBancariaController::class, 'store'])->name('cuentas_bancarias.store')->middleware('permission:cuentas_bancarias.create');
+    Route::get('cuentas_bancarias/{uuid}', [App\Http\Controllers\CuentaBancariaController::class, 'show'])->name('cuentas_bancarias.show')->middleware('permission:cuentas_bancarias.show');
+    Route::get('cuentas_bancarias/{uuid}/edit', [App\Http\Controllers\CuentaBancariaController::class, 'edit'])->name('cuentas_bancarias.edit')->middleware('permission:cuentas_bancarias.edit');
+    Route::put('cuentas_bancarias/{cuenta_bancaria}', [App\Http\Controllers\CuentaBancariaController::class, 'update'])->name('cuentas_bancarias.update')->middleware('permission:cuentas_bancarias.edit');
+    Route::get('cuentas_bancarias/{uuid}/destroy', [App\Http\Controllers\CuentaBancariaController::class, 'destroy'])->name('cuentas_bancarias.destroy')->middleware('permission:gastos_extras.destroy');
+
    });

@@ -56,22 +56,6 @@ window.agregarDireccionInput = function(valor = '') {
     actualizarBotonesDirecciones();
 };
 
-window.limpiarFormularioCliente = function () {
-    document.getElementById('formCliente').reset();
-    document.getElementById('telefonos-container').innerHTML = '';
-    document.getElementById('direcciones-container').innerHTML = '';
-    agregarTelefonoInput();
-    agregarDireccionInput();
-};
-
-window.limpiarFormularioProveedor = function () {
-    document.getElementById('formProveedor').reset();
-    document.getElementById('telefonos-container').innerHTML = '';
-    document.getElementById('direcciones-container').innerHTML = '';
-    agregarTelefonoInput();
-    agregarDireccionInput();
-};
-
 function limpiarError(input) {
     input.classList.remove("is-invalid");
     input.parentNode.querySelectorAll(".invalid-feedback, .text-success").forEach(e => e.remove());
