@@ -78,10 +78,17 @@
 <body>
 
 {{-- ENCABEZADO --}}
-<div class="header">
-    <h1>NOTA DE ENTREGA</h1>
-    <h2>Contrato N° {{ $tramo->contratoCamion->contrato->numero_contrato }}</h2>
-    <div class="numero">Generado el {{ now()->format('d/m/Y H:i') }}</div>
+<div style="display:table; width:100%; border-bottom:3px solid #1a6e3c; padding-bottom:12px; margin-bottom:20px;">
+    <div style="display:table-cell; vertical-align:middle; width:150px;">
+    </div>
+    <div style="display:table-cell; vertical-align:middle; text-align:center;">
+        <h1 style="font-size:22px; color:#1a6e3c; letter-spacing:1px;">NOTA DE ENTREGA</h1>
+        <h2 style="font-size:13px; color:#555; font-weight:normal; margin-top:4px;">Contrato N° {{ $tramo->contratoCamion->contrato->numero_contrato }}</h2>
+        <div style="font-size:11px; color:#888; margin-top:4px;">Generado el {{ now()->format('d/m/Y H:i') }}</div>
+    </div>
+    <div style="display:table-cell; vertical-align:middle; text-align:right; width:150px;">
+        <img src="{{ public_path('assets/images/logo.jpeg') }}" alt="Logo" style="height:90px;">
+    </div>
 </div>
 
 {{-- RUTA --}}
@@ -96,7 +103,36 @@
 </div>
 
 {{-- PESOS --}}
+@php
+    $esParcial    = $tramo->estado === 'Entrega Parcial';
+    $tramoHijo    = $esParcial ? $tramo->tramosHijos()->orderBy('id')->first() : null;
+    $totalLlego   = $esParcial
+        ? round((float)$tramo->peso_llegada + (float)optional($tramoHijo)->peso_salida, 3)
+        : (float)$tramo->peso_salida;
+    $tnCliente    = (float)$tramo->peso_llegada;
+    $tnRestante   = $tramoHijo ? (float)$tramoHijo->peso_salida : 0;
+    $merma        = !$esParcial ? round((float)$tramo->peso_salida - (float)$tramo->peso_llegada, 3) : 0;
+@endphp
 <div class="pesos-box">
+    @if($esParcial)
+    <div class="row">
+        <div class="cell">
+            <div class="big">{{ number_format($totalLlego, 3) }} t</div>
+            <div class="lbl">Total que llegó</div>
+        </div>
+        <div class="cell" style="font-size:22px; color:#aaa; padding-top:8px;">&#8594;</div>
+        <div class="cell">
+            <div class="big" style="color:#0c4a6e;">{{ number_format($tnCliente, 3) }} t</div>
+            <div class="lbl">Entregado a este cliente</div>
+        </div>
+        @if($tnRestante > 0)
+        <div class="cell">
+            <div class="big" style="color:#b45309;">{{ number_format($tnRestante, 3) }} t</div>
+            <div class="lbl">Continúa en nuevo tramo</div>
+        </div>
+        @endif
+    </div>
+    @else
     <div class="row">
         <div class="cell">
             <div class="big">{{ number_format($tramo->peso_salida, 3) }} t</div>
@@ -107,7 +143,6 @@
             <div class="big">{{ number_format($tramo->peso_llegada, 3) }} t</div>
             <div class="lbl">Peso de llegada (neto)</div>
         </div>
-        @php $merma = round((float)$tramo->peso_salida - (float)$tramo->peso_llegada, 3); @endphp
         @if($merma > 0)
         <div class="cell">
             <div class="big diff">− {{ number_format($merma, 3) }} t</div>
@@ -115,6 +150,7 @@
         </div>
         @endif
     </div>
+    @endif
 </div>
 
 <div class="two-col">
@@ -172,13 +208,51 @@
             <td>{{ $tramo->fecha_llegada->format('d/m/Y') }}</td>
         </tr>
         <tr>
+            <td class="label">Proveedor:</td>
+            <td>{{ $tramo->contratoCamion->contrato->proveedor?->nombre ?? '—' }}</td>
             <td class="label">Cliente:</td>
             <td>{{ $tramo->cliente?->nombre ?? '—' }}</td>
+        </tr>
+        <tr>
             <td class="label">Estado:</td>
-            <td><span class="badge badge-success">Entregado</span></td>
+            <td colspan="3">
+                @if($esParcial)
+                    <span class="badge badge-info">Entrega Parcial</span>
+                @else
+                    <span class="badge badge-success">Entregado</span>
+                @endif
+            </td>
         </tr>
     </table>
 </div>
+
+{{-- PRECIO POR TONELADA --}}
+@if($tramo->precio_por_tonelada)
+@php
+    $monedaVenta  = $tramo->moneda_venta ?? 'BOB';
+    $precioTon    = (float) $tramo->precio_por_tonelada;
+    $totalVenta   = round($precioTon * $tnCliente, 2);
+@endphp
+<div style="border:2px solid #1a6e3c; border-radius:5px; background:#f0fdf4; padding:10px 14px; margin-bottom:18px;">
+    <div style="font-weight:bold; color:#1a6e3c; margin-bottom:6px; text-transform:uppercase; font-size:11px;">Valor de la Carga Entregada</div>
+    <div style="display:table; width:100%;">
+        <div style="display:table-cell; text-align:center;">
+            <div style="font-size:18px; font-weight:bold; color:#1a6e3c;">{{ number_format($precioTon, 2) }} {{ $monedaVenta }}/t</div>
+            <div style="font-size:10px; color:#555; text-transform:uppercase;">Precio por tonelada</div>
+        </div>
+        <div style="display:table-cell; text-align:center; font-size:22px; color:#aaa; padding-top:6px;">×</div>
+        <div style="display:table-cell; text-align:center;">
+            <div style="font-size:18px; font-weight:bold; color:#1a6e3c;">{{ number_format($tnCliente, 3) }} t</div>
+            <div style="font-size:10px; color:#555; text-transform:uppercase;">Toneladas entregadas</div>
+        </div>
+        <div style="display:table-cell; text-align:center; font-size:22px; color:#aaa; padding-top:6px;">=</div>
+        <div style="display:table-cell; text-align:center;">
+            <div style="font-size:20px; font-weight:bold; color:#065f46;">{{ number_format($totalVenta, 2) }} {{ $monedaVenta }}</div>
+            <div style="font-size:10px; color:#555; text-transform:uppercase;">Total a cobrar</div>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- DESCUENTO --}}
 @if($tramo->descuento_porcentaje)

@@ -39,7 +39,23 @@ class OperadorTransporteController extends Controller
     public function edit($uuid)
     {
         $operador = OperadorTransporte::where('uuid', $uuid)->firstOrFail();
-        return response()->json($operador);
+        return response()->json([
+            'id'                   => $operador->id,
+            'nombre'               => $operador->nombre,
+            'apellido'             => $operador->apellido,
+            'ci'                   => $operador->ci,
+            'ci_pais'              => $operador->ci_pais,
+            'telefono'             => $operador->telefono,
+            'email'                => $operador->email,
+            'direccion'            => $operador->direccion,
+            'tipo_operador'        => $operador->tipo_operador,
+            'estado'               => $operador->estado,
+            'licencia_numero'      => $operador->licencia_numero,
+            'licencia_pais'        => $operador->licencia_pais,
+            'licencia_vencimiento' => $operador->licencia_vencimiento?->format('Y-m-d'),
+            'doc_carnet'           => $operador->doc_carnet,
+            'doc_licencia'         => $operador->doc_licencia,
+        ]);
     }
 
     public function update(OperadorTransporteRequest $request, OperadorTransporte $operador)

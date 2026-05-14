@@ -73,27 +73,31 @@
                                             @php
                                                 $total      = (float) $c->toneladas_contrato;
                                                 $entregadas = $c->toneladas_entregadas;
-                                                $asignadas  = $c->toneladas_asignadas;
-                                                $pendientes = max(0, $asignadas - $entregadas);
+                                                $enTransito = $c->toneladas_en_transito;
                                                 $pctEnt     = min(100, round(($entregadas / $total) * 100, 1));
-                                                $pctPen     = min(100 - $pctEnt, round(($pendientes / $total) * 100, 1));
+                                                $pctTra     = min(100 - $pctEnt, round(($enTransito / $total) * 100, 1));
+                                                $tPendiente = max(0, $total - $entregadas - $enTransito);
                                             @endphp
-                                            <div class="progress" style="height:16px; min-width:90px;" title="{{ $pctEnt }}% entregado · {{ $pctPen }}% pendiente">
+                                            <div class="progress" style="height:16px; min-width:90px;">
                                                 @if($pctEnt > 0)
                                                 <div class="progress-bar bg-success" style="width:{{ $pctEnt }}%">
                                                     @if($pctEnt >= 15){{ $pctEnt }}%@endif
                                                 </div>
                                                 @endif
-                                                @if($pctPen > 0)
-                                                <div class="progress-bar" style="width:{{ $pctPen }}%; background:#38bdf8;">
-                                                    @if($pctPen >= 15){{ $pctPen }}%@endif
+                                                @if($pctTra > 0)
+                                                <div class="progress-bar" style="width:{{ $pctTra }}%; background:#38bdf8;">
+                                                    @if($pctTra >= 15){{ $pctTra }}%@endif
                                                 </div>
                                                 @endif
                                             </div>
                                             <small class="text-muted">
-                                                <span class="text-success fw-semibold">{{ number_format($entregadas,1) }}t</span>
-                                                / <span style="color:#0ea5e9;">{{ number_format($pendientes,1) }}t</span>
-                                                / {{ number_format($total,1) }}t
+                                                @if($entregadas > 0)
+                                                    <span class="text-success fw-semibold">{{ number_format($entregadas,1) }}t</span> /
+                                                @endif
+                                                <span style="color:#0ea5e9;">{{ number_format($enTransito,1) }}t</span>
+                                                @if($tPendiente > 0)
+                                                    / <span>{{ number_format($tPendiente,1) }}t pend.</span>
+                                                @endif
                                             </small>
                                         @else
                                             <span class="text-muted">-</span>

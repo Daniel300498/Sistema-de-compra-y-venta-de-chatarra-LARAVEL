@@ -13,9 +13,6 @@
                 </ol>
             </nav>
         </div>
-        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalPago">
-            <i class="bi bi-plus-lg"></i> Registrar Pago
-        </button>
     </div>
 </div>
 
@@ -67,7 +64,7 @@
                                 <th class="text-end">Total acordado</th>
                                 <th class="text-end">Pagado</th>
                                 <th class="text-end">Saldo</th>
-                                <th>Estado</th>
+                                <th>Toneladas / Pagado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -83,7 +80,9 @@
                             @endphp
                             <tr class="{{ $rowClass }}" data-proveedor-id="{{ $c->proveedor_id }}">
                                 <td>
-                                    <strong>{{ $c->numero_contrato }}</strong>
+                                    <a href="{{ route('contratos.camiones', $c->uuid) }}" class="text-decoration-none fw-semibold">
+                                        {{ $c->numero_contrato }}
+                                    </a>
                                     <small class="text-muted d-block">{{ $c->fecha_inicio?->format('d/m/Y') ?? '—' }}</small>
                                 </td>
                                 <td>{{ $c->proveedor->nombre ?? '—' }}</td>
@@ -97,16 +96,56 @@
                                 <td class="text-end {{ $saldo > 0 ? 'text-danger fw-semibold' : 'text-success' }}">
                                     {{ $mon }} {{ number_format($saldo, 2) }}
                                 </td>
-                                <td>
-                                    @if($saldo <= 0)
-                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> Pagado</span>
-                                    @elseif($pagado > 0)
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="bi bi-hourglass-split"></i> {{ $pct }}% pagado
-                                        </span>
+                                <td style="min-width:160px;">
+                                    @php
+                                        $tContrato   = $c->toneladas_contrato ?? 0;
+                                        $tEntregadas = $c->toneladas_entregadas;
+                                        $tTransito   = $c->toneladas_en_transito;
+                                        $pctEnt      = $tContrato > 0 ? min(100, round($tEntregadas / $tContrato * 100, 1)) : 0;
+                                        $pctTra      = $tContrato > 0 ? min(100 - $pctEnt, round($tTransito / $tContrato * 100, 1)) : 0;
+                                        $pctPago     = $total > 0 ? min(100, round($pagado / $total * 100, 1)) : 0;
+                                        $tPendiente  = max(0, $tContrato - $tEntregadas - $tTransito);
+                                    @endphp
+                                    {{-- Barra toneladas: entregado + en ruta + pendiente --}}
+                                    @if($tContrato > 0)
+                                        <div class="progress mb-1" style="height:6px;">
+                                            @if($pctEnt > 0)
+                                                <div class="progress-bar bg-success" style="width:{{ $pctEnt }}%"></div>
+                                            @endif
+                                            @if($pctTra > 0)
+                                                <div class="progress-bar" style="width:{{ $pctTra }}%; background:#38bdf8;"></div>
+                                            @endif
+                                        </div>
+                                        <div class="small text-muted mb-2" style="font-size:.7rem;">
+                                            @if($tEntregadas > 0)
+                                                <span class="text-success fw-semibold">{{ number_format($tEntregadas, 2) }}t cliente</span>
+                                                @if($tTransito > 0 || $tPendiente > 0) &nbsp;·&nbsp; @endif
+                                            @endif
+                                            @if($tTransito > 0)
+                                                <span style="color:#0ea5e9;">{{ number_format($tTransito, 2) }}t en ruta</span>
+                                                @if($tPendiente > 0) &nbsp;·&nbsp; @endif
+                                            @endif
+                                            @if($tPendiente > 0)
+                                                <span class="text-muted">{{ number_format($tPendiente, 2) }}t pend.</span>
+                                            @endif
+                                        </div>
                                     @else
-                                        <span class="badge bg-secondary"><i class="bi bi-clock"></i> Pendiente</span>
+                                        <span class="text-muted small d-block mb-2">— sin toneladas</span>
                                     @endif
+                                    {{-- Barra pagos --}}
+                                    <div class="small lh-1 mb-1">
+                                        <span class="fw-semibold {{ $saldo <= 0 ? 'text-success' : '' }}">{{ number_format($pagado, 2) }} {{ $mon }}</span>
+                                        <span class="text-muted">/ {{ number_format($total, 2) }}</span>
+                                    </div>
+                                    <div class="progress mb-1" style="height:6px;" title="Pagado: {{ $pctPago }}%">
+                                        <div class="progress-bar {{ $saldo <= 0 ? 'bg-success' : 'bg-primary' }}" style="width:{{ $pctPago }}%"></div>
+                                    </div>
+                                    <div class="small" style="font-size:.7rem;">
+                                        <span class="{{ $saldo <= 0 ? 'text-success fw-semibold' : 'text-primary' }}">{{ $pctPago }}% pagado</span>
+                                        @if($saldo > 0)
+                                            &nbsp;·&nbsp;<span class="text-danger">{{ number_format($saldo, 2) }} pendiente</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-sm btn-outline-primary"
@@ -180,7 +219,6 @@
                             <select class="form-select" name="tipo_pago" required>
                                 <option value="">-- Seleccione --</option>
                                 <option value="adelanto">Adelanto</option>
-                                <option value="parcial">Parcial</option>
                                 <option value="pago_final">Pago Final</option>
                             </select>
                         </div>
@@ -251,9 +289,9 @@
                             <label class="form-label fw-semibold">Método de Pago <span class="text-danger">(*)</span></label>
                             <select class="form-select" name="metodo_pago" id="metodo_pago" required onchange="toggleCodigo(this.value)">
                                 <option value="">-- Seleccione --</option>
-                                <option value="efectivo">Efectivo</option>
                                 <option value="transferencia">Transferencia Bancaria</option>
                                 <option value="qr">QR</option>
+                                <option value="cheque">Cheque</option>
                             </select>
                         </div>
 
@@ -304,6 +342,75 @@
     </div>
 </div>
 
+{{-- ===== MODAL EDITAR PAGO ===== --}}
+<div class="modal fade" id="modalEditarPagoProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Pago a Proveedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="formEditarPagoProveedor">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="tipo_pago" id="edit_pp_tipo" required>
+                                <option value="adelanto">Adelanto</option>
+                                <option value="pago_final">Pago Final</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="fecha_pago" id="edit_pp_fecha" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Moneda <span class="text-danger">*</span></label>
+                            <select class="form-select" name="moneda_pago" id="edit_pp_moneda" required onchange="editPpToggleTc(this.value)">
+                                <option value="BOB">🇧🇴 BOB</option>
+                                <option value="USD">🇺🇸 USD</option>
+                                <option value="BRL">🇧🇷 BRL</option>
+                                <option value="ARS">🇦🇷 ARS</option>
+                                <option value="EUR">🇪🇺 EUR</option>
+                                <option value="PEN">🇵🇪 PEN</option>
+                                <option value="CLP">🇨🇱 CLP</option>
+                                <option value="PYG">🇵🇾 PYG</option>
+                                <option value="COP">🇨🇴 COP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" name="monto" id="edit_pp_monto" required>
+                        </div>
+                        <div class="col-md-4" id="edit_pp_sec_tc">
+                            <label class="form-label fw-semibold">Tipo de cambio <span class="text-danger">*</span></label>
+                            <input type="number" step="0.0001" min="0.0001" class="form-control" name="tipo_cambio" id="edit_pp_tc">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Método de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="metodo_pago" id="edit_pp_metodo" required>
+                                <option value="transferencia">Transferencia Bancaria</option>
+                                <option value="qr">QR</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Código / N° referencia</label>
+                            <input type="text" class="form-control" name="codigo_seguimiento" id="edit_pp_codigo" maxlength="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-save"></i> Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ===== MODAL DETALLE ===== --}}
 <div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -341,11 +448,16 @@ let _proveedorActual = null;
 let _monedaPendiente = null;
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('modalPago').addEventListener('shown.bs.modal', function () {
+    const modalPago = document.getElementById('modalPago');
+    modalPago.addEventListener('shown.bs.modal', function () {
         if (_monedaPendiente) {
             toggleTipoCambio(_monedaPendiente);
             _monedaPendiente = null;
         }
+    });
+    modalPago.addEventListener('hidden.bs.modal', function () {
+        document.getElementById('sec_seleccionar_contrato').style.display = 'block';
+        document.getElementById('pago_info_contrato').style.display = 'none';
     });
 });
 
@@ -397,6 +509,7 @@ function abrirModalPago(contratoId, label, saldo, moneda, proveedorId) {
     document.getElementById('pago_contrato_label').textContent = label;
     document.getElementById('pago_saldo_label').textContent  = parseFloat(saldo).toFixed(2) + ' ' + (moneda || 'BOB');
     document.getElementById('pago_info_contrato').style.display = 'block';
+    document.getElementById('sec_seleccionar_contrato').style.display = 'none';
 
     _monedaPendiente  = moneda || 'BOB';
     _proveedorActual  = proveedorId;
@@ -446,6 +559,32 @@ function cargarCuentasProveedor(proveedorId) {
 function toggleCodigo(metodo) {
     document.getElementById('sec_codigo').style.display =
         metodo === 'transferencia' ? 'block' : 'none';
+}
+
+function abrirEditarPagoProveedor(uuid, tipo, monto, moneda, tc, fecha, metodo, codigo) {
+    document.getElementById('formEditarPagoProveedor').action = '/pagos/proveedores/' + uuid;
+    document.getElementById('edit_pp_tipo').value    = tipo;
+    document.getElementById('edit_pp_fecha').value   = fecha;
+    document.getElementById('edit_pp_moneda').value  = moneda;
+    document.getElementById('edit_pp_monto').value   = monto;
+    document.getElementById('edit_pp_tc').value      = tc;
+    document.getElementById('edit_pp_metodo').value  = metodo;
+    document.getElementById('edit_pp_codigo').value  = codigo || '';
+    editPpToggleTc(moneda);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarPagoProveedor')).show();
+}
+
+function editPpToggleTc(moneda) {
+    const sec = document.getElementById('edit_pp_sec_tc');
+    const inp = document.getElementById('edit_pp_tc');
+    if (moneda === 'BOB') {
+        sec.style.display = 'none';
+        inp.disabled = true;
+        inp.value = '1';
+    } else {
+        sec.style.display = 'block';
+        inp.disabled = false;
+    }
 }
 
 function verDetalle(contratoId) {
@@ -521,11 +660,18 @@ function verDetalle(contratoId) {
                                 <div class="text-muted small">${p.fecha} &nbsp;·&nbsp; ${p.metodo}${p.codigo ? ' &nbsp;·&nbsp; ' + p.codigo : ''}${origLine}</div>
                                 ${destLine}
                             </div>
-                            <a href="/pagos/proveedores/${p.uuid}/destroy"
-                               class="btn btn-sm btn-outline-danger border-0 mt-1"
-                               onclick="return confirm('¿Eliminar este pago?')" title="Eliminar">
-                               <i class="bi bi-trash"></i>
-                            </a>
+                            <div class="d-flex flex-column gap-1">
+                                <button class="btn btn-sm btn-outline-primary border-0"
+                                    onclick="abrirEditarPagoProveedor('${p.uuid}','${p.tipo_raw}',${p.monto},'${p.moneda_pago}',${p.tipo_cambio},'${p.fecha_raw}','${p.metodo_raw}','${p.codigo||''}')"
+                                    title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a href="/pagos/proveedores/${p.uuid}/destroy"
+                                   class="btn btn-sm btn-outline-danger border-0"
+                                   onclick="return confirm('¿Eliminar este pago?')" title="Eliminar">
+                                   <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>`;
                 });

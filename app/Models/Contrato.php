@@ -119,7 +119,7 @@ class Contrato extends Model implements Auditable
         foreach ($this->contratoCamiones as $cc) {
             $total += $cc->tramos()
                 ->whereDoesntHave('tramosHijos')
-                ->where('estado', 'Entregado')
+                ->whereIn('estado', ['Entregado', 'Entrega Parcial'])
                 ->sum('peso_llegada');
         }
         return (float) $total;

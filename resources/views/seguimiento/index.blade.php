@@ -63,6 +63,30 @@
         </div>
     </div>
 
+    {{-- Filtro por proveedor --}}
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label fw-semibold mb-0"><i class="bi bi-box-seam me-1"></i>Filtrar por proveedor:</label>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select form-select-sm" id="filtro_proveedor_seg" onchange="filtrarPorProveedorSeg(this.value)">
+                        <option value="">— Todos los proveedores —</option>
+                        @foreach($proveedores as $prov)
+                            <option value="{{ $prov->id }}">{{ $prov->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="filtrarPorProveedorSeg('')">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Tabs --}}
     <div class="card">
         <div class="card-body">
@@ -105,6 +129,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Contrato</th>
+                                    <th>Proveedor</th>
                                     <th>Camión</th>
                                     <th>Conductor</th>
                                     <th>Ruta</th>
@@ -117,12 +142,15 @@
                             </thead>
                             <tbody>
                                 @foreach($enRuta as $t)
-                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}">
+                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}" data-proveedor-id="{{ $t->contratoCamion->contrato->proveedor_id }}">
                                     <td>
                                         <a href="{{ route('contratos.camiones', $t->contratoCamion->contrato->uuid) }}"
                                             class="fw-bold text-primary text-decoration-none">
                                             {{ $t->contratoCamion->contrato->numero_contrato }}
                                         </a>
+                                    </td>
+                                    <td>
+                                        <small>{{ $t->contratoCamion->contrato->proveedor?->nombre ?? '—' }}</small>
                                     </td>
                                     <td>
                                         <strong>{{ $t->camion->placa }}</strong>
@@ -173,7 +201,7 @@
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 @can('contratos.edit')
                                                 <li>
-                                                    <button class="dropdown-item" onclick="abrirModalLlegada('{{ $t->uuid }}','{{ $t->origen }} → {{ $t->destino }} ({{ $t->camion->placa }})','{{ $t->peso_salida }}','{{ $t->fecha_salida->format('Y-m-d') }}')">
+                                                    <button class="dropdown-item" onclick="abrirModalLlegada('{{ $t->uuid }}','{{ $t->origen }} → {{ $t->destino }} ({{ $t->camion->placa }})','{{ $t->peso_salida }}','{{ $t->fecha_salida->format('Y-m-d') }}',{{ $t->camion_id }},{{ $t->conductor_id ?? 'null' }},'{{ $t->tipo_tramo }}')">
                                                         <i class="bi bi-geo-alt text-success me-2"></i> Registrar llegada
                                                     </button>
                                                 </li>
@@ -218,6 +246,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Contrato</th>
+                                    <th>Proveedor</th>
                                     <th>Camión</th>
                                     <th>Conductor</th>
                                     <th>Ruta</th>
@@ -230,12 +259,19 @@
                             </thead>
                             <tbody>
                                 @foreach($transbordando as $t)
-                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}">
+                                @php
+                                    $yaAsignadoHijos      = (float) $t->tramosHijos()->where('activo', true)->sum('peso_salida');
+                                    $disponibleTransbordo = round((float) $t->peso_llegada - $yaAsignadoHijos, 3);
+                                @endphp
+                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}" data-proveedor-id="{{ $t->contratoCamion->contrato->proveedor_id }}">
                                     <td>
                                         <a href="{{ route('contratos.camiones', $t->contratoCamion->contrato->uuid) }}"
                                             class="fw-bold text-primary text-decoration-none">
                                             {{ $t->contratoCamion->contrato->numero_contrato }}
                                         </a>
+                                    </td>
+                                    <td>
+                                        <small>{{ $t->contratoCamion->contrato->proveedor?->nombre ?? '—' }}</small>
                                     </td>
                                     <td>
                                         <strong>{{ $t->camion->placa }}</strong>
@@ -258,7 +294,12 @@
                                             {{ $t->tipo_tramo }}
                                         </span>
                                     </td>
-                                    <td class="text-end">{{ number_format($t->peso_llegada, 3) }} t</td>
+                                    <td class="text-end">
+                                        {{ number_format($t->peso_llegada, 3) }} t
+                                        @if($disponibleTransbordo > 0)
+                                            <small class="text-warning d-block">{{ number_format($disponibleTransbordo, 3) }} t libres</small>
+                                        @endif
+                                    </td>
                                     <td>{{ $t->fecha_llegada?->format('d/m/Y') ?? '—' }}</td>
                                     <td class="text-center">
                                         @php
@@ -284,6 +325,13 @@
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 @can('contratos.edit')
+                                                @if($disponibleTransbordo > 0)
+                                                <li>
+                                                    <button class="dropdown-item" onclick="abrirModalTransbordoSeg({{ $t->contrato_camion_id }}, {{ $t->id }}, '{{ addslashes($t->camion->placa) }} → {{ addslashes($t->destino) }}', {{ $disponibleTransbordo }}, '{{ $t->fecha_llegada?->format('Y-m-d') }}')">
+                                                        <i class="bi bi-arrow-down-right text-info me-2"></i> Agregar transbordo
+                                                    </button>
+                                                </li>
+                                                @endif
                                                 @if($t->contratoCamion->monto_acordado)
                                                 <li>
                                                     <button class="dropdown-item" onclick="abrirModalPagoSeg({{ $t->contratoCamion->id }},'{{ addslashes($t->camion->placa) }} — {{ addslashes($t->camion->marca) }}',{{ $t->contratoCamion->saldo_pendiente }},'{{ $t->contratoCamion->moneda_flete ?? 'BOB' }}',{{ $t->conductor_id ?? 'null' }},'{{ addslashes($t->conductor?->nombre_completo ?? '') }}',{{ $t->contratoCamion->camion->propietario_id ?? 'null' }},'{{ addslashes($t->contratoCamion->camion->propietario?->nombre_completo ?? '') }}')">
@@ -325,6 +373,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Contrato</th>
+                                    <th>Proveedor</th>
                                     <th>Camión</th>
                                     <th>Conductor</th>
                                     <th>Ruta</th>
@@ -337,12 +386,15 @@
                             </thead>
                             <tbody>
                                 @foreach($transbordado as $t)
-                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}">
+                                <tr class="{{ !$t->contratoCamion->monto_acordado ? 'table-warning' : '' }}" data-proveedor-id="{{ $t->contratoCamion->contrato->proveedor_id }}">
                                     <td>
                                         <a href="{{ route('contratos.camiones', $t->contratoCamion->contrato->uuid) }}"
                                             class="fw-bold text-primary text-decoration-none">
                                             {{ $t->contratoCamion->contrato->numero_contrato }}
                                         </a>
+                                    </td>
+                                    <td>
+                                        <small>{{ $t->contratoCamion->contrato->proveedor?->nombre ?? '—' }}</small>
                                     </td>
                                     <td>
                                         <strong>{{ $t->camion->placa }}</strong>
@@ -438,6 +490,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Contrato</th>
+                                    <th>Proveedor</th>
                                     <th>Camión</th>
                                     <th>Conductor</th>
                                     <th>Ruta</th>
@@ -451,12 +504,15 @@
                             </thead>
                             <tbody>
                                 @foreach($entregados as $t)
-                                <tr>
+                                <tr data-proveedor-id="{{ $t->contratoCamion->contrato->proveedor_id }}">
                                     <td>
                                         <a href="{{ route('contratos.camiones', $t->contratoCamion->contrato->uuid) }}"
                                             class="fw-bold text-primary text-decoration-none">
                                             {{ $t->contratoCamion->contrato->numero_contrato }}
                                         </a>
+                                    </td>
+                                    <td>
+                                        <small>{{ $t->contratoCamion->contrato->proveedor?->nombre ?? '—' }}</small>
                                     </td>
                                     <td>
                                         <strong>{{ $t->camion->placa }}</strong>
@@ -473,7 +529,12 @@
                                             {{ $t->tipo_tramo }}
                                         </span>
                                     </td>
-                                    <td class="text-end"><strong class="text-success">{{ number_format($t->peso_llegada, 3) }} t</strong></td>
+                                    <td class="text-end">
+                                        <strong class="text-success">{{ number_format($t->peso_llegada, 3) }} t</strong>
+                                        @if($t->estado === 'Entrega Parcial')
+                                            <span class="badge bg-info text-dark d-block mt-1"><i class="bi bi-pie-chart"></i> Parcial</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $t->fecha_llegada?->format('d/m/Y') ?? '—' }}</td>
                                     <td>{{ $t->cliente?->nombre ?? '—' }}</td>
                                     <td class="text-center">
@@ -547,7 +608,6 @@
                             <select class="form-select" name="tipo_pago" required>
                                 <option value="">-- Seleccione --</option>
                                 <option value="adelanto">Adelanto</option>
-                                <option value="flete">Flete</option>
                                 <option value="pago_final">Pago Final</option>
                             </select>
                         </div>
@@ -597,7 +657,6 @@
                             <label class="form-label fw-semibold">Método de Pago <span class="text-danger">*</span></label>
                             <select class="form-select" name="metodo_pago" id="seg_metodo_pago" required onchange="segToggleCodigo(this.value)">
                                 <option value="">-- Seleccione --</option>
-                                <option value="efectivo">Efectivo</option>
                                 <option value="transferencia">Transferencia Bancaria</option>
                                 <option value="qr">QR</option>
                             </select>
@@ -672,6 +731,73 @@
     </div>
 </div>
 
+{{-- ===== MODAL EDITAR PAGO CAMIÓN ===== --}}
+<div class="modal fade" id="modalEditarPago" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Editar Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarPago" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="tipo_pago" id="edit_tipo_pago" required>
+                                <option value="adelanto">Adelanto</option>
+                                <option value="flete">Flete</option>
+                                <option value="pago_final">Pago Final</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="fecha_pago" id="edit_fecha_pago" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Moneda <span class="text-danger">*</span></label>
+                            <select class="form-select" name="moneda_pago" id="edit_moneda_pago" required onchange="editToggleTc(this.value)">
+                                <option value="BOB">🇧🇴 BOB</option>
+                                <option value="USD">🇺🇸 USD</option>
+                                <option value="BRL">🇧🇷 BRL</option>
+                                <option value="ARS">🇦🇷 ARS</option>
+                                <option value="PEN">🇵🇪 PEN</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="monto" id="edit_monto" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="col-12" id="edit_sec_tc">
+                            <label class="form-label fw-semibold">Tipo de Cambio a BOB <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="tipo_cambio" id="edit_tipo_cambio" step="0.0001" min="0.0001" value="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Método de Pago <span class="text-danger">*</span></label>
+                            <select class="form-select" name="metodo_pago" id="edit_metodo_pago" required>
+                                <option value="transferencia">Transferencia Bancaria</option>
+                                <option value="qr">QR</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Código de seguimiento</label>
+                            <input type="text" class="form-control" name="codigo_seguimiento" id="edit_codigo" maxlength="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-save"></i> Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ===== MODAL ASIGNAR FLETE ===== --}}
 <div class="modal fade" id="modalFlete" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -720,7 +846,7 @@
 
 {{-- ===== MODAL REGISTRAR LLEGADA ===== --}}
 <div class="modal fade" id="modalLlegada" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title"><i class="bi bi-geo-alt"></i> Registrar Llegada</h5>
@@ -728,16 +854,18 @@
             </div>
             <form method="POST" id="formLlegada" action="">
                 @csrf
-                <div class="modal-body">
+                <input type="hidden" name="origen" value="seguimiento">
+                <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                     <div class="alert alert-light border mb-3 py-2">
                         <small class="text-muted">Tramo:</small><br>
                         <strong id="llegada_tramo_info"></strong>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Peso al llegar (t) <span class="text-danger">(*)</span></label>
+                            <label class="form-label" id="lbl_peso_llegada">Peso al llegar (t) <span class="text-danger">(*)</span></label>
                             <input type="number" step="0.001" min="0.001" class="form-control"
-                                name="peso_llegada" id="inp_peso_llegada" required placeholder="Toneladas reales pesadas">
+                                name="peso_llegada" id="inp_peso_llegada" required placeholder="Toneladas reales pesadas"
+                                oninput="calcularRestanteParcial()">
                             <small class="text-muted">Máximo permitido: <strong id="llegada_peso_max"></strong> t</small>
                         </div>
                         <div class="col-md-6">
@@ -745,29 +873,8 @@
                             <input type="date" class="form-control" name="fecha_llegada" id="inp_fecha_llegada" required>
                             <small class="text-muted">No puede ser anterior a la fecha de salida.</small>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">¿Qué ocurrió al llegar? <span class="text-danger">(*)</span></label>
-                            <div class="d-flex flex-column gap-2 mt-1">
-                                <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="seg_accion_entregado" required
-                                        onchange="document.getElementById('seg_sec_cliente').classList.remove('d-none')">
-                                    <label class="form-check-label" for="seg_accion_entregado">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        <strong>Entregado al cliente</strong>
-                                        <small class="d-block text-muted">La carga llegó a su destino final.</small>
-                                    </label>
-                                </div>
-                                <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="seg_accion_transbordo" required
-                                        onchange="document.getElementById('seg_sec_cliente').classList.add('d-none'); document.getElementById('seg_sel_cliente').value='';">
-                                    <label class="form-check-label" for="seg_accion_transbordo">
-                                        <i class="bi bi-arrow-left-right text-warning"></i>
-                                        <strong>Transbordando a otro(s) camión(es)</strong>
-                                        <small class="d-block text-muted">La carga continúa en otros camiones.</small>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+
+                        {{-- Sección cliente (entregado normal y parcial) --}}
                         <div class="col-12 d-none" id="seg_sec_cliente">
                             <label class="form-label fw-semibold">Cliente que recibe la carga <span class="text-danger">(*)</span></label>
                             <select class="form-select" name="cliente_id" id="seg_sel_cliente">
@@ -777,6 +884,102 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        {{-- Precio de venta al cliente (entregado y entrega parcial) --}}
+                        <div class="col-12 d-none" id="seg_sec_precio_venta">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="fw-semibold mb-2"><i class="bi bi-tag text-success"></i> Precio de venta al cliente</div>
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-1">Moneda</label>
+                                        <select class="form-select form-select-sm" name="moneda_venta" id="seg_sel_moneda_venta">
+                                            <option value="BOB">BOB</option>
+                                            <option value="USD">USD</option>
+                                            <option value="BRL">BRL</option>
+                                            <option value="ARS">ARS</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="PEN">PEN</option>
+                                            <option value="CLP">CLP</option>
+                                            <option value="PYG">PYG</option>
+                                            <option value="COP">COP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-1">Precio por tonelada</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="0.0001" min="0" class="form-control"
+                                                name="precio_por_tonelada" id="seg_inp_precio_ton"
+                                                placeholder="0.00">
+                                            <span class="input-group-text">/t</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Sección entrega parcial --}}
+                        <div class="col-12 d-none" id="seg_sec_parcial">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <h6 class="fw-semibold mb-3"><i class="bi bi-pie-chart text-info"></i> Datos de la entrega parcial</h6>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <small><i class="bi bi-info-circle"></i> El campo <strong>"Peso al llegar"</strong> arriba indica el total que llegó. Ingresa abajo cuántas toneladas se entregan ahora a este cliente — el resto continuará en un nuevo tramo.</small>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">TN entregadas a este cliente <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.001" min="0.001" class="form-control"
+                                            name="tn_parcial" id="seg_inp_tn_parcial"
+                                            placeholder="0.000" oninput="calcularRestanteParcial()">
+                                        <small class="text-muted">TN para el nuevo tramo: <strong id="lbl_tn_restante">—</strong></small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Destino del nuevo tramo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="destino_nuevo_tramo"
+                                            id="seg_inp_destino_nuevo" maxlength="150"
+                                            placeholder="Ciudad / punto de entrega">
+                                    </div>
+                                </div>
+                                <input type="hidden" name="camion_nuevo_id" id="seg_hidden_camion_nuevo">
+                                <input type="hidden" name="conductor_nuevo_id" id="seg_hidden_conductor_nuevo">
+                                <input type="hidden" name="fecha_salida_nuevo_tramo" id="seg_hidden_fecha_nuevo">
+                                <input type="hidden" name="tipo_tramo_nuevo" id="seg_hidden_tipo_tramo_nuevo">
+                            </div>
+                        </div>
+
+                        {{-- ¿Qué ocurrió al llegar? --}}
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">¿Qué ocurrió al llegar? <span class="text-danger">(*)</span></label>
+                            <div class="d-flex flex-column gap-2 mt-1">
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="seg_accion_entregado" required
+                                        onchange="accionLlegadaCambiada('entregado')">
+                                    <label class="form-check-label" for="seg_accion_entregado">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <strong>Entregado al cliente</strong>
+                                        <small class="d-block text-muted">La carga llegó a su destino final.</small>
+                                    </label>
+                                </div>
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="entrega_parcial" id="seg_accion_parcial" required
+                                        onchange="accionLlegadaCambiada('entrega_parcial')">
+                                    <label class="form-check-label" for="seg_accion_parcial">
+                                        <i class="bi bi-pie-chart text-info"></i>
+                                        <strong>Entrega Parcial</strong>
+                                        <small class="d-block text-muted">Entrega parte de la carga a un cliente y el restante continúa en otro camión.</small>
+                                    </label>
+                                </div>
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="seg_accion_transbordo" required
+                                        onchange="accionLlegadaCambiada('transbordo')">
+                                    <label class="form-check-label" for="seg_accion_transbordo">
+                                        <i class="bi bi-arrow-left-right text-warning"></i>
+                                        <strong>Transbordando a otro(s) camión(es)</strong>
+                                        <small class="d-block text-muted">La carga continúa en otros camiones.</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-12">
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" id="seg_chk_descuento"
@@ -800,9 +1003,94 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar</button>
+                <div class="modal-footer flex-column align-items-stretch gap-2">
+                    <div class="text-muted text-center" style="font-size:12px;">
+                        <i class="bi bi-lock"></i> El botón se activará cuando todos los campos obligatorios (<span class="text-danger fw-bold">*</span>) estén completos.
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn_confirmar_llegada_seg" class="btn btn-secondary" disabled>
+                            <i class="bi bi-check-lg"></i> Confirmar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ===== MODAL TRANSBORDO (desde seguimiento) ===== --}}
+<div class="modal fade" id="modalTransbordoSeg" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-dark">
+                <h5 class="modal-title"><i class="bi bi-arrow-down-right"></i> Registrar Transbordo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('tramo.store') }}">
+                @csrf
+                <input type="hidden" name="origen" value="seguimiento">
+                <input type="hidden" name="contrato_camion_id" id="seg_tsb_cc_id">
+                <input type="hidden" name="tramo_padre_id"     id="seg_tsb_padre_id">
+                <input type="hidden" name="tipo_tramo"         value="Nacional">
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        Transbordo desde: <strong id="seg_tsb_info_padre"></strong>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Camión <span class="text-danger">(*)</span></label>
+                            <select class="form-select" name="camion_id" id="seg_tsb_camion_id" required>
+                                <option value="">-- Seleccione --</option>
+                                @foreach($camionesDisponibles as $cam)
+                                    <option value="{{ $cam->id }}" data-uuid="{{ $cam->uuid }}">
+                                        {{ $cam->placa }} — {{ $cam->marca }} {{ $cam->modelo }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Conductor <span class="text-danger">(*)</span></label>
+                            <select class="form-select" name="conductor_id" id="seg_tsb_conductor_id" disabled required>
+                                <option value="">— Seleccione un camión primero —</option>
+                            </select>
+                            <div id="seg_tsb_sin_conductor_aviso" class="alert alert-warning py-1 px-2 mt-1 mb-0 d-none" style="font-size:13px;">
+                                <i class="bi bi-exclamation-triangle"></i> Este camión no tiene conductores asignados. Asigne un conductor antes de registrar el transbordo.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Destino <span class="text-danger">(*)</span></label>
+                            <input type="text" class="form-control" name="destino" id="seg_tsb_destino" required maxlength="150" placeholder="Ej: LA PAZ"
+                                style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase(); validarFormTransbordoSeg();">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Peso que lleva este camión (t) <span class="text-danger">(*)</span></label>
+                            <input type="number" step="0.001" min="0.001" class="form-control"
+                                name="peso_salida" id="seg_tsb_peso_salida" required placeholder="Toneladas que carga este camión">
+                            <small class="text-muted">Disponible para transbordo: <strong id="seg_tsb_peso_disponible"></strong> t</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de Salida <span class="text-danger">(*)</span></label>
+                            <input type="date" class="form-control" name="fecha_salida" id="seg_tsb_fecha_salida" required>
+                            <small class="text-muted">No puede ser anterior a la llegada del camión anterior.</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="2" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer flex-column align-items-stretch gap-2">
+                    <div class="text-muted text-center" style="font-size:12px;">
+                        <i class="bi bi-lock"></i> El botón se activará cuando todos los campos obligatorios (<span class="text-danger fw-bold">*</span>) estén completos.
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn_registrar_transbordo_seg" class="btn btn-secondary" disabled>
+                            <i class="bi bi-save"></i> Registrar Transbordo
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -960,11 +1248,18 @@ function segCargarHistorial(ccId) {
                             <div class="text-muted small">${p.fecha} &nbsp;·&nbsp; ${p.metodo}${p.receptor ? ' &nbsp;·&nbsp; <span class="text-dark">' + p.receptor + '</span>' : ''}${cuentaOrigLine}</div>
                             ${cuentaDestLine}
                         </div>
-                        <a href="/pagos/camiones/${p.uuid}/destroy"
-                           class="btn btn-sm btn-outline-danger border-0 mt-1"
-                           onclick="return confirm('¿Eliminar este pago?')" title="Eliminar">
-                           <i class="bi bi-trash"></i>
-                        </a>
+                        <div class="d-flex flex-column gap-1 mt-1">
+                            <button class="btn btn-sm btn-outline-secondary border-0"
+                                onclick="abrirModalEditarPago('${p.uuid}', '${p.tipo_raw}', ${parseFloat(p.monto)}, '${p.moneda_pago}', ${parseFloat(p.tipo_cambio)}, '${p.fecha_raw}', '${p.metodo_raw}', '${p.codigo||''}')"
+                                title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="/pagos/camiones/${p.uuid}/destroy"
+                               class="btn btn-sm btn-outline-danger border-0"
+                               onclick="return confirm('¿Eliminar este pago?')" title="Eliminar">
+                               <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -1046,6 +1341,38 @@ function segCambiarReceptor(tipo) {
 }
 // ---- Fin pago desde seguimiento ----
 
+function filtrarPorProveedorSeg(proveedorId) {
+    const tablas = ['tabla_en_ruta', 'tabla_transbordando', 'tabla_transbordado', 'tabla_entregados'];
+    tablas.forEach(function(id) {
+        const tabla = document.getElementById(id);
+        if (!tabla) return;
+        tabla.querySelectorAll('tbody tr').forEach(function(fila) {
+            const ok = !proveedorId || fila.dataset.proveedorId == proveedorId;
+            fila.style.display = ok ? '' : 'none';
+        });
+    });
+    const sel = document.getElementById('filtro_proveedor_seg');
+    if (sel) sel.value = proveedorId;
+}
+
+function abrirModalEditarPago(uuid, tipo, monto, moneda, tipoCambio, fecha, metodo, codigo) {
+    document.getElementById('formEditarPago').action = '/pagos/camiones/' + uuid;
+    document.getElementById('edit_tipo_pago').value   = tipo;
+    document.getElementById('edit_monto').value       = monto;
+    document.getElementById('edit_moneda_pago').value = moneda;
+    document.getElementById('edit_tipo_cambio').value = tipoCambio;
+    document.getElementById('edit_fecha_pago').value  = fecha;
+    document.getElementById('edit_metodo_pago').value = metodo;
+    document.getElementById('edit_codigo').value      = codigo;
+    editToggleTc(moneda);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarPago')).show();
+}
+
+function editToggleTc(moneda) {
+    document.getElementById('edit_sec_tc').style.display = moneda === 'BOB' ? 'none' : 'block';
+    if (moneda === 'BOB') document.getElementById('edit_tipo_cambio').value = 1;
+}
+
 function abrirModalFlete(ccUuid, label) {
     document.getElementById('flete_label').textContent = label;
     document.getElementById('formFlete').action = '{{ url("contrato-camion") }}/' + ccUuid + '/flete';
@@ -1054,7 +1381,7 @@ function abrirModalFlete(ccUuid, label) {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFlete')).show();
 }
 
-function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
+function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida, camionId, conductorId, tipoTramo) {
     document.getElementById('llegada_tramo_info').textContent = info;
     document.getElementById('formLlegada').action            = '{{ url("tramo") }}/' + tramoUuid + '/llegada';
     document.getElementById('llegada_peso_max').textContent  = pesoSalida;
@@ -1072,13 +1399,86 @@ function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
 
     document.getElementById('seg_sec_cliente').classList.add('d-none');
     document.getElementById('seg_sel_cliente').value = '';
+    document.getElementById('seg_sec_precio_venta').classList.add('d-none');
+    document.getElementById('seg_inp_precio_ton').value = '';
+    document.getElementById('seg_sec_parcial').classList.add('d-none');
+    document.getElementById('seg_inp_tn_parcial').value    = '';
+    document.getElementById('seg_inp_destino_nuevo').value = '';
+    document.getElementById('seg_hidden_camion_nuevo').value    = camionId || '';
+    document.getElementById('seg_hidden_conductor_nuevo').value = conductorId || '';
+    document.getElementById('seg_hidden_fecha_nuevo').value     = fechaSalida;
+    document.getElementById('seg_hidden_tipo_tramo_nuevo').value = tipoTramo || '';
+    document.getElementById('lbl_tn_restante').textContent = '—';
+    _llegadaPesoSalida = pesoSalida;
     const chk = document.getElementById('seg_chk_descuento');
     chk.checked = false;
     document.getElementById('seg_sec_descuento').classList.add('d-none');
     document.getElementById('seg_inp_descuento').value = '';
     document.querySelector('#formLlegada textarea[name="observaciones_llegada"]').value = '';
 
+    const btnConf = document.getElementById('btn_confirmar_llegada_seg');
+    btnConf.disabled  = true;
+    btnConf.className = 'btn btn-secondary';
+
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLlegada')).show();
+}
+
+let _llegadaPesoSalida = 0;
+
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('modalLlegada');
+    if (modal) {
+        modal.addEventListener('input',  validarFormLlegadaSeg);
+        modal.addEventListener('change', validarFormLlegadaSeg);
+    }
+});
+
+function validarFormLlegadaSeg() {
+    const peso   = document.getElementById('inp_peso_llegada')?.value;
+    const fecha  = document.getElementById('inp_fecha_llegada')?.value;
+    const accion = document.querySelector('#formLlegada input[name="accion"]:checked')?.value;
+    const cliente   = document.getElementById('seg_sel_cliente')?.value;
+    const tnParcial = document.getElementById('seg_inp_tn_parcial')?.value;
+    const destNuevo = document.getElementById('seg_inp_destino_nuevo')?.value.trim();
+    const btn = document.getElementById('btn_confirmar_llegada_seg');
+    if (!btn) return;
+
+    let ok = peso && fecha && accion;
+    if (accion === 'entregado')       ok = ok && cliente;
+    if (accion === 'entrega_parcial') ok = ok && cliente && tnParcial && destNuevo;
+
+    btn.disabled  = !ok;
+    btn.className = ok ? 'btn btn-success' : 'btn btn-secondary';
+}
+
+function accionLlegadaCambiada(accion) {
+    const secCliente = document.getElementById('seg_sec_cliente');
+    const secPrecio  = document.getElementById('seg_sec_precio_venta');
+    const secParcial = document.getElementById('seg_sec_parcial');
+    const selCliente = document.getElementById('seg_sel_cliente');
+
+    secCliente.classList.add('d-none');
+    secPrecio.classList.add('d-none');
+    secParcial.classList.add('d-none');
+
+    if (accion === 'entregado') {
+        secCliente.classList.remove('d-none');
+        secPrecio.classList.remove('d-none');
+    } else if (accion === 'entrega_parcial') {
+        secCliente.classList.remove('d-none');
+        secPrecio.classList.remove('d-none');
+        secParcial.classList.remove('d-none');
+    } else {
+        selCliente.value = '';
+    }
+    validarFormLlegadaSeg();
+}
+
+function calcularRestanteParcial() {
+    const tnEntregadas = parseFloat(document.getElementById('seg_inp_tn_parcial').value) || 0;
+    const pesoTotal    = parseFloat(document.getElementById('inp_peso_llegada').value) || 0;
+    const restante     = Math.max(0, pesoTotal - tnEntregadas);
+    document.getElementById('lbl_tn_restante').textContent = restante > 0 ? restante.toFixed(3) + ' t' : '—';
 }
 
 function ejecutarAccionSeg(sel) {
@@ -1095,7 +1495,7 @@ function ejecutarAccionSeg(sel) {
         window.open(d.notaUrl, '_blank');
 
     } else if (accion === 'llegada') {
-        abrirModalLlegada(d.uuid, d.label, d.peso, d.fecha);
+        abrirModalLlegada(d.uuid, d.label, d.peso, d.fecha, d.camionId || null, d.conductorId || null, d.tipoTramo || '');
 
     } else if (accion === 'pago') {
         abrirModalPagoSeg(
@@ -1112,6 +1512,113 @@ function ejecutarAccionSeg(sel) {
     } else if (accion === 'flete') {
         abrirModalFlete(d.ccUuid, d.fleteLabel);
     }
+}
+
+// ---- Transbordo desde seguimiento ----
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('seg_tsb_camion_id')) {
+        $('#seg_tsb_camion_id').select2({
+            placeholder: 'Busque por placa...',
+            width: '100%',
+            dropdownParent: $('#modalTransbordoSeg'),
+            language: { noResults: () => 'No se encontró ningún camión.', searching: () => 'Buscando...' }
+        });
+        $('#seg_tsb_camion_id').on('change', function () {
+            const uuid = $('#seg_tsb_camion_id option:selected').data('uuid');
+            cargarConductoresSeg(uuid);
+            validarFormTransbordoSeg();
+        });
+
+        document.getElementById('modalTransbordoSeg').addEventListener('input', validarFormTransbordoSeg);
+        document.getElementById('seg_tsb_conductor_id').addEventListener('change', validarFormTransbordoSeg);
+    }
+});
+
+function cargarConductoresSeg(uuid) {
+    const sel   = document.getElementById('seg_tsb_conductor_id');
+    const aviso = document.getElementById('seg_tsb_sin_conductor_aviso');
+    const btn   = document.getElementById('btn_registrar_transbordo_seg');
+
+    sel.innerHTML = '<option value="">— Cargando... —</option>';
+    sel.disabled  = true;
+    aviso.classList.add('d-none');
+
+    if (!uuid) {
+        sel.innerHTML = '<option value="">— Primero seleccione un camión —</option>';
+        return;
+    }
+
+    fetch('{{ url("api/camion") }}/' + uuid + '/conductores-relacionados', {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(conductores => {
+        if (conductores.length === 0) {
+            sel.innerHTML = '<option value="">— Sin conductores —</option>';
+            aviso.classList.remove('d-none');
+            if (btn) btn.disabled = true;
+            return;
+        }
+        aviso.classList.add('d-none');
+        sel.innerHTML = '<option value="">— Seleccione conductor —</option>';
+        conductores.forEach(c => {
+            const op = document.createElement('option');
+            op.value       = c.id;
+            op.textContent = c.nombre + ' — Lic: ' + (c.licencia || 'S/N') + ' [' + c.tipo + ']';
+            sel.appendChild(op);
+        });
+        sel.disabled = false;
+        validarFormTransbordoSeg();
+    })
+    .catch(() => { sel.innerHTML = '<option value="">— Error al cargar —</option>'; });
+}
+
+function validarFormTransbordoSeg() {
+    const camion    = document.getElementById('seg_tsb_camion_id')?.value;
+    const conductor = document.getElementById('seg_tsb_conductor_id')?.value;
+    const destino   = document.getElementById('seg_tsb_destino')?.value.trim();
+    const peso      = document.getElementById('seg_tsb_peso_salida')?.value;
+    const fecha     = document.getElementById('seg_tsb_fecha_salida')?.value;
+    const btn       = document.getElementById('btn_registrar_transbordo_seg');
+    const aviso     = document.getElementById('seg_tsb_sin_conductor_aviso');
+    const sinConductor = aviso && !aviso.classList.contains('d-none');
+
+    const completo = camion && conductor && destino && peso && fecha && !sinConductor;
+    btn.disabled  = !completo;
+    btn.className = completo ? 'btn btn-info' : 'btn btn-secondary';
+}
+
+function abrirModalTransbordoSeg(ccId, tramoPadreId, infoPadre, disponible, fechaLlegadaPadre) {
+    document.getElementById('seg_tsb_cc_id').value              = ccId;
+    document.getElementById('seg_tsb_padre_id').value           = tramoPadreId;
+    document.getElementById('seg_tsb_info_padre').textContent   = infoPadre;
+    document.getElementById('seg_tsb_peso_disponible').textContent = disponible;
+
+    const inp = document.getElementById('seg_tsb_peso_salida');
+    inp.max   = disponible;
+    inp.value = '';
+    inp.oninput = function () {
+        if (parseFloat(this.value) > parseFloat(disponible)) this.value = disponible;
+        validarFormTransbordoSeg();
+    };
+
+    document.getElementById('seg_tsb_fecha_salida').min   = fechaLlegadaPadre ?? '';
+    document.getElementById('seg_tsb_fecha_salida').value = fechaLlegadaPadre ?? '';
+    document.getElementById('seg_tsb_destino').value = '';
+
+    const sel = document.getElementById('seg_tsb_conductor_id');
+    sel.innerHTML = '<option value="">— Seleccione un camión primero —</option>';
+    sel.disabled  = true;
+
+    document.getElementById('seg_tsb_sin_conductor_aviso').classList.add('d-none');
+    document.getElementById('btn_registrar_transbordo_seg').disabled = true;
+    document.getElementById('btn_registrar_transbordo_seg').className = 'btn btn-secondary';
+
+    if (window.$) {
+        $('#seg_tsb_camion_id').val(null).trigger('change');
+    }
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTransbordoSeg')).show();
 }
 </script>
 @endsection

@@ -52,10 +52,11 @@
                             $enTransito = $contrato->toneladas_en_transito;
                             $pctEnt     = min(100, round(($entregadas / $total) * 100, 1));
                             $pctTra     = min(100 - $pctEnt, round(($enTransito / $total) * 100, 1));
+                            $pendiente  = max(0, $total - $entregadas - $enTransito);
                         @endphp
                         <hr>
                         <h6 class="fw-bold">Toneladas del Contrato</h6>
-                        <div class="progress mb-1" style="height:22px;" title="{{ $pctEnt }}% entregado · {{ $pctTra }}% en tránsito">
+                        <div class="progress mb-1" style="height:22px;" title="{{ $pctEnt }}% entregado al cliente · {{ $pctTra }}% en ruta · {{ number_format($pendiente,3) }} t pendiente">
                             @if($pctEnt > 0)
                             <div class="progress-bar bg-success progress-bar-striped" style="width:{{ $pctEnt }}%">
                                 @if($pctEnt >= 10){{ $pctEnt }}%@endif
@@ -67,11 +68,17 @@
                             </div>
                             @endif
                         </div>
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between flex-wrap gap-1">
                             <small>
-                                <span class="text-success fw-semibold"><i class="bi bi-check-circle"></i> {{ number_format($entregadas, 3) }} t</span>
-                                &nbsp;·&nbsp;
-                                <span style="color:#0ea5e9;"><i class="bi bi-truck"></i> {{ number_format($enTransito, 3) }} t</span>
+                                @if($entregadas > 0)
+                                    <span class="text-success fw-semibold"><i class="bi bi-check-circle"></i> {{ number_format($entregadas, 3) }} t cliente</span>
+                                    &nbsp;·&nbsp;
+                                @endif
+                                <span style="color:#0ea5e9;"><i class="bi bi-truck"></i> {{ number_format($enTransito, 3) }} t en ruta</span>
+                                @if($pendiente > 0)
+                                    &nbsp;·&nbsp;
+                                    <span class="text-muted"><i class="bi bi-hourglass"></i> {{ number_format($pendiente, 3) }} t pend.</span>
+                                @endif
                             </small>
                             <small class="text-muted">Total: <strong>{{ number_format($total, 3) }} t</strong></small>
                         </div>
@@ -323,7 +330,7 @@
 
 {{-- ===== MODAL REGISTRAR LLEGADA ===== --}}
 <div class="modal fade" id="modalLlegada" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title"><i class="bi bi-geo-alt"></i> Registrar Llegada</h5>
@@ -331,16 +338,18 @@
             </div>
             <form method="POST" id="formLlegada" action="">
                 @csrf
-                <div class="modal-body">
+                <input type="hidden" name="origen" value="camiones">
+                <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
                     <div class="alert alert-light border mb-3 py-2">
                         <small class="text-muted">Tramo:</small><br>
                         <strong id="llegada_tramo_info"></strong>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Peso al llegar (t) <span class="text-danger">(*)</span></label>
+                            <label class="form-label" id="lbl_peso_llegada">Peso al llegar (t) <span class="text-danger">(*)</span></label>
                             <input type="number" step="0.001" min="0.001" class="form-control"
-                                name="peso_llegada" id="inp_peso_llegada" required placeholder="Toneladas reales pesadas">
+                                name="peso_llegada" id="inp_peso_llegada" required placeholder="Toneladas reales pesadas"
+                                oninput="calcTotalVenta(); calcRestanteCam();">
                             <small class="text-muted">Máximo permitido: <strong id="llegada_peso_max"></strong> t</small>
                         </div>
                         <div class="col-md-6">
@@ -348,31 +357,8 @@
                             <input type="date" class="form-control" name="fecha_llegada" id="inp_fecha_llegada" required>
                             <small class="text-muted">No puede ser anterior a la fecha de salida.</small>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">¿Qué ocurrió al llegar? <span class="text-danger">(*)</span></label>
-                            <div class="d-flex flex-column gap-2 mt-1">
-                                <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="accion_entregado" required
-                                        onchange="document.getElementById('sec_cliente').classList.remove('d-none'); document.getElementById('sec_precio_venta').classList.remove('d-none'); calcTotalVenta();">
-                                    <label class="form-check-label" for="accion_entregado">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        <strong>Entregado al cliente</strong>
-                                        <small class="d-block text-muted">La carga llegó a su destino final.</small>
-                                    </label>
-                                </div>
-                                <div class="form-check border rounded p-3">
-                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="accion_transbordo" required
-                                        onchange="document.getElementById('sec_cliente').classList.add('d-none'); document.getElementById('sel_cliente').value=''; document.getElementById('sec_precio_venta').classList.add('d-none'); document.getElementById('inp_precio_ton').value=''; document.getElementById('lbl_total_venta').textContent='—';">
-                                    <label class="form-check-label" for="accion_transbordo">
-                                        <i class="bi bi-arrow-left-right text-warning"></i>
-                                        <strong>Transbordando a otro(s) camión(es)</strong>
-                                        <small class="d-block text-muted">La carga continúa en otros camiones (frontera o cambio de unidad).</small>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
 
-                        {{-- Cliente receptor (solo si es entregado) --}}
+                        {{-- Cliente receptor --}}
                         <div class="col-12 d-none" id="sec_cliente">
                             <label class="form-label fw-semibold">Cliente que recibe la carga <span class="text-danger">(*)</span></label>
                             <select class="form-select" name="cliente_id" id="sel_cliente">
@@ -391,15 +377,15 @@
                                     <div class="col-md-4">
                                         <label class="form-label mb-1">Moneda</label>
                                         <select class="form-select form-select-sm" name="moneda_venta" id="sel_moneda_venta">
-                                            <option value="BOB">🇧🇴 BOB</option>
-                                            <option value="USD">🇺🇸 USD</option>
-                                            <option value="BRL">🇧🇷 BRL</option>
-                                            <option value="ARS">🇦🇷 ARS</option>
-                                            <option value="EUR">🇪🇺 EUR</option>
-                                            <option value="PEN">🇵🇪 PEN</option>
-                                            <option value="CLP">🇨🇱 CLP</option>
-                                            <option value="PYG">🇵🇾 PYG</option>
-                                            <option value="COP">🇨🇴 COP</option>
+                                            <option value="BOB">BOB</option>
+                                            <option value="USD">USD</option>
+                                            <option value="BRL">BRL</option>
+                                            <option value="ARS">ARS</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="PEN">PEN</option>
+                                            <option value="CLP">CLP</option>
+                                            <option value="PYG">PYG</option>
+                                            <option value="COP">COP</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -417,6 +403,68 @@
                                     </div>
                                 </div>
                                 <small class="text-muted mt-1 d-block">Basado en el peso de llegada ingresado arriba.</small>
+                            </div>
+                        </div>
+
+                        {{-- Sección entrega parcial --}}
+                        <div class="col-12 d-none" id="sec_parcial_cam">
+                            <div class="border rounded-3 p-3 bg-light">
+                                <h6 class="fw-semibold mb-3"><i class="bi bi-pie-chart text-info"></i> Datos de la entrega parcial</h6>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <small><i class="bi bi-info-circle"></i> El campo <strong>"Peso al llegar"</strong> arriba indica el total que llegó. Ingresa abajo cuántas toneladas se entregan ahora a este cliente — el resto continuará en un nuevo tramo.</small>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">TN entregadas a este cliente <span class="text-danger">*</span></label>
+                                        <input type="number" step="0.001" min="0.001" class="form-control"
+                                            name="tn_parcial" id="cam_inp_tn_parcial"
+                                            placeholder="0.000" oninput="calcRestanteCam()">
+                                        <small class="text-muted">TN para el nuevo tramo: <strong id="cam_lbl_tn_restante">—</strong></small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Destino del nuevo tramo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="destino_nuevo_tramo"
+                                            maxlength="150" placeholder="Ciudad / punto de entrega">
+                                    </div>
+                                </div>
+                                <input type="hidden" name="camion_nuevo_id" id="cam_hidden_camion">
+                                <input type="hidden" name="conductor_nuevo_id" id="cam_hidden_conductor">
+                                <input type="hidden" name="fecha_salida_nuevo_tramo" id="cam_hidden_fecha">
+                                <input type="hidden" name="tipo_tramo_nuevo" id="cam_hidden_tipo_tramo">
+                            </div>
+                        </div>
+
+                        {{-- ¿Qué ocurrió al llegar? --}}
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">¿Qué ocurrió al llegar? <span class="text-danger">(*)</span></label>
+                            <div class="d-flex flex-column gap-2 mt-1">
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="entregado" id="accion_entregado" required
+                                        onchange="accionCamionCambiada('entregado')">
+                                    <label class="form-check-label" for="accion_entregado">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <strong>Entregado al cliente</strong>
+                                        <small class="d-block text-muted">La carga llegó a su destino final.</small>
+                                    </label>
+                                </div>
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="entrega_parcial" id="accion_entrega_parcial" required
+                                        onchange="accionCamionCambiada('entrega_parcial')">
+                                    <label class="form-check-label" for="accion_entrega_parcial">
+                                        <i class="bi bi-pie-chart text-info"></i>
+                                        <strong>Entrega Parcial</strong>
+                                        <small class="d-block text-muted">Entrega parte de la carga a un cliente y el restante continúa en otro camión.</small>
+                                    </label>
+                                </div>
+                                <div class="form-check border rounded p-3">
+                                    <input class="form-check-input" type="radio" name="accion" value="transbordo" id="accion_transbordo" required
+                                        onchange="accionCamionCambiada('transbordo')">
+                                    <label class="form-check-label" for="accion_transbordo">
+                                        <i class="bi bi-arrow-left-right text-warning"></i>
+                                        <strong>Transbordando a otro(s) camión(es)</strong>
+                                        <small class="d-block text-muted">La carga continúa en otros camiones (frontera o cambio de unidad).</small>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -447,9 +495,16 @@
 
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar</button>
+                <div class="modal-footer flex-column align-items-stretch gap-2">
+                    <div class="text-muted text-center" style="font-size:12px;">
+                        <i class="bi bi-lock"></i> El botón se activará cuando todos los campos obligatorios (<span class="text-danger fw-bold">*</span>) estén completos.
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn_confirmar_llegada" class="btn btn-secondary" disabled>
+                            <i class="bi bi-check-lg"></i> Confirmar
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -490,6 +545,9 @@
                             <select class="form-select" name="conductor_id" id="tsb_conductor_id" disabled required>
                                 <option value="">— Seleccione un camión primero —</option>
                             </select>
+                            <div id="tsb_sin_conductor_aviso" class="alert alert-warning py-1 px-2 mt-1 mb-0 d-none" style="font-size:13px;">
+                                <i class="bi bi-exclamation-triangle"></i> Este camión no tiene conductores asignados. Asigne un conductor antes de registrar el transbordo.
+                            </div>
                         </div>
                         @if($contrato->tipo_contrato === 'Internacional')
                         <div class="col-md-6">
@@ -524,9 +582,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-info"><i class="bi bi-save"></i> Registrar Transbordo</button>
+                <div class="modal-footer flex-column align-items-stretch gap-2">
+                    <div class="text-muted text-center" style="font-size:12px;">
+                        <i class="bi bi-lock"></i> El botón se activará cuando todos los campos obligatorios (<span class="text-danger fw-bold">*</span>) estén completos.
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn_registrar_transbordo" class="btn btn-secondary" disabled>
+                            <i class="bi bi-save"></i> Registrar Transbordo
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -604,7 +669,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const opt  = $('#tsb_camion_id option:selected');
         const uuid = opt.data('uuid');
         cargarConductores(uuid, 'tsb_conductor_id', null);
+        validarFormTransbordo();
     });
+
+    document.getElementById('modalTransbordo').addEventListener('input', validarFormTransbordo);
+    document.getElementById('tsb_conductor_id').addEventListener('change', validarFormTransbordo);
+
+    document.getElementById('modalLlegada').addEventListener('input', validarFormLlegada);
+    document.getElementById('modalLlegada').addEventListener('change', validarFormLlegada);
 
     // Re-inicializar Select2 cuando se abre el tab de agregar
     $('button[data-bs-target="#pane-agregar"]').on('shown.bs.tab', function () {
@@ -635,11 +707,17 @@ function cargarConductores(uuid, selectId, sinConductoresId) {
     })
     .then(r => r.json())
     .then(conductores => {
+        const btnSubmit = document.getElementById('btn_registrar_transbordo');
+        const aviso     = document.getElementById('tsb_sin_conductor_aviso');
         if (conductores.length === 0) {
             sel.innerHTML = '<option value="">— Sin conductores —</option>';
             if (sin) sin.classList.remove('d-none');
+            if (aviso) aviso.classList.remove('d-none');
+            if (btnSubmit) btnSubmit.disabled = true;
             return;
         }
+        if (aviso) aviso.classList.add('d-none');
+        if (btnSubmit) btnSubmit.disabled = false;
         sel.innerHTML = '<option value="">— Seleccione conductor —</option>';
         conductores.forEach(c => {
             const op = document.createElement('option');
@@ -648,11 +726,12 @@ function cargarConductores(uuid, selectId, sinConductoresId) {
             sel.appendChild(op);
         });
         sel.disabled = false;
+        validarFormTransbordo();
     })
     .catch(() => { sel.innerHTML = '<option value="">— Error al cargar —</option>'; });
 }
 
-function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
+function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida, camionId, conductorId, tipoTramo) {
     document.getElementById('llegada_tramo_info').textContent = info;
     document.getElementById('formLlegada').action            = '{{ url("tramo") }}/' + tramoUuid + '/llegada';
     document.getElementById('llegada_peso_max').textContent  = pesoSalida;
@@ -669,19 +748,100 @@ function abrirModalLlegada(tramoUuid, info, pesoSalida, fechaSalida) {
     document.getElementById('inp_fecha_llegada').min   = fechaSalida;
     document.getElementById('inp_fecha_llegada').value = fechaSalida;
 
-    // Resetear cliente, precio venta, descuento y observaciones
+    // Resetear todos los campos
     document.getElementById('sec_cliente').classList.add('d-none');
     document.getElementById('sel_cliente').value = '';
     document.getElementById('sec_precio_venta').classList.add('d-none');
     document.getElementById('inp_precio_ton').value = '';
     document.getElementById('lbl_total_venta').textContent = '—';
+    document.getElementById('sec_parcial_cam').classList.add('d-none');
+    document.getElementById('cam_inp_tn_parcial').value = '';
+    document.getElementById('cam_lbl_tn_restante').textContent = '—';
+    document.getElementById('cam_hidden_camion').value     = camionId || '';
+    document.getElementById('cam_hidden_conductor').value  = conductorId || '';
+    document.getElementById('cam_hidden_fecha').value      = fechaSalida;
+    document.getElementById('cam_hidden_tipo_tramo').value = tipoTramo || '';
+    _camPesoSalida = pesoSalida;
     const chk = document.getElementById('chk_descuento');
     chk.checked = false;
     document.getElementById('sec_descuento').classList.add('d-none');
     document.getElementById('inp_descuento').value = '';
     document.querySelector('#formLlegada textarea[name="observaciones_llegada"]').value = '';
 
+    const btnConf = document.getElementById('btn_confirmar_llegada');
+    btnConf.disabled  = true;
+    btnConf.className = 'btn btn-secondary';
+
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLlegada')).show();
+}
+
+let _camPesoSalida = 0;
+
+function validarFormLlegada() {
+    const peso    = document.getElementById('inp_peso_llegada')?.value;
+    const fecha   = document.getElementById('inp_fecha_llegada')?.value;
+    const accion  = document.querySelector('#formLlegada input[name="accion"]:checked')?.value;
+    const cliente = document.getElementById('sel_cliente')?.value;
+    const tnParcial  = document.getElementById('cam_inp_tn_parcial')?.value;
+    const destNuevo  = document.querySelector('#sec_parcial_cam [name="destino_nuevo_tramo"]')?.value.trim();
+    const btn = document.getElementById('btn_confirmar_llegada');
+    if (!btn) return;
+
+    let ok = peso && fecha && accion;
+    if (accion === 'entregado')       ok = ok && cliente;
+    if (accion === 'entrega_parcial') ok = ok && cliente && tnParcial && destNuevo;
+
+    btn.disabled  = !ok;
+    btn.className = ok ? 'btn btn-success' : 'btn btn-secondary';
+}
+
+function accionCamionCambiada(accion) {
+    const secCliente  = document.getElementById('sec_cliente');
+    const secPrecio   = document.getElementById('sec_precio_venta');
+    const secParcial  = document.getElementById('sec_parcial_cam');
+    const selCliente  = document.getElementById('sel_cliente');
+
+    secCliente.classList.add('d-none');
+    secPrecio.classList.add('d-none');
+    secParcial.classList.add('d-none');
+    document.getElementById('inp_precio_ton').value = '';
+    document.getElementById('lbl_total_venta').textContent = '—';
+
+    if (accion === 'entregado') {
+        secCliente.classList.remove('d-none');
+        secPrecio.classList.remove('d-none');
+        calcTotalVenta();
+    } else if (accion === 'entrega_parcial') {
+        secCliente.classList.remove('d-none');
+        secPrecio.classList.remove('d-none');
+        secParcial.classList.remove('d-none');
+        calcTotalVenta();
+    } else {
+        selCliente.value = '';
+    }
+    validarFormLlegada();
+}
+
+function calcRestanteCam() {
+    const tnEntregadas = parseFloat(document.getElementById('cam_inp_tn_parcial').value) || 0;
+    const pesoTotal    = parseFloat(document.getElementById('inp_peso_llegada').value) || 0;
+    const restante     = Math.max(0, pesoTotal - tnEntregadas);
+    document.getElementById('cam_lbl_tn_restante').textContent = restante > 0 ? restante.toFixed(3) + ' t' : '—';
+}
+
+function validarFormTransbordo() {
+    const camion    = document.getElementById('tsb_camion_id')?.value;
+    const conductor = document.getElementById('tsb_conductor_id')?.value;
+    const destino   = document.querySelector('#modalTransbordo [name="destino"]')?.value.trim();
+    const peso      = document.getElementById('tsb_peso_salida')?.value;
+    const fecha     = document.getElementById('tsb_fecha_salida')?.value;
+    const btn       = document.getElementById('btn_registrar_transbordo');
+    const aviso     = document.getElementById('tsb_sin_conductor_aviso');
+    const sinConductor = aviso && !aviso.classList.contains('d-none');
+
+    const completo = camion && conductor && destino && peso && fecha && !sinConductor;
+    btn.disabled = !completo;
+    btn.className = completo ? 'btn btn-info' : 'btn btn-secondary';
 }
 
 function abrirModalTransbordo(ccId, tramoPadreId, destino, infoPadre, disponible, fechaLlegadaPadre) {
@@ -703,6 +863,11 @@ function abrirModalTransbordo(ccId, tramoPadreId, destino, infoPadre, disponible
     const sel = document.getElementById('tsb_conductor_id');
     sel.innerHTML = '<option value="">— Seleccione un camión primero —</option>';
     sel.disabled  = true;
+
+    const aviso = document.getElementById('tsb_sin_conductor_aviso');
+    if (aviso) aviso.classList.add('d-none');
+    const btnSubmit = document.getElementById('btn_registrar_transbordo');
+    if (btnSubmit) btnSubmit.disabled = true;
 
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTransbordo')).show();
 }

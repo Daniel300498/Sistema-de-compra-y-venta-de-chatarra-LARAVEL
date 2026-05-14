@@ -104,14 +104,18 @@
                                                     <ul class="dropdown-menu">
                                                         @can('camiones.edit')
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="editarCamion({{ $c }}, {{ $c->fotos->toJson() }})">
+                                                            <a class="dropdown-item" href="#"
+                                                               onclick="editarCamionPorUuid('{{ $c->uuid }}'); return false;">
                                                                 <i class="bi bi-pencil"></i> Modificar
                                                             </a>
                                                         </li>
                                                         @endcan
                                                         <li>
                                                             @if($c->fotos->count())
-                                                            <a class="dropdown-item" href="#" onclick="verFotos({{ $c->fotos->toJson() }}, '{{ $c->placa }}')">
+                                                            <a class="dropdown-item" href="#"
+                                               onclick="verFotosDesdeData(this); return false;"
+                                               data-fotos="{{ htmlspecialchars(json_encode($c->fotos), ENT_QUOTES, 'UTF-8') }}"
+                                               data-placa="{{ $c->placa }}">
                                                                 <i class="bi bi-images"></i> Ver Fotos ({{ $c->fotos->count() }})
                                                             </a>
                                                             @else
@@ -221,7 +225,7 @@
                                                     <ul class="dropdown-menu">
                                                         @can('operadores.edit')
                                                         <li>
-                                                            <a class="dropdown-item" href="#" onclick="editarOperador({{ $o }})">
+                                                            <a class="dropdown-item" href="#" onclick="editarOperadorPorUuid('{{ $o->uuid }}'); return false;">
                                                                 <i class="bi bi-pencil"></i> Modificar
                                                             </a>
                                                         </li>
@@ -654,22 +658,22 @@
                         <div class="col-md-5">
                             <label class="form-label">Teléfono <span class="text-danger">(*)</span></label>
                             <div class="input-group">
-                                <select id="op_telefono_pais" class="form-select flex-grow-0" style="max-width:130px"
+                                <select id="op_telefono_pais" class="form-select flex-grow-0" style="width:115px; min-width:115px; max-width:115px;"
                                     onchange="actualizarPrefijoTelefono()">
-                                    <option value="Bolivia" data-code="+591" data-maxlen="8" data-placeholder="Ej: 70000000">🇧🇴 +591</option>
-                                    <option value="Argentina" data-code="+54" data-maxlen="10" data-placeholder="Ej: 1150000000">🇦🇷 +54</option>
-                                    <option value="Brasil" data-code="+55" data-maxlen="11" data-placeholder="Ej: 11900000000">🇧🇷 +55</option>
-                                    <option value="Chile" data-code="+56" data-maxlen="9" data-placeholder="Ej: 912345678">🇨🇱 +56</option>
-                                    <option value="Paraguay" data-code="+595" data-maxlen="9" data-placeholder="Ej: 981000000">🇵🇾 +595</option>
-                                    <option value="Perú" data-code="+51" data-maxlen="9" data-placeholder="Ej: 912345678">🇵🇪 +51</option>
-                                    <option value="Colombia" data-code="+57" data-maxlen="10" data-placeholder="Ej: 3001234567">🇨🇴 +57</option>
-                                    <option value="Ecuador" data-code="+593" data-maxlen="10" data-placeholder="Ej: 0991234567">🇪🇨 +593</option>
-                                    <option value="Uruguay" data-code="+598" data-maxlen="8" data-placeholder="Ej: 91234567">🇺🇾 +598</option>
-                                    <option value="Venezuela" data-code="+58" data-maxlen="10" data-placeholder="Ej: 4121234567">🇻🇪 +58</option>
-                                    <option value="México" data-code="+52" data-maxlen="10" data-placeholder="Ej: 5512345678">🇲🇽 +52</option>
-                                    <option value="Estados Unidos" data-code="+1" data-maxlen="10" data-placeholder="Ej: 2025550100">🇺🇸 +1</option>
-                                    <option value="Canadá" data-code="+1" data-maxlen="10" data-placeholder="Ej: 4165550100">🇨🇦 +1</option>
-                                    <option value="España" data-code="+34" data-maxlen="9" data-placeholder="Ej: 612345678">🇪🇸 +34</option>
+                                    <option value="Bolivia" data-code="+591" data-maxlen="8" data-placeholder="Ej: 70000000">BO +591</option>
+                                    <option value="Argentina" data-code="+54" data-maxlen="10" data-placeholder="Ej: 1150000000">AR +54</option>
+                                    <option value="Brasil" data-code="+55" data-maxlen="11" data-placeholder="Ej: 11900000000">BR +55</option>
+                                    <option value="Chile" data-code="+56" data-maxlen="9" data-placeholder="Ej: 912345678">CL +56</option>
+                                    <option value="Paraguay" data-code="+595" data-maxlen="9" data-placeholder="Ej: 981000000">PY +595</option>
+                                    <option value="Perú" data-code="+51" data-maxlen="9" data-placeholder="Ej: 912345678">PE +51</option>
+                                    <option value="Colombia" data-code="+57" data-maxlen="10" data-placeholder="Ej: 3001234567">CO +57</option>
+                                    <option value="Ecuador" data-code="+593" data-maxlen="10" data-placeholder="Ej: 0991234567">EC +593</option>
+                                    <option value="Uruguay" data-code="+598" data-maxlen="8" data-placeholder="Ej: 91234567">UY +598</option>
+                                    <option value="Venezuela" data-code="+58" data-maxlen="10" data-placeholder="Ej: 4121234567">VE +58</option>
+                                    <option value="México" data-code="+52" data-maxlen="10" data-placeholder="Ej: 5512345678">MX +52</option>
+                                    <option value="Estados Unidos" data-code="+1" data-maxlen="10" data-placeholder="Ej: 2025550100">US +1</option>
+                                    <option value="Canadá" data-code="+1" data-maxlen="10" data-placeholder="Ej: 4165550100">CA +1</option>
+                                    <option value="España" data-code="+34" data-maxlen="9" data-placeholder="Ej: 612345678">ES +34</option>
                                 </select>
                                 <input type="hidden" name="telefono_prefijo" id="op_telefono_prefijo" value="+591">
                                 <input type="text" class="form-control @error('telefono') is-invalid @enderror"
@@ -1493,6 +1497,15 @@
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCamion')).show();
     }
 
+    function editarCamionPorUuid(uuid) {
+        fetch('/camion/' + uuid + '/edit', {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(data => editarCamion(data, data.fotos))
+        .catch(err => alert('Error al cargar datos: ' + err.message));
+    }
+
     function verFotos(fotos, placa) {
         document.getElementById('galeriaPlaca').innerText = placa;
         const viewer = document.getElementById('galeriaViewer');
@@ -1556,6 +1569,15 @@
         document.getElementById('op_email').classList.remove('is-valid', 'is-invalid');
     }
 
+    function editarOperadorPorUuid(uuid) {
+        fetch('/operador/' + uuid + '/edit', {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(r => r.json())
+        .then(op => editarOperador(op))
+        .catch(err => alert('Error al cargar datos: ' + err.message));
+    }
+
     // Llenar modal operador en modo Editar
     function editarOperador(op) {
         document.getElementById('tituloOperador').innerText = 'Editar Operador';
@@ -1567,11 +1589,10 @@
         document.getElementById('op_ci_pais').value   = op.ci_pais ?? '';
         actualizarFormatoCI();
         document.getElementById('op_ci').value        = op.ci;
-        document.getElementById('op_telefono').value  = op.telefono ?? '';
         document.getElementById('op_email').value     = op.email ?? '';
-        // El prefijo de teléfono se deja en Bolivia por defecto al editar (el número ya está guardado con prefijo)
         document.getElementById('op_telefono_pais').value = 'Bolivia';
         actualizarPrefijoTelefono();
+        document.getElementById('op_telefono').value  = op.telefono ?? '';
         document.getElementById('op_direccion').value= op.direccion ?? '';
         document.getElementById('op_tipo').value     = op.tipo_operador;
         document.getElementById('op_estado').value   = op.estado;

@@ -1,24 +1,27 @@
 @php
     $estadoColor = [
-        'En ruta'       => 'primary',
-        'Transbordando' => 'warning text-dark',
-        'Transbordado'  => 'info text-dark',
-        'Entregado'     => 'success',
-        'Desactivado'   => 'secondary',
+        'En ruta'        => 'primary',
+        'Transbordando'  => 'warning text-dark',
+        'Transbordado'   => 'info text-dark',
+        'Entregado'      => 'success',
+        'Entrega Parcial'=> 'info text-dark',
+        'Desactivado'    => 'secondary',
     ];
     $estadoIcono = [
-        'En ruta'       => 'bi-truck',
-        'Transbordando' => 'bi-arrow-left-right',
-        'Transbordado'  => 'bi-check2-all',
-        'Entregado'     => 'bi-check-circle',
-        'Desactivado'   => 'bi-slash-circle',
+        'En ruta'        => 'bi-truck',
+        'Transbordando'  => 'bi-arrow-left-right',
+        'Transbordado'   => 'bi-check2-all',
+        'Entregado'      => 'bi-check-circle',
+        'Entrega Parcial'=> 'bi-pie-chart',
+        'Desactivado'    => 'bi-slash-circle',
     ];
     $estadoBorde = [
-        'En ruta'       => 'border-primary',
-        'Transbordando' => 'border-warning',
-        'Transbordado'  => 'border-info',
-        'Entregado'     => 'border-success',
-        'Desactivado'   => 'border-secondary',
+        'En ruta'        => 'border-primary',
+        'Transbordando'  => 'border-warning',
+        'Transbordado'   => 'border-info',
+        'Entregado'      => 'border-success',
+        'Entrega Parcial'=> 'border-info',
+        'Desactivado'    => 'border-secondary',
     ];
     $color  = $estadoColor[$tramo->estado]  ?? 'secondary';
     $icono  = $estadoIcono[$tramo->estado]  ?? 'bi-circle';
@@ -72,7 +75,10 @@
                                 '{{ $tramo->uuid }}',
                                 '{{ $tramo->origen }} → {{ $tramo->destino }} ({{ $tramo->camion->placa }})',
                                 '{{ $tramo->peso_salida }}',
-                                '{{ $tramo->fecha_salida->format('Y-m-d') }}'
+                                '{{ $tramo->fecha_salida->format('Y-m-d') }}',
+                                {{ $tramo->camion_id }},
+                                {{ $tramo->conductor_id ?? 'null' }},
+                                '{{ $tramo->tipo_tramo }}'
                             )">
                             <i class="bi bi-geo-alt"></i> Registrar llegada
                         </button>

@@ -63,12 +63,14 @@ use Illuminate\Support\Facades\Route;
     Route::get('camiones',[App\Http\Controllers\CamionController::class,'index'])->name('camiones.index')->middleware('permission:camiones.index');
     Route::post('camion/store',[App\Http\Controllers\CamionController::class,'store'])->name('camiones.store')->middleware('permission:camiones.create');
     Route::put('camion/{camion}',[App\Http\Controllers\CamionController::class,'update'])->name('camiones.update')->middleware('permission:camiones.edit');
+    Route::get('camion/{uuid}/edit',[App\Http\Controllers\CamionController::class,'edit'])->name('camiones.edit')->middleware('permission:camiones.edit');
     Route::get('camion/{uuid}/destroy',[App\Http\Controllers\CamionController::class,'destroy'])->name('camiones.destroy')->middleware('permission:camiones.destroy');
     Route::get('camion/{uuid}/ruat',[App\Http\Controllers\CamionController::class,'verRuat'])->name('camiones.ruat')->middleware('permission:camiones.index');
     Route::delete('camion/foto/{foto}',[App\Http\Controllers\CamionController::class,'eliminarFoto'])->name('camiones.foto.destroy')->middleware('permission:camiones.edit');
 
     //Operadores de Transporte (propietarios y conductores)
     Route::post('operador/store',[App\Http\Controllers\OperadorTransporteController::class,'store'])->name('operadores.store')->middleware('permission:operadores.create');
+    Route::get('operador/{uuid}/edit',[App\Http\Controllers\OperadorTransporteController::class,'edit'])->name('operadores.edit')->middleware('permission:operadores.edit');
     Route::put('operador/{operador}',[App\Http\Controllers\OperadorTransporteController::class,'update'])->name('operadores.update')->middleware('permission:operadores.edit');
     Route::get('operador/{uuid}/destroy',[App\Http\Controllers\OperadorTransporteController::class,'destroy'])->name('operadores.destroy')->middleware('permission:operadores.destroy');
     Route::get('operador/{uuid}/carnet',[App\Http\Controllers\OperadorTransporteController::class,'verCarnet'])->name('operadores.carnet')->middleware('permission:operadores.index');
@@ -126,12 +128,14 @@ use Illuminate\Support\Facades\Route;
     Route::get('pagos/proveedores',[App\Http\Controllers\PagoProveedorController::class,'index'])->name('pagos.proveedores.index');
     Route::post('pagos/proveedores',[App\Http\Controllers\PagoProveedorController::class,'store'])->name('pagos.proveedores.store');
     Route::get('pagos/proveedores/{uuid}/destroy',[App\Http\Controllers\PagoProveedorController::class,'destroy'])->name('pagos.proveedores.destroy');
+    Route::put('pagos/proveedores/{uuid}',[App\Http\Controllers\PagoProveedorController::class,'update'])->name('pagos.proveedores.update');
     Route::get('api/pagos/proveedores/{id}/detalle',[App\Http\Controllers\PagoProveedorController::class,'detalle'])->name('pagos.proveedores.detalle');
     Route::get('api/pagos/cuentas-proveedor',[App\Http\Controllers\PagoProveedorController::class,'cuentasProveedor'])->name('pagos.cuentas-proveedor');
 
     // Pagos a camiones
     Route::get('pagos/camiones',[App\Http\Controllers\PagoCamionController::class,'index'])->name('pagos.camiones.index');
     Route::post('pagos/camiones',[App\Http\Controllers\PagoCamionController::class,'store'])->name('pagos.camiones.store');
+    Route::put('pagos/camiones/{uuid}',[App\Http\Controllers\PagoCamionController::class,'update'])->name('pagos.camiones.update');
     Route::get('pagos/camiones/{uuid}/destroy',[App\Http\Controllers\PagoCamionController::class,'destroy'])->name('pagos.camiones.destroy');
     Route::get('api/pagos/camiones/{id}/detalle',[App\Http\Controllers\PagoCamionController::class,'detalle'])->name('pagos.camiones.detalle');
     Route::get('api/pagos/cuentas-receptor',[App\Http\Controllers\PagoCamionController::class,'cuentasReceptor'])->name('pagos.cuentas-receptor');

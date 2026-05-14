@@ -90,12 +90,41 @@ class PagoCamionController extends Controller
         return redirect()->route('seguimiento.index');
     }
 
+    public function update(Request $request, $uuid)
+    {
+        $pago = PagoCamion::where('uuid', $uuid)->firstOrFail();
+
+        $request->validate([
+            'tipo_pago'          => 'required|in:adelanto,flete,pago_final',
+            'monto'              => 'required|numeric|min:0.01',
+            'moneda_pago'        => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
+            'tipo_cambio'        => 'required|numeric|min:0.0001',
+            'fecha_pago'         => 'required|date',
+            'metodo_pago'        => 'required|in:efectivo,transferencia,qr,cheque',
+            'codigo_seguimiento' => 'nullable|string|max:100',
+        ]);
+
+        $pago->update([
+            'tipo_pago'          => $request->tipo_pago,
+            'monto'              => $request->monto,
+            'moneda_pago'        => $request->moneda_pago,
+            'tipo_cambio'        => $request->tipo_cambio,
+            'fecha_pago'         => $request->fecha_pago,
+            'metodo_pago'        => $request->metodo_pago,
+            'codigo_seguimiento' => $request->codigo_seguimiento ?: null,
+            'updated_by'         => auth()->id(),
+        ]);
+
+        Alert::success('Éxito', 'Pago actualizado correctamente.');
+        return redirect()->route('seguimiento.index');
+    }
+
     public function destroy($uuid)
     {
         $pago = PagoCamion::where('uuid', $uuid)->firstOrFail();
         $pago->delete();
         Alert::success('Éxito', 'Pago eliminado.');
-        return redirect()->route('pagos.camiones.index');
+        return redirect()->route('seguimiento.index');
     }
 
     // API: cuentas del receptor para poblar el select de cuenta destino
@@ -152,12 +181,15 @@ class PagoCamionController extends Controller
             'pagos'            => $cc->pagos->map(fn($p) => [
                 'uuid'        => $p->uuid,
                 'tipo'        => $p->tipo_pago_label,
+                'tipo_raw'    => $p->tipo_pago,
                 'monto'       => $p->monto,
                 'moneda_pago' => $p->moneda_pago,
                 'tipo_cambio' => $p->tipo_cambio,
                 'monto_bob'   => $p->monto_en_bob,
                 'fecha'       => $p->fecha_pago->format('d/m/Y'),
-                'metodo'      => $p->metodo_pago,
+                'fecha_raw'   => $p->fecha_pago->format('Y-m-d'),
+                'metodo'      => ucfirst($p->metodo_pago),
+                'metodo_raw'  => $p->metodo_pago,
                 'receptor'        => $p->nombre_receptor,
                 'codigo'          => $p->codigo_seguimiento,
                 'cuenta_destino'  => $p->cuentaDestino ? [

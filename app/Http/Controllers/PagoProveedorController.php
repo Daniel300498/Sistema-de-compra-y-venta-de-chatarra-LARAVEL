@@ -18,7 +18,7 @@ class PagoProveedorController extends Controller
 
     public function index()
     {
-        $contratos = Contrato::with(['proveedor', 'pagosProveedor'])
+        $contratos = Contrato::with(['proveedor', 'pagosProveedor', 'contratoCamiones.tramos'])
             ->whereNotNull('proveedor_id')
             ->whereNotNull('monto_total')
             ->orderByDesc('created_at')
@@ -81,6 +81,35 @@ class PagoProveedorController extends Controller
         return redirect()->route('pagos.proveedores.index');
     }
 
+    public function update(Request $request, $uuid)
+    {
+        $pago = PagoProveedor::where('uuid', $uuid)->firstOrFail();
+
+        $request->validate([
+            'tipo_pago'          => 'required|in:adelanto,pago_final',
+            'monto'              => 'required|numeric|min:0.01',
+            'moneda_pago'        => 'required|in:BOB,USD,EUR,BRL,ARS,PEN,CLP,PYG,COP',
+            'tipo_cambio'        => 'required|numeric|min:0.0001',
+            'fecha_pago'         => 'required|date',
+            'metodo_pago'        => 'required|in:transferencia,qr,cheque',
+            'codigo_seguimiento' => 'nullable|string|max:100',
+        ]);
+
+        $pago->update([
+            'tipo_pago'          => $request->tipo_pago,
+            'monto'              => $request->monto,
+            'moneda_pago'        => $request->moneda_pago,
+            'tipo_cambio'        => $request->tipo_cambio,
+            'fecha_pago'         => $request->fecha_pago,
+            'metodo_pago'        => $request->metodo_pago,
+            'codigo_seguimiento' => $request->codigo_seguimiento ?: null,
+            'updated_by'         => auth()->id(),
+        ]);
+
+        Alert::success('Éxito', 'Pago actualizado correctamente.');
+        return redirect()->route('pagos.proveedores.index');
+    }
+
     public function destroy($uuid)
     {
         $pago = PagoProveedor::where('uuid', $uuid)->firstOrFail();
@@ -113,7 +142,11 @@ class PagoProveedorController extends Controller
                 'moneda_pago'    => $p->moneda_pago,
                 'tipo_cambio'    => $p->tipo_cambio,
                 'fecha'          => $p->fecha_pago->format('d/m/Y'),
-                'metodo'         => $p->metodo_pago,
+                'fecha_raw'      => $p->fecha_pago->format('Y-m-d'),
+                'metodo'         => ucfirst($p->metodo_pago),
+                'metodo_raw'     => $p->metodo_pago,
+                'tipo_raw'       => $p->tipo_pago,
+                'monto_bob'      => $p->monto_en_moneda_contrato,
                 'codigo'         => $p->codigo_seguimiento,
                 'cuenta_destino' => $p->cuentaDestino ? [
                     'banco'          => $p->cuentaDestino->banco->nombre ?? '—',

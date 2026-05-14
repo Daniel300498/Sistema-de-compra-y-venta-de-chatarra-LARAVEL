@@ -58,8 +58,22 @@ class CamionController extends Controller
 
     public function edit($uuid)
     {
-        $camion = Camion::where('uuid', $uuid)->firstOrFail();
-        return response()->json($camion);
+        $camion = Camion::with('fotos')->where('uuid', $uuid)->firstOrFail();
+        return response()->json([
+            'id'            => $camion->id,
+            'placa'         => $camion->placa,
+            'placa_pais'    => $camion->placa_pais,
+            'tipo_vehiculo' => $camion->tipo_vehiculo,
+            'marca'         => $camion->marca,
+            'modelo'        => $camion->modelo,
+            'anio'          => $camion->anio,
+            'capacidad_kg'  => $camion->capacidad_kg,
+            'color'         => $camion->color,
+            'estado'        => $camion->estado,
+            'propietario_id'=> $camion->propietario_id,
+            'documento_ruat'=> $camion->documento_ruat,
+            'fotos'         => $camion->fotos,
+        ]);
     }
 
     public function update(CamionRequest $request, Camion $camion)

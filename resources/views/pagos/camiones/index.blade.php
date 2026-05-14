@@ -78,7 +78,6 @@
                                 <th>Receptor</th>
                                 <th>Pagado por</th>
                                 <th>Código</th>
-                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -165,14 +164,6 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">{{ $p->codigo_seguimiento ?? '—' }}</small>
-                                </td>
-                                <td class="text-center">
-                                    <a href="{{ route('pagos.camiones.destroy', $p->uuid) }}"
-                                       class="btn btn-sm btn-outline-danger"
-                                       onclick="return confirm('¿Eliminar este pago?')"
-                                       title="Eliminar pago">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
                                 </td>
                             </tr>
                             @endforeach
