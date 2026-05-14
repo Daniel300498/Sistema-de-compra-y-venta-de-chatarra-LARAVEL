@@ -11,7 +11,7 @@ class PermissionsTableSeeder extends Seeder
 {
     public function run()
     {
-        // Proveedores
+    /*    // Proveedores
         Permission::create(['name' => 'proveedores.index',   'descripcion' => 'Ver todos los Proveedores',  'guard_name' => 'web',  'grupo'=>'PROVEEDORES']);
         Permission::create(['name' => 'proveedores.create',  'descripcion' => 'Agregar Proveedores',        'guard_name' => 'web',  'grupo'=>'PROVEEDORES']);
         Permission::create(['name' => 'proveedores.edit',    'descripcion' => 'Editar Proveedores',         'guard_name' => 'web',  'grupo'=>'PROVEEDORES']);
@@ -119,7 +119,7 @@ class PermissionsTableSeeder extends Seeder
         Permission::create(['name' => 'pagos_camiones.create',  'descripcion' => 'Registrar Pagos a Camiones', 'guard_name' => 'web', 'grupo'=>'PAGOS_CAMIONES']);
         Permission::create(['name' => 'pagos_camiones.edit',    'descripcion' => 'Editar Pagos a Camiones',    'guard_name' => 'web', 'grupo'=>'PAGOS_CAMIONES']);
         Permission::create(['name' => 'pagos_camiones.destroy', 'descripcion' => 'Eliminar Pagos a Camiones',  'guard_name' => 'web', 'grupo'=>'PAGOS_CAMIONES']);
-
+*/
         // Crear rol superadmin y asignarle todos los permisos
         $role = Role::create([
             'uuid'        => Str::uuid(),
