@@ -20,8 +20,8 @@
       @endcan
 
       {{-- PROVEEDORES --}}
-      @can('proveedores.index')
       @php $enProveedores = request()->routeIs(['proveedores.index','proveedores.create','proveedores.edit','proveedores.ficha','proveedores.consulta','pagos.proveedores.index']); @endphp
+      @if(auth()->user()->can('proveedores.index') || auth()->user()->can('pagos_proveedores.index'))
       <li class="nav-item">
         <a class="nav-link {{ $enProveedores ? '' : 'collapsed' }}"
            data-sidebar-target="menu-proveedores" href="#">
@@ -31,25 +31,29 @@
         </a>
         <ul id="menu-proveedores"
             class="nav-content sidebar-submenu {{ $enProveedores ? 'submenu-open' : '' }}">
+          @can('proveedores.index')
           <li>
             <a href="{{ route('proveedores.index') }}"
                class="{{ isActiveRoute(['proveedores.index','proveedores.create','proveedores.edit','proveedores.ficha','proveedores.consulta']) ? 'active' : '' }}">
               <i class="bi bi-person-lines-fill"></i><span>Lista de Proveedores</span>
             </a>
           </li>
+          @endcan
+          @can('pagos_proveedores.index')
           <li>
             <a href="{{ route('pagos.proveedores.index') }}"
                class="{{ isActiveRoute(['pagos.proveedores.index']) ? 'active' : '' }}">
               <i class="bi bi-cash-stack"></i><span>Pagos a Proveedores</span>
             </a>
           </li>
+          @endcan
         </ul>
       </li>
-      @endcan
+      @endif
 
       {{-- TRANSPORTE --}}
-      @can('camiones.index')
       @php $enTransporte = request()->routeIs(['camiones.index','seguimiento.index','pagos.camiones.index']); @endphp
+      @if(auth()->user()->can('camiones.index') || auth()->user()->can('seguimiento.index') || auth()->user()->can('pagos_camiones.index'))
       <li class="nav-item">
         <a class="nav-link {{ $enTransporte ? '' : 'collapsed' }}"
            data-sidebar-target="menu-transporte" href="#">
@@ -59,31 +63,37 @@
         </a>
         <ul id="menu-transporte"
             class="nav-content sidebar-submenu {{ $enTransporte ? 'submenu-open' : '' }}">
+          @can('camiones.index')
           <li>
             <a href="{{ route('camiones.index') }}"
                class="{{ isActiveRoute(['camiones.index']) ? 'active' : '' }}">
               <i class="bi bi-truck-front"></i><span>Camiones</span>
             </a>
           </li>
+          @endcan
+          @can('seguimiento.index')
           <li>
             <a href="{{ route('seguimiento.index') }}"
                class="{{ isActiveRoute(['seguimiento.index']) ? 'active' : '' }}">
               <i class="bi bi-geo-alt"></i><span>Seguimiento de Cargas</span>
             </a>
           </li>
+          @endcan
+          @can('pagos_camiones.index')
           <li>
             <a href="{{ route('pagos.camiones.index') }}"
                class="{{ isActiveRoute(['pagos.camiones.index']) ? 'active' : '' }}">
               <i class="bi bi-cash-coin"></i><span>Historial Pagos Camiones</span>
             </a>
           </li>
+          @endcan
         </ul>
       </li>
-      @endcan
+      @endif
 
       {{-- CLIENTES --}}
-      @can('clientes.index')
       @php $enClientes = request()->routeIs(['clientes.index','clientes.create','clientes.edit','clientes.ficha','clientes.consulta','pagos.clientes.index']); @endphp
+      @if(auth()->user()->can('clientes.index') || auth()->user()->can('pagos_clientes.index'))
       <li class="nav-item">
         <a class="nav-link {{ $enClientes ? '' : 'collapsed' }}"
            data-sidebar-target="menu-clientes" href="#">
@@ -93,28 +103,35 @@
         </a>
         <ul id="menu-clientes"
             class="nav-content sidebar-submenu {{ $enClientes ? 'submenu-open' : '' }}">
+          @can('clientes.index')
           <li>
             <a href="{{ route('clientes.index') }}"
                class="{{ isActiveRoute(['clientes.index','clientes.create','clientes.edit','clientes.ficha','clientes.consulta']) ? 'active' : '' }}">
               <i class="bi bi-person-lines-fill"></i><span>Lista de Clientes</span>
             </a>
           </li>
+          @endcan
+          @can('pagos_clientes.index')
           <li>
             <a href="{{ route('pagos.clientes.index') }}"
                class="{{ isActiveRoute(['pagos.clientes.index']) ? 'active' : '' }}">
               <i class="bi bi-receipt"></i><span>Cobros a Clientes</span>
             </a>
           </li>
+          @endcan
         </ul>
       </li>
-      @endcan
+      @endif
+
       {{-- Bancos y Cuentas --}}
+      @can('bancos.index')
       <li class="nav-item">
         <a class="nav-link {{ isActiveRoute(['bancos.index']) }}" href="{{ route('bancos.index') }}">
           <i class="bi bi-bank"></i>
           <span>Bancos y Cuentas</span>
         </a>
       </li>
+      @endcan
 
       {{-- Empleados --}}
       @can('empleados.index')
@@ -134,7 +151,8 @@
         </a>
       </li>
       @endcan
-     @can('reportes.index')
+
+      @can('reportes.index')
       <li class="nav-item">
         <a class="nav-link {{ isActiveRoute('reportes.index') }}" href="{{ route('reportes.index') }}">
           <i class="bi bi-graph-up"></i>
@@ -142,8 +160,9 @@
         </a>
       </li>
       @endcan
+
       {{-- ADMINISTRACIÓN --}}
-      @if(auth()->user()->can('permisos.index') || auth()->user()->can('roles.index') || auth()->user()->can('usuarios.index'))
+      @if(auth()->user()->can('permisos.index') || auth()->user()->can('roles.index') || auth()->user()->can('users.index'))
       @php $enAdmin = request()->routeIs(['permisos.*','roles.*','users.*']); @endphp
       <li class="nav-item">
         <a class="nav-link {{ $enAdmin ? '' : 'collapsed' }}"
@@ -170,7 +189,7 @@
             </a>
           </li>
           @endcan
-          @can('usuarios.index')
+          @can('users.index')
           <li>
             <a href="{{ route('users.index') }}"
                class="{{ isActiveRoute('users.*') ? 'active' : '' }}">

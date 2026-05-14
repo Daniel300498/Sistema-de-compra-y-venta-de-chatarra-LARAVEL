@@ -24,12 +24,10 @@ class RoleRequest extends FormRequest
      */
      public function rules()
     {
-
         return [
-            'name' => ['required',Rule::unique('users')->ignore( $this->route('user') )],
-            'descripcion'=>'required'
+            'name' => ['required', Rule::unique('users')->ignore($this->route('user'))],
+            'descripcion' => 'required',
         ];
-
     }
     public function messages()
     {

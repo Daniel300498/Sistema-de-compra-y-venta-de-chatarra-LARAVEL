@@ -67,7 +67,7 @@ class RoleController extends Controller
         //actualice el rol
         $role->update($request->all());
         //actualice los permisos
-        $role->permissions()->sync($request->get('permissions'));
+        $role->syncPermissions($request->get('permissions') ?? []);
         Alert::success('Actualizado','Datos del Rol actualizado con exito!');
         return redirect()->route('roles.index');
     }

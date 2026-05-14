@@ -832,13 +832,15 @@ h6 {
 }
 
 .sidebar-nav .nav-content a.active {
-    color: #38bdf8;
+    color: #fff;
+    font-weight: 600;
 }
 
 .sidebar-nav .nav-content a.active i {
-    color: #38bdf8;
+    color: #fff;
     background-color: transparent;
 }
+
 
 /*--------------------------------------------------------------
 # Dashboard
