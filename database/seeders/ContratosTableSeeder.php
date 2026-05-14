@@ -49,7 +49,7 @@ class ContratosTableSeeder extends Seeder
             'cantidad_camiones' => 2,
             'monto_total'      => 85000.00,
             'moneda'           => 'BOB',
-            'estado'           => 'Borrador',
+            'estado'           => 'Activo',
             'created_by'       => 1,
             'updated_by'       => 1,
         ]);

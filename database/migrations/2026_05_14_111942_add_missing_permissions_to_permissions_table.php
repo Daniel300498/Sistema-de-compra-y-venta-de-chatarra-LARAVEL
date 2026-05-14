@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -26,10 +25,10 @@ return new class extends Migration
             ['name' => 'permisos.edit',    'descripcion' => 'Editar Permisos',         'grupo' => 'PERMISOS'],
             ['name' => 'permisos.destroy', 'descripcion' => 'Eliminar Permisos',       'grupo' => 'PERMISOS'],
 
-            // Conductores (asignación de conductores a camiones)
-            ['name' => 'conductores.index',   'descripcion' => 'Ver asignaciones de conductores', 'grupo' => 'CONDUCTORES'],
-            ['name' => 'conductores.create',  'descripcion' => 'Asignar conductores a camiones',  'grupo' => 'CONDUCTORES'],
-            ['name' => 'conductores.edit',    'descripcion' => 'Editar asignaciones de conductores', 'grupo' => 'CONDUCTORES'],
+            // Conductores
+            ['name' => 'conductores.index',   'descripcion' => 'Ver asignaciones de conductores',      'grupo' => 'CONDUCTORES'],
+            ['name' => 'conductores.create',  'descripcion' => 'Asignar conductores a camiones',       'grupo' => 'CONDUCTORES'],
+            ['name' => 'conductores.edit',    'descripcion' => 'Editar asignaciones de conductores',   'grupo' => 'CONDUCTORES'],
             ['name' => 'conductores.destroy', 'descripcion' => 'Eliminar asignaciones de conductores', 'grupo' => 'CONDUCTORES'],
 
             // Seguimiento de cargas
@@ -39,34 +38,34 @@ return new class extends Migration
             ['name' => 'empleados.index',   'descripcion' => 'Ver todos los Empleados', 'grupo' => 'EMPLEADOS'],
             ['name' => 'empleados.create',  'descripcion' => 'Agregar Empleados',       'grupo' => 'EMPLEADOS'],
             ['name' => 'empleados.edit',    'descripcion' => 'Editar Empleados',        'grupo' => 'EMPLEADOS'],
-            ['name' => 'empleados.destroy', 'descripcion' => 'Eliminar Empleados',     'grupo' => 'EMPLEADOS'],
+            ['name' => 'empleados.destroy', 'descripcion' => 'Eliminar Empleados',      'grupo' => 'EMPLEADOS'],
 
             // Bancos y cuentas bancarias
             ['name' => 'bancos.index',   'descripcion' => 'Ver bancos y cuentas bancarias', 'grupo' => 'BANCOS'],
             ['name' => 'bancos.create',  'descripcion' => 'Agregar bancos y cuentas',       'grupo' => 'BANCOS'],
             ['name' => 'bancos.edit',    'descripcion' => 'Editar bancos y cuentas',        'grupo' => 'BANCOS'],
-            ['name' => 'bancos.destroy', 'descripcion' => 'Eliminar bancos y cuentas',     'grupo' => 'BANCOS'],
+            ['name' => 'bancos.destroy', 'descripcion' => 'Eliminar bancos y cuentas',      'grupo' => 'BANCOS'],
 
             // Cuentas bancarias
-            ['name' => 'cuentas_bancarias.index',   'descripcion' => 'Ver Cuentas Bancarias', 'grupo' => 'CUENTAS_BANCARIAS'],
-            ['name' => 'cuentas_bancarias.create',  'descripcion' => 'Agregar Cuentas Bancarias', 'grupo' => 'CUENTAS_BANCARIAS'],
-            ['name' => 'cuentas_bancarias.edit',    'descripcion' => 'Editar Cuentas Bancarias',  'grupo' => 'CUENTAS_BANCARIAS'],
+            ['name' => 'cuentas_bancarias.index',   'descripcion' => 'Ver Cuentas Bancarias',      'grupo' => 'CUENTAS_BANCARIAS'],
+            ['name' => 'cuentas_bancarias.create',  'descripcion' => 'Agregar Cuentas Bancarias',  'grupo' => 'CUENTAS_BANCARIAS'],
+            ['name' => 'cuentas_bancarias.edit',    'descripcion' => 'Editar Cuentas Bancarias',   'grupo' => 'CUENTAS_BANCARIAS'],
             ['name' => 'cuentas_bancarias.destroy', 'descripcion' => 'Eliminar Cuentas Bancarias', 'grupo' => 'CUENTAS_BANCARIAS'],
 
             // Pagos a clientes
-            ['name' => 'pagos_clientes.index',   'descripcion' => 'Ver Pagos de Clientes',    'grupo' => 'PAGOS_CLIENTES'],
+            ['name' => 'pagos_clientes.index',   'descripcion' => 'Ver Pagos de Clientes',       'grupo' => 'PAGOS_CLIENTES'],
             ['name' => 'pagos_clientes.create',  'descripcion' => 'Registrar Pagos de Clientes', 'grupo' => 'PAGOS_CLIENTES'],
             ['name' => 'pagos_clientes.edit',    'descripcion' => 'Editar Pagos de Clientes',    'grupo' => 'PAGOS_CLIENTES'],
             ['name' => 'pagos_clientes.destroy', 'descripcion' => 'Eliminar Pagos de Clientes',  'grupo' => 'PAGOS_CLIENTES'],
 
             // Pagos a proveedores
-            ['name' => 'pagos_proveedores.index',   'descripcion' => 'Ver Pagos a Proveedores',    'grupo' => 'PAGOS_PROVEEDORES'],
+            ['name' => 'pagos_proveedores.index',   'descripcion' => 'Ver Pagos a Proveedores',       'grupo' => 'PAGOS_PROVEEDORES'],
             ['name' => 'pagos_proveedores.create',  'descripcion' => 'Registrar Pagos a Proveedores', 'grupo' => 'PAGOS_PROVEEDORES'],
             ['name' => 'pagos_proveedores.edit',    'descripcion' => 'Editar Pagos a Proveedores',    'grupo' => 'PAGOS_PROVEEDORES'],
             ['name' => 'pagos_proveedores.destroy', 'descripcion' => 'Eliminar Pagos a Proveedores',  'grupo' => 'PAGOS_PROVEEDORES'],
 
             // Pagos a camiones
-            ['name' => 'pagos_camiones.index',   'descripcion' => 'Ver Pagos a Camiones',    'grupo' => 'PAGOS_CAMIONES'],
+            ['name' => 'pagos_camiones.index',   'descripcion' => 'Ver Pagos a Camiones',       'grupo' => 'PAGOS_CAMIONES'],
             ['name' => 'pagos_camiones.create',  'descripcion' => 'Registrar Pagos a Camiones', 'grupo' => 'PAGOS_CAMIONES'],
             ['name' => 'pagos_camiones.edit',    'descripcion' => 'Editar Pagos a Camiones',    'grupo' => 'PAGOS_CAMIONES'],
             ['name' => 'pagos_camiones.destroy', 'descripcion' => 'Eliminar Pagos a Camiones',  'grupo' => 'PAGOS_CAMIONES'],
@@ -84,7 +83,6 @@ return new class extends Migration
         ];
 
         foreach ($permisos as $p) {
-            // Evitar duplicados si la migración se corre dos veces
             if (!Permission::where('name', $p['name'])->where('guard_name', 'web')->exists()) {
                 Permission::create([
                     'name'        => $p['name'],
@@ -95,7 +93,6 @@ return new class extends Migration
             }
         }
 
-        // Dar todos los permisos nuevos al rol superadmin
         $superadmin = Role::where('name', 'superadmin')->first();
         if ($superadmin) {
             $superadmin->givePermissionTo(Permission::all());
