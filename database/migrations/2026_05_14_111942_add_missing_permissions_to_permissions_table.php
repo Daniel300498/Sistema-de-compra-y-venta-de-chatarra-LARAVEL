@@ -10,6 +10,16 @@ return new class extends Migration
     public function up(): void
     {
         $permisos = [
+            //clientes
+            ['name' => 'clientes.index',   'descripcion' => 'Ver todos los Clientes', 'grupo' => 'CLIENTES'],
+            ['name' => 'clientes.create',  'descripcion' => 'Agregar Clientes',       'grupo' => 'CLIENTES'],
+            ['name' => 'clientes.edit',    'descripcion' => 'Editar Clientes',        'grupo' => 'CLIENTES'],
+            ['name' => 'clientes.destroy', 'descripcion' => 'Eliminar Clientes',     'grupo' => 'CLIENTES'],
+            //proveedores
+            ['name' => 'proveedores.index',   'descripcion' => 'Ver todos los Proveedores', 'grupo' => 'PROVEEDORES'],
+            ['name' => 'proveedores.create',  'descripcion' => 'Agregar Proveedores',       'grupo' => 'PROVEEDORES'],
+            ['name' => 'proveedores.edit',    'descripcion' => 'Editar Proveedores',        'grupo' => 'PROVEEDORES'],
+            ['name' => 'proveedores.destroy', 'descripcion' => 'Eliminar Proveedores',     'grupo' => 'PROVEEDORES'],
             // Permisos (módulo de gestión de permisos)
             ['name' => 'permisos.index',   'descripcion' => 'Ver todos los Permisos',  'grupo' => 'PERMISOS'],
             ['name' => 'permisos.create',  'descripcion' => 'Agregar Permisos',        'grupo' => 'PERMISOS'],
@@ -60,6 +70,17 @@ return new class extends Migration
             ['name' => 'pagos_camiones.create',  'descripcion' => 'Registrar Pagos a Camiones', 'grupo' => 'PAGOS_CAMIONES'],
             ['name' => 'pagos_camiones.edit',    'descripcion' => 'Editar Pagos a Camiones',    'grupo' => 'PAGOS_CAMIONES'],
             ['name' => 'pagos_camiones.destroy', 'descripcion' => 'Eliminar Pagos a Camiones',  'grupo' => 'PAGOS_CAMIONES'],
+
+            //gastos extras
+            ['name' => 'gastos_extras.index',   'descripcion' => 'Ver Gastos Extras',    'grupo' => 'GASTOS_EXTRAS'],
+            ['name' => 'gastos_extras.create',  'descripcion' => 'Registrar Gastos Extras', 'grupo' => 'GASTOS_EXTRAS'],
+            ['name' => 'gastos_extras.edit',    'descripcion' => 'Editar Gastos Extras',    'grupo' => 'GASTOS_EXTRAS'],
+            ['name' => 'gastos_extras.destroy', 'descripcion' => 'Eliminar Gastos Extras',  'grupo' => 'GASTOS_EXTRAS'],
+
+            //reportes
+            ['name' => 'reportes.index',   'descripcion' => 'Ver Reportes',    'grupo' => 'REPORTES'],
+            ['name' => 'reportes.export',   'descripcion' => 'Exportar Reportes',    'grupo' => 'REPORTES'],
+        
         ];
 
         foreach ($permisos as $p) {
@@ -84,6 +105,8 @@ return new class extends Migration
     public function down(): void
     {
         $nombres = [
+            'clientes.index', 'clientes.create', 'clientes.edit', 'clientes.destroy',
+            'proveedores.index', 'proveedores.create', 'proveedores.edit', 'proveedores.destroy',
             'permisos.index', 'permisos.create', 'permisos.edit', 'permisos.destroy',
             'conductores.index', 'conductores.create', 'conductores.edit', 'conductores.destroy',
             'seguimiento.index',
@@ -93,6 +116,8 @@ return new class extends Migration
             'pagos_clientes.index', 'pagos_clientes.create', 'pagos_clientes.edit', 'pagos_clientes.destroy',
             'pagos_proveedores.index', 'pagos_proveedores.create', 'pagos_proveedores.edit', 'pagos_proveedores.destroy',
             'pagos_camiones.index', 'pagos_camiones.create', 'pagos_camiones.edit', 'pagos_camiones.destroy',
+            'gastos_extras.index', 'gastos_extras.create', 'gastos_extras.edit', 'gastos_extras.destroy',
+            'reportes.index', 'reportes.export',
         ];
 
         Permission::whereIn('name', $nombres)->where('guard_name', 'web')->delete();

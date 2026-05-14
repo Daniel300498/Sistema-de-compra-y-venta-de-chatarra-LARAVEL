@@ -187,89 +187,40 @@ function verDetalles(gastos, contrato)
             if(g.estado === 'pendiente'){
                 marcarPagado = `<li><a class="dropdown-item"><i class="bi bi-cash"></i>Marcar Pagado</a></li>`;
             }
-
             html += `
                 <tr>
-
                     <td>${g.fecha.split('T')[0]}</td>
-
-                    <td>
-                        <span class="badge bg-primary">
-                            ${g.categoria}
-                        </span>
-                    </td>
-
+                    <td><span class="badge bg-primary">${g.categoria}</span></td>
                     <td>${g.concepto}</td>
-
-                    <td>
-                        ${g.moneda} ${parseFloat(g.monto).toFixed(2)}
-                    </td>
-
+                    <td>${g.moneda} ${parseFloat(g.monto).toFixed(2)}</td>
                     <td>${estado}</td>
-
                     <td class="text-center">
-
                         <div class="btn-group">
-
-                            <button
-                                class="btn btn-secondary btn-sm dropdown-toggle"
-                                data-bs-toggle="dropdown">
-
-                                Opciones
-
-                            </button>
-
+                            <button class="btn btn-secondary btn-sm dropdown-toggle"
+                                data-bs-toggle="dropdown">Opciones</button>
                             <ul class="dropdown-menu">
-
                                 @can('gastos_extras.edit')
                                 <li>
-                                    <a
-                                        class="dropdown-item"
+                                    <a class="dropdown-item"
                                         href="#"
-                                        onclick='editarGasto(${JSON.stringify(g)})'>
-
-                                        <i class="bi bi-pencil"></i>
-                                        Modificar
-
-                                    </a>
+                                        onclick='editarGasto(${JSON.stringify(g)})'><i class="bi bi-pencil"></i>Modificar</a>
                                 </li>
                                 @endcan
-
                                 ${comprobante}
-
                                 ${marcarPagado}
-
                                 @can('gastos_extras.destroy')
                                 <li>
-
-                                    <form
-                                        action="/gastos_extras/${g.uuid}"
-                                        method="POST"
+                                    <form action="/gastos_extras/${g.uuid}" method="POST"
                                         onsubmit="return confirm('¿Eliminar este gasto extra?')">
-
                                         @csrf
                                         @method('DELETE')
-
-                                        <button
-                                            type="submit"
-                                            class="dropdown-item text-danger">
-
-                                            <i class="bi bi-trash"></i>
-                                            Eliminar
-
-                                        </button>
-
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash"></i>Eliminar</button>
                                     </form>
-
                                 </li>
                                 @endcan
-
                             </ul>
-
                         </div>
-
                     </td>
-
                 </tr>
                 `;
         });
