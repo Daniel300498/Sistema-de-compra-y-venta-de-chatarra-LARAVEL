@@ -50,12 +50,13 @@
                                 </label>
                             </li>
                             <?php $cont=0; ?>
+                            @php $rolePermissionIds = isset($role) && $role->id ? $role->permissions->pluck('id')->toArray() : []; @endphp
                             @foreach($permissions as $permission)
                             @if($permission->grupo==$grupo->grupo)
                             <?php $cont=$cont+1; ?>
                             <li>
                                 <label>
-                                    {{ Form::checkbox('permissions[]', $permission->id, null, ['class' => 'form-check-input', 'id' => 'basic_checkbox_' . $cont, 'data-grupo' => $grupo->grupo]) }}
+                                    {{ Form::checkbox('permissions[]', $permission->id, in_array($permission->id, $rolePermissionIds), ['class' => 'form-check-input', 'id' => 'basic_checkbox_' . $cont, 'data-grupo' => $grupo->grupo]) }}
                                     &nbsp;&nbsp; {{$permission->descripcion ?: 'Sin descripción'}}
                                     <em>({{$permission->name}})</em>
                                 </label>

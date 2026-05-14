@@ -35,10 +35,10 @@ class RoleController extends Controller
      public function store(RoleRequest $request)
     {
         //dd($request->all());
-        $role=Role::create(['name'=>$request->name,'descripcion'=>$request->descripcion,'guard_name'=>'web']);
+        $role=Role::create(['name'=>$request->name,'descripcion'=>$request->descripcion,'guard_name'=>'web','uuid'=>\Illuminate\Support\Str::uuid()]);
         //actualice los permisos
 
-        $role->syncPermissions($request->get('permissions'));
+        $role->permissions()->sync($request->get('permissions') ?? []);
         Alert::success('Guardado','Rol creado con exito!');
         return redirect()->route('roles.index');
 
