@@ -176,7 +176,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
+        Collective\Html\HtmlServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
         RealRashid\SweetAlert\SweetAlertServiceProvider::class,
@@ -185,7 +185,7 @@ return [
         App\Providers\ViewSolicitudesProvider::class,
         
     ])->toArray(),
-
+    
     /*
     |--------------------------------------------------------------------------
     | Class Aliases
@@ -202,6 +202,8 @@ return [
         'Alert' => RealRashid\SweetAlert\Facades\Alert::class,
         'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+         'Form' => Collective\Html\FormFacade::class,
+        'Html' => Collective\Html\HtmlFacade::class,
     ])->toArray(),
 
 ];
