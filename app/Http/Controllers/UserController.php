@@ -7,6 +7,7 @@ use App\Models\Parametro;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\UserRequest;
+use App\Http\Requests\changePasswordRequest;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\File;
@@ -45,43 +46,50 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
         $user->save();
-
         $avatar = new LetterAvatar($request->name,'circle', 64);
         $path=public_path().'/assets/avatar/'.$user->id.'.jpg';
         $avatar->saveAs($path, LetterAvatar::MIME_TYPE_JPEG);
-        
         $user->roles()->sync($request->role_id);
         Alert::success("Usuario registrado correctamente!");
         return redirect()->route('users.index');
     }  
-    public function changePassword(Request $request)
+    public function changePassword(changePasswordRequest $request)
     {
-        $request->validate([
-            'current_password' => 'required',
-            'new_password' => 'required|string|min:7|confirmed',
-        ]);
-
         $user = User::find(auth()->user()->id);
-
         if (!Hash::check($request->current_password, $user->password)) {
             Alert::error('Error', 'La contraseña actual no es correcta');
-           return redirect()->back();
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
         }
 
         if (Hash::check($request->new_password, $user->password)) {
-            Alert::error('Error', 'La NUEVA CONTRASEÑA no puede ser igual a la constraseña actual');
-           return redirect()->back();
+            Alert::error('Error', 'La nueva contraseña no puede ser igual a la contraseña actual');
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
         }
-         
-         if (strlen($request->new_password) < 7) {
-            Alert::error('Error', 'La NUEVA CONTRASEÑA debe tener al menos 8 caracteres');
-            return redirect()->back();
+   
+        $passwordsComunes = ['12345678','password','admin123','qwerty123','123456789','abc123456',];
+
+        if (in_array(strtolower($request->new_password), $passwordsComunes)) {
+            Alert::error('Error', 'La contraseña ingresada es demasiado común o insegura');
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
         }
 
-        $user->update([
-            'password' => bcrypt($request->new_password),
-        ]);
-        Alert::success('Contraseña', 'Actualizada correctamente');
+        if (stripos($request->new_password, auth()->user()->name) !== false) {
+            Alert::error('Error', 'La contraseña no debe contener su nombre de usuario');
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
+        }
+
+        if (preg_match('/\s/', $request->new_password)) {
+            Alert::error('Error', 'La contraseña no debe contener espacios');
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
+        }
+
+        if (preg_match('/(.)\1{3,}/', $request->new_password)) {
+            Alert::error('Error', 'La contraseña contiene demasiados caracteres repetidos');
+            return redirect()->back()->withInput()->with('active_tab', 'change_password');
+        }
+
+        $user->update(['password' => bcrypt($request->new_password),]);
+        Alert::success('Contraseña', 'Actualizada correctamente');
         return redirect()->back();
     }
 
@@ -108,30 +116,44 @@ class UserController extends Controller
         return redirect()->route('users.index');
     }
 
-    public function update_profile(Request $request, User $user){
-        
-        $file_foto=$request->file('avatar');
-        if($file_foto != null){
-            $direccion=public_path()."/assets/avatar/";
-            $fullPath=public_path().'/assets/avatar/'.$user->avatar;
-            File::delete($fullPath);
-            $filename=$file_foto->getClientOriginalName();
-            $file_foto->move($direccion, $filename);
-            $user->avatar=$filename;
-        }else{
-            $path=public_path()."/assets/avatar/".$user->id.'.jpg';
-            if (!file_exists($path)){
-                $avatar = new LetterAvatar($request->name,'circle', 64);
-                $avatar->saveAs($path, LetterAvatar::MIME_TYPE_JPEG);
-            }
-            $user->avatar=$user->id.'.jpg';
+    public function update_profile(Request $request, User $user)
+    {
+        $direccion = public_path('/assets/avatar/');
+        if (!file_exists($direccion)) {
+            mkdir($direccion, 0755, true);
         }
-        $user->save();
-        Alert::success('Datos actualizados correctamente!');
+        if ($request->remove_avatar == '1') {
+            if ($user->avatar && $user->avatar !== 'default-avatar.svg') {
+                $fullPath = $direccion . $user->avatar;
+                if (file_exists($fullPath)) {
+                    File::delete($fullPath);
+                }
+            }
+            $user->avatar = null;
+            $user->save();
+            Alert::success('Foto eliminada', 'Ahora se mostrará el avatar por defecto.');
+            return redirect()->back();
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar && $user->avatar !== 'default-avatar.svg') {
+                $fullPath = $direccion . $user->avatar;
+                if (file_exists($fullPath)) {
+                    File::delete($fullPath);
+                }
+            }
+            $file_foto = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file_foto->getClientOriginalExtension();
+            $file_foto->move($direccion, $filename);
+            $user->avatar = $filename;
+            $user->save();
+            Alert::success('Foto actualizada', 'Tu foto de perfil fue actualizada correctamente.');
+            return redirect()->back();
+        }
+
+        Alert::info('Sin cambios', 'No se realizó ningún cambio en la foto.');
         return redirect()->back();
     }
-
-
     public function destroy($uuid)
     {
         $user=User::where('uuid',$uuid)->firstOrFail();

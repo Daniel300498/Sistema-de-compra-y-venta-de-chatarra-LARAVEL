@@ -9,23 +9,17 @@
   <meta content="" name="keywords">
   @include('layouts.partials.styles')
 </head>
-
 <body class="body-login">
-
   <main>
     <div class="container">
-
       <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
         <div class="container">
           <div class="row justify-content-center">
             <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
-
               <div class="d-flex justify-content-center py-1">
                 <a href="#" class="">                     
-              
               </a>
               </div><!-- End Logo -->
-
               <div class="card mb-3">
                 <div class="card-body">
                     <div class="pt-7 pb-2">
@@ -46,7 +40,6 @@
                                 @endif
                             </div>
                         </div>
-
                          <div class="col-12">
                           <label for="yourPassword" class="form-label">Contrase&ntilde;a</label>
                           <div class="position-relative">
@@ -78,9 +71,8 @@
       </section>
     </div>
   </main><!-- End #main -->
-
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
  @include('layouts.partials.scripts')
-</body>
 
+</body>
 </html>
