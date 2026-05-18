@@ -64,11 +64,10 @@ class RoleController extends Controller
 
     public function update(RoleRequest $request, Role $role)
     {
-        //actualice el rol
-        $role->update($request->all());
-        //actualice los permisos
-        $role->syncPermissions($request->get('permissions') ?? []);
-        Alert::success('Actualizado','Datos del Rol actualizado con exito!');
+        $role->update($request->only('name'));
+        $permissions = Permission::whereIn('id', $request->get('permissions') ?? [])->get();
+        $role->syncPermissions($permissions);
+        Alert::success('Actualizado', 'Datos del Rol actualizado con éxito!');
         return redirect()->route('roles.index');
     }
 

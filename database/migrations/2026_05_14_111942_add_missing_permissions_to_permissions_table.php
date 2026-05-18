@@ -79,8 +79,21 @@ return new class extends Migration
             //reportes
             ['name' => 'reportes.index',   'descripcion' => 'Ver Reportes',    'grupo' => 'REPORTES'],
             ['name' => 'reportes.export',   'descripcion' => 'Exportar Reportes',    'grupo' => 'REPORTES'],
-        
-        ];
+
+             //usuarios
+             ['name' => 'users.index',   'descripcion' => 'Ver todos los Usuarios', 'grupo' => 'USUARIOS'],
+             ['name' => 'users.create',  'descripcion' => 'Agregar Usuarios',       'grupo' => 'USUARIOS'],
+             ['name' => 'users.edit',    'descripcion' => 'Editar Usuarios',        'grupo' => 'USUARIOS'],
+             ['name' => 'users.destroy', 'descripcion' => 'Eliminar Usuarios',      'grupo' => 'USUARIOS'],
+             ['name' => 'users.show',   'descripcion' => 'Ver Perfil de Usuario',    'grupo' => 'USUARIOS'],
+
+             //roles
+             ['name' => 'roles.index',   'descripcion' => 'Ver todos los Roles', 'grupo' => 'ROLES'],
+             ['name' => 'roles.create',  'descripcion' => 'Agregar Roles',       'grupo' => 'ROLES'],
+             ['name' => 'roles.edit',    'descripcion' => 'Editar Roles',        'grupo' => 'ROLES'],
+             ['name' => 'roles.destroy', 'descripcion' => 'Eliminar Roles',      'grupo' => 'ROLES'],
+
+             ];
 
         foreach ($permisos as $p) {
             if (!Permission::where('name', $p['name'])->where('guard_name', 'web')->exists()) {
